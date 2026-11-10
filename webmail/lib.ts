@@ -13,8 +13,28 @@ import * as api from './api'
 const cssStyleDark = dom.style(attr.type('text/css'))
 document.head.prepend(cssStyleDark)
 const styleSheetDark = cssStyleDark.sheet!
-styleSheetDark.insertRule('@media (prefers-color-scheme: dark) {}')
-const darkModeRule = styleSheetDark.cssRules[0] as CSSMediaRule
+
+// Dark values apply when html[data-theme="dark"]. Auto resolves to light or dark
+// in applyTheme, the same way msilab does, so an explicit light choice stays light
+// while the OS is dark.
+const darkSelector = (selector: string): string => {
+	const parts: string[] = []
+	let depth = 0
+	let start = 0
+	for (let i = 0; i < selector.length; i++) {
+		const c = selector[i]
+		if (c === '(') {
+			depth++
+		} else if (c === ')') {
+			depth--
+		} else if (c === ',' && depth === 0) {
+			parts.push(selector.slice(start, i).trim())
+			start = i + 1
+		}
+	}
+	parts.push(selector.slice(start).trim())
+	return parts.map(part => part === ':root' || part === 'html' ? '[data-theme="dark"]' : '[data-theme="dark"] ' + part).join(', ')
+}
 
 // We keep the default/regular styles and dark-mode styles in separate stylesheets.
 const cssStyle = dom.style(attr.type('text/css'))
@@ -55,9 +75,9 @@ export const ensureCSS = (selector: string, styles: { [prop: string]: string | n
 				throw new Error('2 elements required for light/dark mode style, got '+v.length)
 			}
 			if (!darkst) {
-				const darkIndex = darkModeRule.cssRules.length
-				darkModeRule.insertRule(selector + ' {}', darkIndex)
-				darkst = (darkModeRule.cssRules[darkIndex] as CSSStyleRule).style
+				const darkIndex = styleSheetDark.cssRules.length
+				styleSheetDark.insertRule(darkSelector(selector) + ' {}', darkIndex)
+				darkst = (styleSheetDark.cssRules[darkIndex] as CSSStyleRule).style
 			}
 			st.setProperty(k, ''+v[0], important ? 'important' : '')
 			darkst.setProperty(k, ''+v[1], important ? 'important' : '')
@@ -74,65 +94,131 @@ export const css = (className: string, styles: { [prop: string]: string | number
 	return dom._class(className)
 }
 
-// todo: reduce number of colors. hopefully we can derive some colors from a few base colors (making them brighter/darker, or shifting hue, etc). then make them configurable through settings.
-// todo: add the standard padding and border-radius, perhaps more.
-// We define css variables, making them easy to override.
+// Theme choice matches msilab: light, dark, or auto. Auto stores the word "auto"
+// and sets data-theme to the resolved appearance. Message iframes hear the
+// storage event and follow the same choice.
+export type ThemePreference = 'light' | 'dark' | 'auto'
+
+const themePreferenceKey = 'theme-preference'
+
+const readThemePreference = (): ThemePreference => {
+	try {
+		const v = localStorage.getItem(themePreferenceKey)
+		if (v === 'light' || v === 'dark' || v === 'auto') {
+			return v
+		}
+	} catch (err) {
+	}
+	return 'auto'
+}
+
+export const themePreference = (): ThemePreference => readThemePreference()
+
+const prefersDark = (): boolean => window.matchMedia('(prefers-color-scheme: dark)').matches
+
+export const applyTheme = (theme: ThemePreference) => {
+	const resolved = theme === 'auto' ? (prefersDark() ? 'dark' : 'light') : theme
+	document.documentElement.setAttribute('data-theme', resolved)
+	const toggle = document.getElementById('theme-toggle-switch') as HTMLInputElement | null
+	const autoBtn = document.getElementById('theme-auto')
+	if (toggle) {
+		toggle.checked = resolved === 'dark'
+	}
+	if (autoBtn) {
+		autoBtn.classList.toggle('active', theme === 'auto')
+		autoBtn.setAttribute('aria-pressed', theme === 'auto' ? 'true' : 'false')
+	}
+	try {
+		localStorage.setItem(themePreferenceKey, theme)
+	} catch (err) {
+	}
+}
+
+applyTheme(readThemePreference())
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+	if (readThemePreference() === 'auto') {
+		applyTheme('auto')
+	}
+})
+window.addEventListener('storage', (e: StorageEvent) => {
+	if (e.key === themePreferenceKey && (e.newValue === 'light' || e.newValue === 'dark' || e.newValue === 'auto')) {
+		applyTheme(e.newValue)
+	}
+})
+
+// Design tokens: calm grey palette. Dark values apply under [data-theme="dark"].
 ensureCSS(':root', {
-	'--color': ['black', '#ddd'],
-	'--colorMild': ['#555', '#bbb'],
-	'--colorMilder': ['#666', '#aaa'],
-	'--backgroundColor': ['white', '#222'],
-	'--backgroundColorMild': ['#f8f8f8', '#080808'],
-	'--backgroundColorMilder': ['#999', '#777'],
-	'--borderColor': ['#ccc', '#333'],
-	'--mailboxesTopBackgroundColor': ['#fdfdf1', '#1a1200'],
-	'--msglistBackgroundColor': ['#f5ffff', '#04130d'],
-	'--boxShadow': ['0 0 20px rgba(0, 0, 0, 0.1)', '0px 0px 20px #000'],
+	'--radius': '8px',
 
-	'--buttonBackground': ['#eee', '#222'],
-	'--buttonBorderColor': ['#888', '#666'],
-	'--buttonHoverBackground': ['#ddd', '#333'],
+	'--color': ['#2c3035', '#e3e6e9'],
+	'--colorMild': ['#555b61', '#b3b9bf'],
+	'--colorMilder': ['#868d94', '#828a91'],
+	'--backgroundColor': ['#f2f3f5', '#15171a'],
+	'--backgroundColorMild': ['#ffffff', '#1e2125'],
+	'--backgroundColorMilder': ['#e1e4e8', '#3a4048'],
+	'--borderColor': ['#e1e4e8', '#2e333a'],
+	'--borderStrong': ['#cdd2d8', '#3a4048'],
 
-	'--overlayOpaqueBackgroundColor': ['#eee', '#011'],
-	'--overlayBackgroundColor': ['rgba(0, 0, 0, 0.2)', 'rgba(0, 0, 0, 0.5)'],
+	'--mailboxesTopBackgroundColor': ['#2b2f33', '#101214'],
+	'--mailboxesSidebarBackground': ['#ffffff', '#1e2125'],
+	'--msglistBackgroundColor': ['#f7f8fa', '#24282d'],
+	'--boxShadow': ['0 2px 10px rgba(0, 0, 0, 0.08)', '0 2px 12px rgba(0, 0, 0, 0.5)'],
+	'--shadowSm': ['0 1px 2px rgba(0, 0, 0, 0.06)', '0 1px 2px rgba(0, 0, 0, 0.3)'],
 
-	'--popupColor': ['black', 'white'],
-	'--popupBackgroundColor': ['white', '#313233'],
-	'--popupBorderColor': ['#ccc', '#555'],
+	'--accent': ['#5b7083', '#7e95a8'],
+	'--accentHover': ['#44535f', '#98abbb'],
+	'--accentSoft': ['#eef1f4', '#262b31'],
 
-	'--highlightBackground': ['gold', '#a70167'],
-	'--highlightBorderColor': ['#8c7600', '#fd1fa7'],
-	'--highlightBackgroundHover': ['#ffbd21', '#710447'],
+	'--buttonBackground': ['#f7f8fa', '#24282d'],
+	'--buttonBorderColor': ['#cdd2d8', '#3a4048'],
+	'--buttonHoverBackground': ['#eef1f4', '#262b31'],
+	'--buttonPrimaryBackground': ['#5b7083', '#7e95a8'],
+	'--buttonPrimaryHover': ['#44535f', '#98abbb'],
 
-	'--mailboxActiveBackground': ['linear-gradient(135deg, #ffc7ab 0%, #ffdeab 100%)', 'linear-gradient(135deg, #b63d00 0%, #8c5a0d 100%)'],
-	'--mailboxHoverBackgroundColor': ['#eee', '#421f15'],
+	'--navTextColor': ['#c4c9ce', '#c4c9ce'],
+	'--navTextHover': ['#ffffff', '#ffffff'],
 
-	'--msgItemActiveBackground': ['linear-gradient(135deg, #8bc8ff 0%, #8ee5ff 100%)', 'linear-gradient(135deg, #045cac 0%, #027ba0 100%)'],
-	'--msgItemHoverBackgroundColor': ['#eee', '#073348'],
-	'--msgItemFocusBorderColor': ['#2685ff', '#2685ff'],
+	'--overlayOpaqueBackgroundColor': ['rgba(242, 243, 245, 0.92)', 'rgba(21, 23, 26, 0.92)'],
+	'--overlayBackgroundColor': ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.55)'],
 
-	'--buttonTristateOnBackground': ['#c4ffa9', '#277e00'],
-	'--buttonTristateOffBackground': ['#ffb192', '#bf410f'],
+	'--popupColor': ['#2c3035', '#e3e6e9'],
+	'--popupBackgroundColor': ['#ffffff', '#1e2125'],
+	'--popupBorderColor': ['#e1e4e8', '#2e333a'],
 
-	'--warningBackgroundColor': ['#ffca91', '#a85700'],
+	'--highlightBackground': ['#eef1f4', '#262b31'],
+	'--highlightBorderColor': ['#5b7083', '#7e95a8'],
+	'--highlightBackgroundHover': ['#e1e4e8', '#3a4048'],
 
-	'--successBackground': ['#d2f791', '#1fa204'],
-	'--emphasisBackground': ['#666', '#aaa'],
+	'--mailboxActiveBackground': ['#eef1f4', '#262b31'],
+	'--mailboxActiveBorder': ['#5b7083', '#7e95a8'],
+	'--mailboxHoverBackgroundColor': ['#f7f8fa', '#24282d'],
+
+	'--msgItemActiveBackground': ['#eef1f4', '#262b31'],
+	'--msgItemActiveBorder': ['#5b7083', '#7e95a8'],
+	'--msgItemHoverBackgroundColor': ['#f7f8fa', '#24282d'],
+	'--msgItemFocusBorderColor': ['#5b7083', '#7e95a8'],
+
+	'--buttonTristateOnBackground': ['rgba(58, 138, 95, 0.16)', 'rgba(58, 138, 95, 0.25)'],
+	'--buttonTristateOffBackground': ['rgba(179, 71, 58, 0.16)', 'rgba(179, 71, 58, 0.25)'],
+
+	'--warningBackgroundColor': ['rgba(185, 129, 12, 0.12)', 'rgba(185, 129, 12, 0.2)'],
+	'--successBackground': ['rgba(58, 138, 95, 0.12)', 'rgba(58, 138, 95, 0.2)'],
+	'--emphasisBackground': ['#555b61', '#b3b9bf'],
 
 	// For authentication/security results.
-	'--underlineGreen': '#50c40f',
-	'--underlineRed': '#e15d1c',
-	'--underlineBlue': '#09f',
-	'--underlineGrey': '#888',
+	'--underlineGreen': '#3a8a5f',
+	'--underlineRed': '#b3473a',
+	'--underlineBlue': '#5b7083',
+	'--underlineGrey': '#868d94',
 
-	'--quoted1Color': ['#03828f', '#71f2ff'], // red
-	'--quoted2Color': ['#c7445c', '#ec4c4c'], // green
-	'--quoted3Color': ['#417c10', '#73e614'], // blue
+	'--quoted1Color': ['#3f6079', '#8fb0c9'],
+	'--quoted2Color': ['#5b7083', '#98abbb'],
+	'--quoted3Color': ['#44535f', '#7e95a8'],
 
-	'--scriptSwitchUnderlineColor': ['#dca053', '#e88f1e'],
+	'--scriptSwitchUnderlineColor': ['#b9810c', '#e8b84a'],
 
-	'--linkColor': ['#096bc2', '#63b6ff'],
-	'--linkVisitedColor': ['#0704c1', '#c763ff'],
+	'--linkColor': ['#3f6079', '#8fb0c9'],
+	'--linkVisitedColor': ['#27384a', '#b6cee0'],
 })
 
 // Typed way to reference a css variables. Kept from before used variables.
@@ -144,13 +230,26 @@ export const styles = {
 	backgroundColorMild: 'var(--backgroundColorMild)',
 	backgroundColorMilder: 'var(--backgroundColorMilder)',
 	borderColor: 'var(--borderColor)',
+	borderStrong: 'var(--borderStrong)',
 	mailboxesTopBackgroundColor: 'var(--mailboxesTopBackgroundColor)',
+	mailboxesSidebarBackground: 'var(--mailboxesSidebarBackground)',
 	msglistBackgroundColor: 'var(--msglistBackgroundColor)',
 	boxShadow: 'var(--boxShadow)',
+	shadowSm: 'var(--shadowSm)',
+	radius: 'var(--radius)',
+
+	accent: 'var(--accent)',
+	accentHover: 'var(--accentHover)',
+	accentSoft: 'var(--accentSoft)',
 
 	buttonBackground: 'var(--buttonBackground)',
 	buttonBorderColor: 'var(--buttonBorderColor)',
 	buttonHoverBackground: 'var(--buttonHoverBackground)',
+	buttonPrimaryBackground: 'var(--buttonPrimaryBackground)',
+	buttonPrimaryHover: 'var(--buttonPrimaryHover)',
+
+	navTextColor: 'var(--navTextColor)',
+	navTextHover: 'var(--navTextHover)',
 
 	overlayOpaqueBackgroundColor: 'var(--overlayOpaqueBackgroundColor)',
 	overlayBackgroundColor: 'var(--overlayBackgroundColor)',
@@ -164,9 +263,11 @@ export const styles = {
 	highlightBackgroundHover: 'var(--highlightBackgroundHover)',
 
 	mailboxActiveBackground: 'var(--mailboxActiveBackground)',
+	mailboxActiveBorder: 'var(--mailboxActiveBorder)',
 	mailboxHoverBackgroundColor: 'var(--mailboxHoverBackgroundColor)',
 
 	msgItemActiveBackground: 'var(--msgItemActiveBackground)',
+	msgItemActiveBorder: 'var(--msgItemActiveBorder)',
 	msgItemHoverBackgroundColor: 'var(--msgItemHoverBackgroundColor)',
 	msgItemFocusBorderColor: 'var(--msgItemFocusBorderColor)',
 
@@ -204,7 +305,7 @@ export const styleClasses = {
 	scriptswitch: css('scriptswitch', {textDecoration: 'underline 2px', textDecorationColor: styles.scriptSwitchUnderlineColor}),
 	textMild: css('textMild', {color: styles.colorMild}),
 	// For keywords (also known as flags/labels/tags) on messages.
-	keyword: css('keyword', {padding: '0 .15em', borderRadius: '.15em', fontWeight: 'normal', fontSize: '.9em', margin: '0 .15em', whiteSpace: 'nowrap', background: styles.highlightBackground, color: styles.color, border: '1px solid', borderColor: styles.highlightBorderColor}),
+	keyword: css('keyword', {padding: '2px 8px', borderRadius: '20px', fontWeight: '600', fontSize: '11px', margin: '0 .15em', whiteSpace: 'nowrap', background: styles.accentSoft, color: styles.accent, border: '1px solid', borderColor: styles.highlightBorderColor}),
 	msgHeaders: css('msgHeaders', {marginBottom: '1ex', width: '100%'}),
 }
 
@@ -212,15 +313,18 @@ ensureCSS('.msgHeaders td', {wordBreak: 'break-word'}) // Prevent horizontal scr
 ensureCSS('.keyword.keywordCollapsed', {opacity: .75}),
 
 // Generic styling.
-ensureCSS('html', {backgroundColor: 'var(--backgroundColor)', color: 'var(--color)'})
-ensureCSS('*', {fontSize: 'inherit', fontFamily: "'ubuntu', 'lato', sans-serif", margin: 0, padding: 0, boxSizing: 'border-box'})
-ensureCSS('.mono, .mono *', {fontFamily: "'ubuntu mono', monospace"})
-ensureCSS('table td, table th', {padding: '.15em .25em'})
-ensureCSS('.pad', {padding: '.5em'})
+ensureCSS('html', {backgroundColor: 'var(--backgroundColor)', color: 'var(--color)', lineHeight: '1.55'})
+ensureCSS('body', {fontSize: '14px'})
+ensureCSS('*', {fontSize: 'inherit', fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', margin: 0, padding: 0, boxSizing: 'border-box'})
+ensureCSS('.mono, .mono *', {fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace"})
+ensureCSS('table td, table th', {padding: '.35em .5em'})
+ensureCSS('.pad', {padding: '.65em'})
 ensureCSS('iframe', {border: 0})
 ensureCSS('img, embed, video, iframe', {backgroundColor: 'white', color: 'black'})
-ensureCSS('a', {color: styles.linkColor})
+ensureCSS('a', {color: styles.linkColor, textDecoration: 'none', transition: 'color .2s ease'})
+ensureCSS('a:hover', {color: 'var(--linkVisitedColor)'})
 ensureCSS('a:visited', {color: styles.linkVisitedColor})
+ensureCSS('h1, h2, h3', {color: styles.color, fontWeight: '600', lineHeight: '1.25'})
 
 // For message view with multiple inline elements (often a single text and multiple messages).
 ensureCSS('.textmulti > *:nth-child(even)', {backgroundColor: ['#f4f4f4', '#141414']})

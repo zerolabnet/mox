@@ -112,24 +112,71 @@ func (xc *Composer) HeaderAddrs(k string, l []NameAddress) {
 func (xc *Composer) Subject(subject string) {
 	var subjectValue strings.Builder
 	subjectLineLen := len("Subject: ")
-	subjectWord := false
-	for i, word := range strings.Split(subject, " ") {
-		if !xc.SMTPUTF8 && !isASCII(word) {
-			word = mime.QEncoding.Encode("utf-8", word)
-		}
-		if i > 0 {
-			subjectValue.WriteString(" ")
-			subjectLineLen++
-		}
-		if subjectWord && subjectLineLen+len(word) > 77 {
+	for i, part := range subjectParts(subject, !xc.SMTPUTF8 && !isASCII(subject)) {
+		if i > 0 && subjectLineLen+len(part) > 77 {
 			subjectValue.WriteString("\r\n\t")
 			subjectLineLen = 1
 		}
-		subjectValue.WriteString(word)
-		subjectLineLen += len(word)
-		subjectWord = true
+		subjectValue.WriteString(part)
+		subjectLineLen += len(part)
 	}
 	xc.Header("Subject", subjectValue.String())
+}
+
+// subjectParts splits a subject into segments for writing. When encodeUTF8 is set,
+// non-ascii text is Q-encoded. Words are split on U+0020 only, matching the historical
+// encoder, but adjacent non-ascii words are merged so the space is inside one
+// encoded-word: RFC 2047 ignores whitespace between adjacent encoded-words.
+// Other ASCII, including tabs and newlines, stays inside the word and is Q-encoded
+// with it when the word is not ASCII.
+func subjectParts(subject string, encodeUTF8 bool) []string {
+	if !encodeUTF8 {
+		return []string{subject}
+	}
+	words := strings.Split(subject, " ")
+	var parts []string
+	var asciiBuf, utfBuf strings.Builder
+	flushASCII := func() {
+		if asciiBuf.Len() == 0 {
+			return
+		}
+		parts = append(parts, asciiBuf.String())
+		asciiBuf.Reset()
+	}
+	flushUTF := func() {
+		if utfBuf.Len() == 0 {
+			return
+		}
+		parts = append(parts, mime.QEncoding.Encode("utf-8", utfBuf.String()))
+		utfBuf.Reset()
+	}
+	for i, word := range words {
+		if isASCII(word) {
+			if utfBuf.Len() > 0 {
+				flushUTF()
+			}
+			if i > 0 {
+				asciiBuf.WriteByte(' ')
+			}
+			asciiBuf.WriteString(word)
+			continue
+		}
+		if asciiBuf.Len() > 0 {
+			if i > 0 {
+				asciiBuf.WriteByte(' ')
+			}
+			flushASCII()
+		} else if utfBuf.Len() > 0 {
+			utfBuf.WriteByte(' ')
+		}
+		utfBuf.WriteString(word)
+	}
+	flushASCII()
+	flushUTF()
+	if len(parts) == 0 {
+		return []string{subject}
+	}
+	return parts
 }
 
 // Line writes an empty line.

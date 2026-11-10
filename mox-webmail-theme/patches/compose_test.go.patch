@@ -1,0 +1,74 @@
+--- /dev/null
++++ message/compose_test.go
+@@ -0,0 +1,71 @@
++package message
++
++import (
++	"mime"
++	"strings"
++	"testing"
++)
++
++func TestSubjectParts(t *testing.T) {
++	check := func(subject string, want []string) {
++		t.Helper()
++		got := subjectParts(subject, true)
++		if len(got) != len(want) {
++			t.Fatalf("subjectParts(%q) = %q, want %q", subject, got, want)
++		}
++		for i := range want {
++			if got[i] != want[i] {
++				t.Fatalf("subjectParts(%q)[%d] = %q, want %q", subject, i, got[i], want[i])
++			}
++		}
++	}
++
++	check("plain ascii", []string{"plain ascii"})
++	check("hi ☺", []string{"hi ", mime.QEncoding.Encode("utf-8", "☺")})
++	check("Это тема письма", []string{mime.QEncoding.Encode("utf-8", "Это тема письма")})
++	check("ქართული ენა", []string{mime.QEncoding.Encode("utf-8", "ქართული ენა")})
++	check("Это subject моего письма", []string{
++		mime.QEncoding.Encode("utf-8", "Это"),
++		" subject ",
++		mime.QEncoding.Encode("utf-8", "моего письма"),
++	})
++	check("Это\nтема", []string{mime.QEncoding.Encode("utf-8", "Это\nтема")})
++	check("Это\rтема", []string{mime.QEncoding.Encode("utf-8", "Это\rтема")})
++}
++
++func TestSubjectRoundtrip(t *testing.T) {
++	check := func(subject string, smtputf8 bool) {
++		t.Helper()
++		var buf strings.Builder
++		xc := NewComposer(&buf, 0, smtputf8)
++		xc.Subject(subject)
++		xc.Flush()
++		raw := strings.ReplaceAll(buf.String(), "\r\n", "\n")
++		if !strings.HasPrefix(raw, "Subject: ") {
++			t.Fatalf("got %q, expected Subject header", buf.String())
++		}
++		value := strings.TrimPrefix(raw, "Subject: ")
++		if i := strings.Index(value, "\n\n"); i >= 0 {
++			value = value[:i]
++		}
++		value = strings.TrimSuffix(value, "\n")
++		// Unfold RFC 5322 continuation lines without treating a folded newline as content.
++		value = strings.ReplaceAll(value, "\n\t", "")
++		value = strings.ReplaceAll(value, "\n ", "")
++		dec := mime.WordDecoder{}
++		got, err := dec.DecodeHeader(value)
++		tcheck(t, err, "decode subject")
++		if got != subject {
++			t.Fatalf("subject %q encoded as %q, decoded as %q", subject, value, got)
++		}
++	}
++
++	check("Это тема письма", false)
++	check("ქართული ენა", false)
++	check("Это subject моего письма", false)
++	check("hi ☺", false)
++	check("plain ascii", false)
++	check("Это тема письма", true)
++	check("Это\nтема", false)
++	check("Это\rтема", false)
++}

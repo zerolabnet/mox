@@ -550,8 +550,24 @@
 	var cssStyleDark = dom.style(attr.type("text/css"));
 	document.head.prepend(cssStyleDark);
 	var styleSheetDark = cssStyleDark.sheet;
-	styleSheetDark.insertRule("@media (prefers-color-scheme: dark) {}");
-	var darkModeRule = styleSheetDark.cssRules[0];
+	var darkSelector = /* @__PURE__ */ __name((selector) => {
+		const parts = [];
+		let depth = 0;
+		let start = 0;
+		for (let i = 0; i < selector.length; i++) {
+			const c = selector[i];
+			if (c === "(") {
+				depth++;
+			} else if (c === ")") {
+				depth--;
+			} else if (c === "," && depth === 0) {
+				parts.push(selector.slice(start, i).trim());
+				start = i + 1;
+			}
+		}
+		parts.push(selector.slice(start).trim());
+		return parts.map((part) => part === ":root" || part === "html" ? '[data-theme="dark"]' : '[data-theme="dark"] ' + part).join(", ");
+	}, "darkSelector");
 	var cssStyle = dom.style(attr.type("text/css"));
 	document.head.prepend(cssStyle);
 	var styleSheet = cssStyle.sheet;
@@ -581,9 +597,9 @@
 					throw new Error("2 elements required for light/dark mode style, got " + v.length);
 				}
 				if (!darkst) {
-					const darkIndex = darkModeRule.cssRules.length;
-					darkModeRule.insertRule(selector + " {}", darkIndex);
-					darkst = darkModeRule.cssRules[darkIndex].style;
+					const darkIndex = styleSheetDark.cssRules.length;
+					styleSheetDark.insertRule(darkSelector(selector) + " {}", darkIndex);
+					darkst = styleSheetDark.cssRules[darkIndex].style;
 				}
 				st.setProperty(k, "" + v[0], important ? "important" : "");
 				darkst.setProperty(k, "" + v[1], important ? "important" : "");
@@ -596,52 +612,102 @@
 		ensureCSS("." + className, styles2, important);
 		return dom._class(className);
 	}, "css");
+	var themePreferenceKey = "theme-preference";
+	var readThemePreference = /* @__PURE__ */ __name(() => {
+		try {
+			const v = localStorage.getItem(themePreferenceKey);
+			if (v === "light" || v === "dark" || v === "auto") {
+				return v;
+			}
+		} catch (err) {
+		}
+		return "auto";
+	}, "readThemePreference");
+	var prefersDark = /* @__PURE__ */ __name(() => window.matchMedia("(prefers-color-scheme: dark)").matches, "prefersDark");
+	var applyTheme = /* @__PURE__ */ __name((theme) => {
+		const resolved = theme === "auto" ? prefersDark() ? "dark" : "light" : theme;
+		document.documentElement.setAttribute("data-theme", resolved);
+		const toggle = document.getElementById("theme-toggle-switch");
+		const autoBtn = document.getElementById("theme-auto");
+		if (toggle) {
+			toggle.checked = resolved === "dark";
+		}
+		if (autoBtn) {
+			autoBtn.classList.toggle("active", theme === "auto");
+			autoBtn.setAttribute("aria-pressed", theme === "auto" ? "true" : "false");
+		}
+		try {
+			localStorage.setItem(themePreferenceKey, theme);
+		} catch (err) {
+		}
+	}, "applyTheme");
+	applyTheme(readThemePreference());
+	window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+		if (readThemePreference() === "auto") {
+			applyTheme("auto");
+		}
+	});
+	window.addEventListener("storage", (e) => {
+		if (e.key === themePreferenceKey && (e.newValue === "light" || e.newValue === "dark" || e.newValue === "auto")) {
+			applyTheme(e.newValue);
+		}
+	});
 	ensureCSS(":root", {
-		"--color": ["black", "#ddd"],
-		"--colorMild": ["#555", "#bbb"],
-		"--colorMilder": ["#666", "#aaa"],
-		"--backgroundColor": ["white", "#222"],
-		"--backgroundColorMild": ["#f8f8f8", "#080808"],
-		"--backgroundColorMilder": ["#999", "#777"],
-		"--borderColor": ["#ccc", "#333"],
-		"--mailboxesTopBackgroundColor": ["#fdfdf1", "#1a1200"],
-		"--msglistBackgroundColor": ["#f5ffff", "#04130d"],
-		"--boxShadow": ["0 0 20px rgba(0, 0, 0, 0.1)", "0px 0px 20px #000"],
-		"--buttonBackground": ["#eee", "#222"],
-		"--buttonBorderColor": ["#888", "#666"],
-		"--buttonHoverBackground": ["#ddd", "#333"],
-		"--overlayOpaqueBackgroundColor": ["#eee", "#011"],
-		"--overlayBackgroundColor": ["rgba(0, 0, 0, 0.2)", "rgba(0, 0, 0, 0.5)"],
-		"--popupColor": ["black", "white"],
-		"--popupBackgroundColor": ["white", "#313233"],
-		"--popupBorderColor": ["#ccc", "#555"],
-		"--highlightBackground": ["gold", "#a70167"],
-		"--highlightBorderColor": ["#8c7600", "#fd1fa7"],
-		"--highlightBackgroundHover": ["#ffbd21", "#710447"],
-		"--mailboxActiveBackground": ["linear-gradient(135deg, #ffc7ab 0%, #ffdeab 100%)", "linear-gradient(135deg, #b63d00 0%, #8c5a0d 100%)"],
-		"--mailboxHoverBackgroundColor": ["#eee", "#421f15"],
-		"--msgItemActiveBackground": ["linear-gradient(135deg, #8bc8ff 0%, #8ee5ff 100%)", "linear-gradient(135deg, #045cac 0%, #027ba0 100%)"],
-		"--msgItemHoverBackgroundColor": ["#eee", "#073348"],
-		"--msgItemFocusBorderColor": ["#2685ff", "#2685ff"],
-		"--buttonTristateOnBackground": ["#c4ffa9", "#277e00"],
-		"--buttonTristateOffBackground": ["#ffb192", "#bf410f"],
-		"--warningBackgroundColor": ["#ffca91", "#a85700"],
-		"--successBackground": ["#d2f791", "#1fa204"],
-		"--emphasisBackground": ["#666", "#aaa"],
+		"--radius": "8px",
+		"--color": ["#2c3035", "#e3e6e9"],
+		"--colorMild": ["#555b61", "#b3b9bf"],
+		"--colorMilder": ["#868d94", "#828a91"],
+		"--backgroundColor": ["#f2f3f5", "#15171a"],
+		"--backgroundColorMild": ["#ffffff", "#1e2125"],
+		"--backgroundColorMilder": ["#e1e4e8", "#3a4048"],
+		"--borderColor": ["#e1e4e8", "#2e333a"],
+		"--borderStrong": ["#cdd2d8", "#3a4048"],
+		"--mailboxesTopBackgroundColor": ["#2b2f33", "#101214"],
+		"--mailboxesSidebarBackground": ["#ffffff", "#1e2125"],
+		"--msglistBackgroundColor": ["#f7f8fa", "#24282d"],
+		"--boxShadow": ["0 2px 10px rgba(0, 0, 0, 0.08)", "0 2px 12px rgba(0, 0, 0, 0.5)"],
+		"--shadowSm": ["0 1px 2px rgba(0, 0, 0, 0.06)", "0 1px 2px rgba(0, 0, 0, 0.3)"],
+		"--accent": ["#5b7083", "#7e95a8"],
+		"--accentHover": ["#44535f", "#98abbb"],
+		"--accentSoft": ["#eef1f4", "#262b31"],
+		"--buttonBackground": ["#f7f8fa", "#24282d"],
+		"--buttonBorderColor": ["#cdd2d8", "#3a4048"],
+		"--buttonHoverBackground": ["#eef1f4", "#262b31"],
+		"--buttonPrimaryBackground": ["#5b7083", "#7e95a8"],
+		"--buttonPrimaryHover": ["#44535f", "#98abbb"],
+		"--navTextColor": ["#c4c9ce", "#c4c9ce"],
+		"--navTextHover": ["#ffffff", "#ffffff"],
+		"--overlayOpaqueBackgroundColor": ["rgba(242, 243, 245, 0.92)", "rgba(21, 23, 26, 0.92)"],
+		"--overlayBackgroundColor": ["rgba(0, 0, 0, 0.25)", "rgba(0, 0, 0, 0.55)"],
+		"--popupColor": ["#2c3035", "#e3e6e9"],
+		"--popupBackgroundColor": ["#ffffff", "#1e2125"],
+		"--popupBorderColor": ["#e1e4e8", "#2e333a"],
+		"--highlightBackground": ["#eef1f4", "#262b31"],
+		"--highlightBorderColor": ["#5b7083", "#7e95a8"],
+		"--highlightBackgroundHover": ["#e1e4e8", "#3a4048"],
+		"--mailboxActiveBackground": ["#eef1f4", "#262b31"],
+		"--mailboxActiveBorder": ["#5b7083", "#7e95a8"],
+		"--mailboxHoverBackgroundColor": ["#f7f8fa", "#24282d"],
+		"--msgItemActiveBackground": ["#eef1f4", "#262b31"],
+		"--msgItemActiveBorder": ["#5b7083", "#7e95a8"],
+		"--msgItemHoverBackgroundColor": ["#f7f8fa", "#24282d"],
+		"--msgItemFocusBorderColor": ["#5b7083", "#7e95a8"],
+		"--buttonTristateOnBackground": ["rgba(58, 138, 95, 0.16)", "rgba(58, 138, 95, 0.25)"],
+		"--buttonTristateOffBackground": ["rgba(179, 71, 58, 0.16)", "rgba(179, 71, 58, 0.25)"],
+		"--warningBackgroundColor": ["rgba(185, 129, 12, 0.12)", "rgba(185, 129, 12, 0.2)"],
+		"--successBackground": ["rgba(58, 138, 95, 0.12)", "rgba(58, 138, 95, 0.2)"],
+		"--emphasisBackground": ["#555b61", "#b3b9bf"],
 		// For authentication/security results.
-		"--underlineGreen": "#50c40f",
-		"--underlineRed": "#e15d1c",
-		"--underlineBlue": "#09f",
-		"--underlineGrey": "#888",
-		"--quoted1Color": ["#03828f", "#71f2ff"],
-		// red
-		"--quoted2Color": ["#c7445c", "#ec4c4c"],
-		// green
-		"--quoted3Color": ["#417c10", "#73e614"],
-		// blue
-		"--scriptSwitchUnderlineColor": ["#dca053", "#e88f1e"],
-		"--linkColor": ["#096bc2", "#63b6ff"],
-		"--linkVisitedColor": ["#0704c1", "#c763ff"]
+		"--underlineGreen": "#3a8a5f",
+		"--underlineRed": "#b3473a",
+		"--underlineBlue": "#5b7083",
+		"--underlineGrey": "#868d94",
+		"--quoted1Color": ["#3f6079", "#8fb0c9"],
+		"--quoted2Color": ["#5b7083", "#98abbb"],
+		"--quoted3Color": ["#44535f", "#7e95a8"],
+		"--scriptSwitchUnderlineColor": ["#b9810c", "#e8b84a"],
+		"--linkColor": ["#3f6079", "#8fb0c9"],
+		"--linkVisitedColor": ["#27384a", "#b6cee0"]
 	});
 	var styles = {
 		color: "var(--color)",
@@ -651,12 +717,23 @@
 		backgroundColorMild: "var(--backgroundColorMild)",
 		backgroundColorMilder: "var(--backgroundColorMilder)",
 		borderColor: "var(--borderColor)",
+		borderStrong: "var(--borderStrong)",
 		mailboxesTopBackgroundColor: "var(--mailboxesTopBackgroundColor)",
+		mailboxesSidebarBackground: "var(--mailboxesSidebarBackground)",
 		msglistBackgroundColor: "var(--msglistBackgroundColor)",
 		boxShadow: "var(--boxShadow)",
+		shadowSm: "var(--shadowSm)",
+		radius: "var(--radius)",
+		accent: "var(--accent)",
+		accentHover: "var(--accentHover)",
+		accentSoft: "var(--accentSoft)",
 		buttonBackground: "var(--buttonBackground)",
 		buttonBorderColor: "var(--buttonBorderColor)",
 		buttonHoverBackground: "var(--buttonHoverBackground)",
+		buttonPrimaryBackground: "var(--buttonPrimaryBackground)",
+		buttonPrimaryHover: "var(--buttonPrimaryHover)",
+		navTextColor: "var(--navTextColor)",
+		navTextHover: "var(--navTextHover)",
 		overlayOpaqueBackgroundColor: "var(--overlayOpaqueBackgroundColor)",
 		overlayBackgroundColor: "var(--overlayBackgroundColor)",
 		popupColor: "var(--popupColor)",
@@ -666,8 +743,10 @@
 		highlightBorderColor: "var(--highlightBorderColor)",
 		highlightBackgroundHover: "var(--highlightBackgroundHover)",
 		mailboxActiveBackground: "var(--mailboxActiveBackground)",
+		mailboxActiveBorder: "var(--mailboxActiveBorder)",
 		mailboxHoverBackgroundColor: "var(--mailboxHoverBackgroundColor)",
 		msgItemActiveBackground: "var(--msgItemActiveBackground)",
+		msgItemActiveBorder: "var(--msgItemActiveBorder)",
 		msgItemHoverBackgroundColor: "var(--msgItemHoverBackgroundColor)",
 		msgItemFocusBorderColor: "var(--msgItemFocusBorderColor)",
 		buttonTristateOnBackground: "var(--buttonTristateOnBackground)",
@@ -698,20 +777,23 @@
 		scriptswitch: css("scriptswitch", { textDecoration: "underline 2px", textDecorationColor: styles.scriptSwitchUnderlineColor }),
 		textMild: css("textMild", { color: styles.colorMild }),
 		// For keywords (also known as flags/labels/tags) on messages.
-		keyword: css("keyword", { padding: "0 .15em", borderRadius: ".15em", fontWeight: "normal", fontSize: ".9em", margin: "0 .15em", whiteSpace: "nowrap", background: styles.highlightBackground, color: styles.color, border: "1px solid", borderColor: styles.highlightBorderColor }),
+		keyword: css("keyword", { padding: "2px 8px", borderRadius: "20px", fontWeight: "600", fontSize: "11px", margin: "0 .15em", whiteSpace: "nowrap", background: styles.accentSoft, color: styles.accent, border: "1px solid", borderColor: styles.highlightBorderColor }),
 		msgHeaders: css("msgHeaders", { marginBottom: "1ex", width: "100%" })
 	};
 	ensureCSS(".msgHeaders td", { wordBreak: "break-word" });
 	ensureCSS(".keyword.keywordCollapsed", { opacity: 0.75 }), // Generic styling.
-	ensureCSS("html", { backgroundColor: "var(--backgroundColor)", color: "var(--color)" });
-	ensureCSS("*", { fontSize: "inherit", fontFamily: "'ubuntu', 'lato', sans-serif", margin: 0, padding: 0, boxSizing: "border-box" });
-	ensureCSS(".mono, .mono *", { fontFamily: "'ubuntu mono', monospace" });
-	ensureCSS("table td, table th", { padding: ".15em .25em" });
-	ensureCSS(".pad", { padding: ".5em" });
+	ensureCSS("html", { backgroundColor: "var(--backgroundColor)", color: "var(--color)", lineHeight: "1.55" });
+	ensureCSS("body", { fontSize: "14px" });
+	ensureCSS("*", { fontSize: "inherit", fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', margin: 0, padding: 0, boxSizing: "border-box" });
+	ensureCSS(".mono, .mono *", { fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace" });
+	ensureCSS("table td, table th", { padding: ".35em .5em" });
+	ensureCSS(".pad", { padding: ".65em" });
 	ensureCSS("iframe", { border: 0 });
 	ensureCSS("img, embed, video, iframe", { backgroundColor: "white", color: "black" });
-	ensureCSS("a", { color: styles.linkColor });
+	ensureCSS("a", { color: styles.linkColor, textDecoration: "none", transition: "color .2s ease" });
+	ensureCSS("a:hover", { color: "var(--linkVisitedColor)" });
 	ensureCSS("a:visited", { color: styles.linkVisitedColor });
+	ensureCSS("h1, h2, h3", { color: styles.color, fontWeight: "600", lineHeight: "1.25" });
 	ensureCSS(".textmulti > *:nth-child(even)", { backgroundColor: ["#f4f4f4", "#141414"] });
 	ensureCSS(".textmulti > *", {
 		padding: "2ex .5em",

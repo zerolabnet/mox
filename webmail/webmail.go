@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	_ "embed"
+	"embed"
 
 	"golang.org/x/net/html"
 
@@ -80,6 +80,15 @@ var webmailtextHTML []byte
 
 //go:embed text.js
 var webmailtextJS []byte
+
+//go:embed fonts.css
+var webmailFontsCSS []byte
+
+//go:embed favicon.svg
+var webmailFaviconSVG []byte
+
+//go:embed fonts
+var webmailFonts embed.FS
 
 var (
 	// Similar between ../webmail/webmail.go:/metricSubmission and ../smtpserver/server.go:/metricSubmission and ../webapisrv/server.go:/metricSubmission
@@ -193,7 +202,7 @@ func serveContentFallback(log mlog.Log, w http.ResponseWriter, r *http.Request, 
 			buf = bytes.Replace(buf, []byte("/* js placeholder */"), customJS, 1)
 			rd = bytes.NewReader(buf)
 		}
-		http.ServeContent(w, r, "", mtime, rd)
+		http.ServeContent(w, r, filepath.Base(path), mtime, rd)
 	}
 
 	f, err := os.Open(path)
@@ -287,6 +296,26 @@ func handle(apiHandler http.Handler, isForwarded bool, accountPath string, w htt
 		}
 		return
 
+	case "/fonts.css":
+		switch r.Method {
+		case "GET", "HEAD":
+			w.Header().Set("Content-Type", "text/css; charset=utf-8")
+			serveContentFallback(log, w, r, filepath.FromSlash("webmail/fonts.css"), webmailFontsCSS, false)
+		default:
+			http.Error(w, "405 - method not allowed - use get", http.StatusMethodNotAllowed)
+		}
+		return
+
+	case "/favicon.svg":
+		switch r.Method {
+		case "GET", "HEAD":
+			w.Header().Set("Content-Type", "image/svg+xml")
+			serveContentFallback(log, w, r, filepath.FromSlash("webmail/favicon.svg"), webmailFaviconSVG, false)
+		default:
+			http.Error(w, "405 - method not allowed - use get", http.StatusMethodNotAllowed)
+		}
+		return
+
 	case "/msg.js", "/text.js":
 		switch r.Method {
 		default:
@@ -304,6 +333,29 @@ func handle(apiHandler http.Handler, isForwarded bool, accountPath string, w htt
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 		serveContentFallback(log, w, r, path, fallback, false)
 		return
+
+	default:
+		if strings.HasPrefix(r.URL.Path, "/fonts/") {
+			switch r.Method {
+			case "GET", "HEAD":
+				name := r.URL.Path[len("/fonts/"):]
+				if name == "" || strings.Contains(name, "/") || strings.Contains(name, "..") {
+					http.NotFound(w, r)
+					return
+				}
+				path := filepath.Join("webmail", "fonts", name)
+				fallback, err := webmailFonts.ReadFile(filepath.Join("fonts", name))
+				if err != nil {
+					http.NotFound(w, r)
+					return
+				}
+				w.Header().Set("Content-Type", "font/woff2")
+				serveContentFallback(log, w, r, path, fallback, false)
+			default:
+				http.Error(w, "405 - method not allowed - use get", http.StatusMethodNotAllowed)
+			}
+			return
+		}
 	}
 
 	isAPI := strings.HasPrefix(r.URL.Path, "/api/")
