@@ -190,7 +190,8 @@
 		img: /* @__PURE__ */ __name((...l) => _domKids(document.createElement("img"), l), "img"),
 		style: /* @__PURE__ */ __name((...l) => _domKids(document.createElement("style"), l), "style"),
 		search: /* @__PURE__ */ __name((...l) => _domKids(document.createElement("search"), l), "search"),
-		p: /* @__PURE__ */ __name((...l) => _domKids(document.createElement("p"), l), "p")
+		p: /* @__PURE__ */ __name((...l) => _domKids(document.createElement("p"), l), "p"),
+		canvas: /* @__PURE__ */ __name((...l) => _domKids(document.createElement("canvas"), l), "canvas")
 	};
 	var _attr = /* @__PURE__ */ __name((k, v) => {
 		const o = {};
@@ -2098,9 +2099,9 @@
 		l.push(">");
 		return l;
 	}, "formatAddressValidated");
-	var formatAddressShort = /* @__PURE__ */ __name((a, junk) => {
+	var formatAddressShort = /* @__PURE__ */ __name((a, junk2) => {
 		const n = a.Name;
-		if (!junk && n && !n.includes("<") && !n.includes("@") && !n.includes(">")) {
+		if (!junk2 && n && !n.includes("<") && !n.includes("@") && !n.includes(">")) {
 			return n;
 		}
 		return "<" + a.User + "@" + formatDomain(a.Domain) + ">";
@@ -2189,6 +2190,30 @@
 			dom.tr(dom.td(moreHeaders.map((s) => dom.div(s + ":", msgHeaderFieldStyle, style({ visibility: "hidden", height: 0 })))), dom.td())
 		);
 	}, "loadMsgheaderView");
+
+	// .js/webmail/icons.js
+	var svgIcon = /* @__PURE__ */ __name((width, height, ...pathData) => {
+		const svgns = "http://www.w3.org/2000/svg";
+		const svg = document.createElementNS(svgns, "svg");
+		svg.setAttributeNS(null, "viewBox", "0 0 " + width + " " + height);
+		svg.style.height = "1em";
+		svg.style.verticalAlign = "middle";
+		svg.style.fill = "currentColor";
+		for (const e of pathData) {
+			const path = document.createElementNS(svgns, "path");
+			path.setAttributeNS(null, "d", e);
+			svg.appendChild(path);
+		}
+		return svg;
+	}, "svgIcon");
+	var flag = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M5 15.64c2-.87 4.28-.76 6.18.33c1.37.78 2.89 1.18 4.42 1.18c1.12 0 2.24-.21 3.32-.64l1.45-.58A1 1 0 0 0 21 15V4a1 1 0 0 0-1.37-.93l-1.45.58c-1.97.79-4.16.63-6-.42A8.9 8.9 0 0 0 3.77 3l-.21.1a1 1 0 0 0-.55.89v18h2v-6.36ZM5 4.63c2-.87 4.28-.75 6.18.34c2.37 1.36 5.19 1.55 7.74.54l.08-.03v8.85l-.82.33a6.85 6.85 0 0 1-6-.42a8.95 8.95 0 0 0-4.42-1.18c-.93 0-1.86.15-2.75.44V4.63Z"), "flag");
+	var forward = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M12.66 3.25c-.29-.26-.72-.33-1.07-.17c-.36.16-.59.52-.59.91v4h-1c-4.41 0-8 3.59-8 8v4c0 .42.27.8.67.94q.165.06.33.06c.3 0 .59-.13.78-.38l1.9-2.37a5.98 5.98 0 0 1 4.69-2.25h.64v4c0 .39.23.75.59.91s.78.1 1.07-.17l9-8c.21-.19.34-.46.34-.75s-.12-.56-.34-.75zM13 17.77V14h-2.64a7.97 7.97 0 0 0-6.25 3l-.12.15V16c0-3.31 2.69-6 6-6h3V6.23L19.48 12l-6.49 5.77Z"), "forward");
+	var reply = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M14 8h-1V4c0-.39-.23-.75-.59-.91a.98.98 0 0 0-1.07.17l-9 7.99c-.21.19-.34.46-.34.75s.12.56.34.75l9 8c.29.26.72.33 1.07.17c.36-.16.59-.52.59-.91v-4h.64c1.83 0 3.54.82 4.69 2.25l1.9 2.37a1 1 0 0 0 .78.38q.165 0 .33-.06c.4-.14.67-.52.67-.94v-4c0-4.41-3.59-8-8-8Zm6 9.15l-.12-.15c-1.53-1.91-3.8-3-6.25-3h-2.64v3.77L4.5 12l6.49-5.77V10h3c3.31 0 6 2.69 6 6v1.15Z"), "reply");
+	var trash = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M17 6V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v2H2v2h2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8h2V6zM9 4h6v2H9zM6 20V8h12v12z", "M9 10h2v8H9zm4 0h2v8h-2z"), "trash");
+	var junk = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M17.55 6.17c-.31-.2-.7-.22-1.03-.05c-.32.17-.53.51-.53.88c0 1.63-.5 5-2 5c-.23 0-.63-.13-.78-.41c-.21-.39.02-1.15.61-2.03c2-3-.59-6.12-2.23-7.35a.99.99 0 0 0-.83-.17a.98.98 0 0 0-.66.53C9.52 3.74 8.24 4.79 7.01 5.8c-.63.52-1.22 1-1.73 1.51c-2.27 2.27-2.29 5.57-2.29 5.71c0 4.96 4.04 9 9 9s9-4.04 9-9c0-.19-.04-4.56-3.45-6.83ZM12 20c-3.86 0-7-3.14-7-7c0-.03.04-2.63 1.71-4.3c.44-.44.99-.9 1.58-1.38c1-.82 2.1-1.73 2.92-2.79c.85.89 1.94 2.45.96 3.91c-1.33 1.99-1.12 3.32-.71 4.08c.54 1.02 1.67 1.47 2.54 1.47c1.21 0 2.82-.65 3.59-3.76c.09-.35.16-.71.21-1.05c1.15 1.7 1.19 3.75 1.19 3.8c0 3.86-3.14 7-7 7Z"), "junk");
+	var rejects = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M12 2c-4.96 0-9 4.04-9 9v8h.05c.25 1.69 1.69 3 3.45 3c1.17 0 2.07-.42 2.67-1.17c.72.72 1.72 1.17 2.83 1.17s2.11-.46 2.84-1.19c.6.76 1.5 1.19 2.66 1.19c1.93 0 3.5-1.57 3.5-3.5V11c0-4.96-4.04-9-9-9m7 16.5c0 .83-.67 1.5-1.5 1.5c-.45 0-1.5 0-1.5-2v-1h-2v1c0 1.1-.9 2-2 2s-2-.9-2-2v-1H8v1c0 1.85-.77 2-1.5 2c-.83 0-1.5-.67-1.5-1.5V11c0-3.86 3.14-7 7-7s7 3.14 7 7z", "M15.5 9a1.5 1.5 0 1 0 0 3a1.5 1.5 0 1 0 0-3m-7 0a1.5 1.5 0 1 0 0 3a1.5 1.5 0 1 0 0-3"), "rejects");
+	var introbox = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M11 14h2v2h-2zM9.53 7.03C8.87 7.69 8.5 8.57 8.5 9.5h2c0-.4.16-.78.44-1.06c.57-.57 1.55-.57 2.12 0A1.499 1.499 0 0 1 12 11c-.55 0-1 .45-1 1v1h2v-.14c.55-.16 1.06-.46 1.47-.88c.66-.66 1.03-1.54 1.03-2.47s-.36-1.81-1.03-2.47c-1.32-1.32-3.63-1.32-4.95 0Z", "M12 3C6.49 3 2 6.59 2 11c0 2.91 1.9 5.51 5 6.93V21c0 .38.21.72.55.89c.14.07.29.11.45.11c.21 0 .42-.07.6-.2l3.74-2.8c5.36-.14 9.66-3.67 9.66-8s-4.49-8-10-8m0 14c-.22 0-.43.07-.6.2L9 19v-1.73c0-.41-.25-.78-.64-.93C5.67 15.3 4 13.26 4 11c0-3.31 3.59-6 8-6s8 2.69 8 6s-3.59 6-8 6"), "introbox");
+	var attachment = /* @__PURE__ */ __name(() => svgIcon(16, 16, "M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0z"), "attachment");
 
 	// .js/webmail/webmail.js
 	var reloadURL = URL.parse(window.location.href);
@@ -3139,7 +3164,7 @@
 		const othermsgflags = [];
 		let l = msgflags;
 		const seen = /* @__PURE__ */ new Set();
-		const flag = /* @__PURE__ */ __name((v, char, name) => {
+		const flag2 = /* @__PURE__ */ __name((v, char, name) => {
 			if (v && !seen.has(name)) {
 				l.push([name, char]);
 				seen.add(name);
@@ -3147,19 +3172,19 @@
 		}, "flag");
 		const addFlags = /* @__PURE__ */ __name((mi, ownRow) => {
 			const m = mi.Message;
-			flag(m.Answered, "r", ui("Replied/answered"));
+			flag2(!m.Junk && !m.Notjunk, "?", ui("Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages"));
+			flag2(m.Answered, "r", ui("Replied/answered"));
 			if (!ownRow) {
-				flag(m.Flagged, "!", ui("Flagged"));
+				flag2(m.Flagged, "!", ui("Flagged"));
 			}
-			flag(m.Forwarded, "f", ui("Forwarded"));
-			flag(m.Junk, "j", ui("Junk"));
-			flag(m.Deleted, "D", ui("Deleted, used in IMAP, message will likely be removed soon."));
-			flag(m.Draft, "d", ui("Draft"));
-			flag(m.Phishing, "p", ui("Phishing"));
-			flag(!m.Junk && !m.Notjunk, "?", ui("Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages"));
-			flag(mi.Attachments && mi.Attachments.length > 0 ? true : false, "a", ui("Has at least one attachment"));
+			flag2(m.Forwarded, "f", ui("Forwarded"));
+			flag2(m.Junk, "j", ui("Junk"));
+			flag2(m.Deleted, "D", ui("Deleted, used in IMAP, message will likely be removed soon."));
+			flag2(m.Draft, "d", ui("Draft"));
+			flag2(m.Phishing, "p", ui("Phishing"));
+			flag2(mi.Attachments && mi.Attachments.length > 0 ? true : false, "a", ui("Has at least one attachment"));
 			if (m.ThreadMuted) {
-				flag(true, "m", ui("Muted, new messages are automatically marked as read."));
+				flag2(true, "m", ui("Muted, new messages are automatically marked as read."));
 			}
 		}, "addFlags");
 		addFlags(miv.messageitem, true);
@@ -3169,8 +3194,23 @@
 				addFlags(miv.messageitem, false);
 			}
 		}
+		const flagCharIcons = {
+			"r": reply,
+			"!": flag,
+			"f": forward,
+			"j": junk,
+			"a": attachment,
+			"D": trash
+		};
+		const flagChar = /* @__PURE__ */ __name((c) => {
+			const fn = flagCharIcons[c];
+			if (fn) {
+				return fn();
+			}
+			return c;
+		}, "flagChar");
 		const msgItemFlagStyle = css("msgItemFlag", { marginRight: "1px", fontWeight: "normal", fontSize: ".9em" });
-		return msgflags.map((t) => dom.span(msgItemFlagStyle, t[1], attr.title(t[0]))).concat(othermsgflags.map((t) => dom.span(msgItemFlagStyle, css("msgItemFlagCollapsed", { color: styles.colorMilder }), t[1], attr.title(t[0]))));
+		return msgflags.map((t) => dom.span(msgItemFlagStyle, flagChar(t[1]), attr.title(t[0]))).concat(othermsgflags.map((t) => dom.span(msgItemFlagStyle, css("msgItemFlagCollapsed", { color: styles.colorMilder }), flagChar(t[1]), attr.title(t[0]))));
 	}, "flagList");
 	var refineFilters = /* @__PURE__ */ __name((f, notf) => {
 		const refine = settings.refine;
@@ -4521,14 +4561,14 @@
 			const correspondents = /* @__PURE__ */ __name(() => {
 				let fromAddrs = [];
 				let toAddrs = [];
-				let junk = m.Junk || !!listMailboxes().find((mb) => mb.ID === m.MailboxID && (mb.Name === rejectsMailbox || mb.Junk));
+				let junk2 = m.Junk || !!listMailboxes().find((mb) => mb.ID === m.MailboxID && (mb.Name === rejectsMailbox || mb.Junk));
 				if (msgitemView.isCollapsedThreadRoot()) {
 					;
 					[msgitemView, ...msgitemView.descendants()].forEach((miv) => {
 						const [fa2, ta2] = correspondentAddrs(miv);
 						fromAddrs = [...fromAddrs, ...fa2];
 						toAddrs = [...toAddrs, ...ta2];
-						junk = junk || miv.messageitem.Message.Junk;
+						junk2 = junk2 || miv.messageitem.Message.Junk;
 					});
 				} else {
 					[fromAddrs, toAddrs] = correspondentAddrs(msgitemView);
@@ -4560,8 +4600,8 @@
 				return [
 					attr.title(title),
 					join([
-						...fa.map((a) => new String(formatAddressShort(a, junk))),
-						...ta.map((a) => dom.span(style({ fontStyle: "italic" }), new String(formatAddressShort(a, junk))))
+						...fa.map((a) => new String(formatAddressShort(a, junk2))),
+						...ta.map((a) => dom.span(style({ fontStyle: "italic" }), new String(formatAddressShort(a, junk2))))
 					], () => ", ")
 				];
 			}, "correspondents");
@@ -4761,7 +4801,7 @@
 			parsedMessageResolve = resolve;
 			parsedMessageReject = reject;
 		});
-		const react = /* @__PURE__ */ __name(async (to, cc, bcc, forward) => {
+		const react = /* @__PURE__ */ __name(async (to, cc, bcc, forward2) => {
 			const pm = await parsedMessagePromise;
 			let body = "";
 			const sel = window.getSelection();
@@ -4774,7 +4814,7 @@
 			}
 			body = body.replace(/\r/g, "").replace(/\n\n\n\n*/g, "\n\n").trim();
 			let editOffset = 0;
-			if (forward) {
+			if (forward2) {
 				const env = mi.Envelope;
 				const subject2 = env.Subject ? [env.Subject] : [];
 				const date = pm.Headers?.Date || [];
@@ -4833,7 +4873,7 @@
 					body = "\n\n" + sig + "\n" + onWroteLine + body;
 				}
 			}
-			const subjectPrefix = forward ? "Fwd:" : "Re:";
+			const subjectPrefix = forward2 ? "Fwd:" : "Re:";
 			let subject = mi.Envelope.Subject || "";
 			subject = (RegExp("^" + subjectPrefix, "i").test(subject) ? "" : subjectPrefix + " ") + subject;
 			const opts = {
@@ -4843,8 +4883,8 @@
 				bcc: bcc.map((a) => formatAddress(a)),
 				subject,
 				body,
-				isForward: forward,
-				attachmentsMessageItem: forward ? mi : void 0,
+				isForward: forward2,
+				attachmentsMessageItem: forward2 ? mi : void 0,
 				responseMessageID: m.ID,
 				isList: m.IsMailingList,
 				editOffset,
@@ -4856,7 +4896,7 @@
 			};
 			compose(opts, listMailboxes, setLocationHash);
 		}, "react");
-		const reply = /* @__PURE__ */ __name(async (all) => {
+		const reply2 = /* @__PURE__ */ __name(async (all) => {
 			const contains = /* @__PURE__ */ __name((l, a) => !!l.find((e) => equalAddress(e, a)), "contains");
 			let to = [];
 			let cc = [];
@@ -4895,10 +4935,10 @@
 			}
 		}, "cmdReplyList");
 		const cmdReply = /* @__PURE__ */ __name(async () => {
-			await reply(false);
+			await reply2(false);
 		}, "cmdReply");
 		const cmdReplyAll = /* @__PURE__ */ __name(async () => {
-			await reply(true);
+			await reply2(true);
 		}, "cmdReplyAll");
 		const cmdPrint = /* @__PURE__ */ __name(async () => {
 			if (urlType) {
@@ -6783,6 +6823,12 @@
 		if (mb.Archive) {
 			return strokeIcon(strokePaths.archive);
 		}
+		if (rejectsMailbox !== "" && mb.Name === rejectsMailbox) {
+			return rejects();
+		}
+		if (introboxMailbox !== "" && mb.Name === introboxMailbox) {
+			return introbox();
+		}
 		return strokeIcon(strokePaths.folder);
 	}, "mailboxStrokeIcon");
 	var themeGlyph = /* @__PURE__ */ __name((kind) => {
@@ -7073,6 +7119,7 @@
 				mbv.mailbox.Junk = specialUse.Junk;
 				mbv.mailbox.Sent = specialUse.Sent;
 				mbv.mailbox.Trash = specialUse.Trash;
+				dom._kids(mailboxIcon, mailboxStrokeIcon(mbv.mailbox));
 			}, "setSpecialUse"),
 			setKeywords: /* @__PURE__ */ __name((keywords) => {
 				mbv.mailbox.Keywords = keywords;
@@ -7571,10 +7618,10 @@
 			}, "click")), dom.clickbutton(ui("1 year"), /* @__PURE__ */ __name(function click() {
 				setPeriod(new Date((/* @__PURE__ */ new Date()).getTime() - 365 * 24 * 3600 * 1e3));
 			}, "click"))))), dom.tr(dom.td(ui("Attachments")), dom.td(dom.div(dom._class("searchRadios"), dom.label(attachmentNone = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("none"), attachmentHandlers), ui(" None")), dom.label(attachmentAny = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("any"), attachmentHandlers), ui(" Any")), dom.label(attachmentImage = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("image"), attachmentHandlers), ui(" Images")), dom.label(attachmentPDF = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("pdf"), attachmentHandlers), ui(" PDFs")), dom.label(attachmentArchive = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("archive"), attachmentHandlers), ui(" Archives")), dom.label(attachmentSpreadsheet = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("spreadsheet"), attachmentHandlers), ui(" Spreadsheets")), dom.label(attachmentDocument = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("document"), attachmentHandlers), ui(" Documents")), dom.label(attachmentPresentation = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("presentation"), attachmentHandlers), ui(" Presentations"))))), dom.tr(dom.td(ui("Labels")), dom.td(dom.div(dom._class("searchKeywordButtons"), join(flagViews = Object.entries({ Read: "\\Seen", Replied: "\\Answered", Flagged: "\\Flagged", Deleted: "\\Deleted", Draft: "\\Draft", Forwarded: "$Forwarded", Junk: "$Junk", NotJunk: "$NotJunk", Phishing: "$Phishing", MDNSent: "$MDNSent" }).map((t) => {
-				const [name, flag] = t;
+				const [name, flag2] = t;
 				const v = {
 					active: null,
-					flag,
+					flag: flag2,
 					root: dom.clickbutton(ui(name), /* @__PURE__ */ __name(function click() {
 						if (v.active === null) {
 							v.active = true;
@@ -7657,6 +7704,10 @@
 		let currentLayout = "";
 		let msglistscrollElem;
 		let queryactivityElem;
+		let composeBtn;
+		let searchbarElemBox;
+		let settingsBtn;
+		let mailboxesListMsgBox;
 		const listendElem = dom.div(css("msgListEnd", { borderTop: "1px solid", borderColor: styles.borderColor, color: styles.colorMilder, margin: "1ex" }));
 		const listloadingElem = dom.div(css("msgListLoading", { textAlign: "center", padding: ".15em 0", color: styles.colorMild, border: "1px solid", borderColor: styles.borderColor, margin: "1ex", backgroundColor: styles.backgroundColorMild }), ui("loading..."));
 		const listerrElem = dom.div(css("msgListErr", { textAlign: "center", padding: ".15em 0", color: styles.colorMild, border: "1px solid", borderColor: styles.borderColor, margin: "1ex", backgroundColor: styles.backgroundColorMild }));
@@ -7686,6 +7737,70 @@
 				document.title = ["(" + mb.Unread + ") " + mailboxLabel(mb, mb.Name), addr, "Mox Webmail"].join(" - ");
 			}
 		}, "updatePageTitle");
+		const faviconLink = document.head.querySelector('link[rel="icon"]');
+		const faviconImg = dom.img(attr.src("favicon.svg"));
+		const faviconProm = new Promise((resolve, reject) => {
+			faviconImg.addEventListener("load", () => resolve());
+			faviconImg.addEventListener("error", () => reject());
+		});
+		let faviconState = 0;
+		const faviconDraw = /* @__PURE__ */ __name(async () => {
+			try {
+				await faviconProm;
+			} catch (err) {
+				return;
+			}
+			let state;
+			if (!eventSource) {
+				state = -1;
+			} else {
+				const inbox = mailboxlistView.findMailboxByName("Inbox");
+				state = Math.min(999, inbox?.Unread || 0);
+			}
+			if (faviconState === state) {
+				return;
+			}
+			const canvas = dom.canvas(prop({ width: 32, height: 32 }));
+			const ctx = canvas.getContext("2d");
+			if (!ctx || !faviconLink) {
+				return;
+			}
+			ctx.drawImage(faviconImg, 0, 0, 32, 32);
+			if (state < 0) {
+				const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+				const px = imageData.data;
+				for (let i = 0; i < px.length; i += 4) {
+					const r = px[i];
+					const g = px[i + 1];
+					const b = px[i + 2];
+					const grey = Math.floor(0.2126 * r + 0.715 * g + 0.0722 * b);
+					px[i] = grey;
+					px[i + 1] = grey;
+					px[i + 2] = grey;
+					px[i + 3] = 127;
+				}
+				ctx.putImageData(imageData, 0, 0);
+			} else if (state > 0) {
+				ctx.font = "bold 14px sans-serif";
+				const size = ctx.measureText("" + state);
+				ctx.beginPath();
+				const radius = (size.fontBoundingBoxAscent + size.fontBoundingBoxDescent) / 2;
+				const slack = radius / 3;
+				const left = Math.min(32 - 2 * radius, 32 - 2 * slack - size.width);
+				const bottom = 32;
+				const right = 32;
+				ctx.arc(right - radius, bottom - radius, radius, 1.5 * Math.PI, 0.5 * Math.PI, false);
+				ctx.lineTo(left - radius, bottom);
+				ctx.arc(left + radius, bottom - radius, radius, 0.5 * Math.PI, 1.5 * Math.PI, false);
+				ctx.lineTo(right + radius, bottom - 2 * radius);
+				ctx.fillStyle = "#222";
+				ctx.fill();
+				ctx.fillStyle = "white";
+				ctx.fillText("" + state, (right + left) / 2 - size.width / 2, bottom - size.fontBoundingBoxDescent);
+			}
+			faviconLink.href = canvas.toDataURL("image/png");
+			faviconState = state;
+		}, "faviconDraw");
 		const setLocationHash = /* @__PURE__ */ __name(() => {
 			const msgid = requestMsgID || msglistView.activeMessageID();
 			let trail = msgid ? "," + msgid : "";
@@ -8033,7 +8148,6 @@
 			}
 		}, "searchViewClose");
 		let topcomposeboxElem, mailboxessplitElem;
-		let searchbarElemBox;
 		const searchbarInitial = /* @__PURE__ */ __name(() => {
 			const mailboxActive = mailboxlistView.activeMailbox();
 			if (mailboxActive && mailboxActive.Name !== "Inbox") {
@@ -8186,7 +8300,7 @@
 			layoutButtons.push(btn);
 			return btn;
 		}));
-		const webmailroot = dom.div(css("webmailRoot", { display: "flex", flexDirection: "column", alignContent: "stretch", height: "100dvh", position: "relative", zIndex: 0 }), dom.div(topBarStyle, attr.role("region"), attr.arialabel(ui("Top bar")), topcomposeboxElem = dom.div(dom._class("pad"), dom._class("topBarComposeDesktop"), style({ width: settings.mailboxesWidth + "px", textAlign: "center" }), dom.clickbutton(dom._class("btnPrimary"), strokeIcon(strokePaths.compose), ui("Compose"), attr.title(ui("Compose new email message.")), /* @__PURE__ */ __name(function click() {
+		const webmailroot = dom.div(css("webmailRoot", { display: "flex", flexDirection: "column", alignContent: "stretch", height: "100dvh", position: "relative", zIndex: 0 }), dom.div(topBarStyle, attr.role("region"), attr.arialabel(ui("Top bar")), topcomposeboxElem = dom.div(dom._class("pad"), dom._class("topBarComposeDesktop"), style({ width: settings.mailboxesWidth + "px", textAlign: "center" }), composeBtn = dom.clickbutton(dom._class("btnPrimary"), strokeIcon(strokePaths.compose), ui("Compose"), attr.title(ui("Compose new email message.")), /* @__PURE__ */ __name(function click() {
 			shortcutCmd(cmdCompose, shortcuts);
 		}, "click"))), dom.div(dom._class("pad"), dom._class("topBarSearchRow"), dom.div(dom._class("topBarMobileOnly"), dom.clickbutton(dom._class("topBarMenuBtn"), attr.title(ui("Open mailboxes.")), attr.arialabel(ui("Open mailboxes.")), /* @__PURE__ */ __name(function click() {
 			openMailboxesDrawer();
@@ -8249,7 +8363,7 @@
 			} else {
 				openAccountMenu();
 			}
-		}, "click")), accountMenu = dom.div(dom._class("nav-account-menu"), accountElem = dom.a(dom._class("nav-account-item"), attr.role("menuitem"), navIcon(strokePaths.user, [["12", "7", "4"]]), ui("Account")), accountCmdItem(navIcon(strokePaths.info, [["12", "12", "10"]]), ui("Tooltip"), ui('Show tooltips, based on the title attributes (underdotted text) for the focused element and all user interface elements below it. Use the keyboard shortcut "ctrl ?" instead of clicking on the tooltip button, which changes focus to the tooltip button.'), cmdTooltip), accountCmdItem(navIcon(strokePaths.bookOpen), ui("Help"), ui("Show popup with basic usage information and a keyboard shortcuts."), cmdHelp), accountCmdItem(navIcon(strokePaths.settings, [["12", "12", "3"]]), ui("Settings"), ui("Change settings for composing messages."), cmdSettings), dom.div(dom._class("nav-account-divider")), dom.clickbutton(dom._class("nav-account-item"), attr.role("menuitem"), navIcon(strokePaths.logOut), ui("Logout"), attr.title(ui("Logout, invalidating this session.")), /* @__PURE__ */ __name(async function click(e) {
+		}, "click")), accountMenu = dom.div(dom._class("nav-account-menu"), accountElem = dom.a(dom._class("nav-account-item"), attr.role("menuitem"), navIcon(strokePaths.user, [["12", "7", "4"]]), ui("Account")), accountCmdItem(navIcon(strokePaths.info, [["12", "12", "10"]]), ui("Tooltip"), ui('Show tooltips, based on the title attributes (underdotted text) for the focused element and all user interface elements below it. Use the keyboard shortcut "ctrl ?" instead of clicking on the tooltip button, which changes focus to the tooltip button.'), cmdTooltip), accountCmdItem(navIcon(strokePaths.bookOpen), ui("Help"), ui("Show popup with basic usage information and a keyboard shortcuts."), cmdHelp), settingsBtn = accountCmdItem(navIcon(strokePaths.settings, [["12", "12", "3"]]), ui("Settings"), ui("Change settings for composing messages."), cmdSettings), dom.div(dom._class("nav-account-divider")), dom.clickbutton(dom._class("nav-account-item"), attr.role("menuitem"), navIcon(strokePaths.logOut), ui("Logout"), attr.title(ui("Logout, invalidating this session.")), /* @__PURE__ */ __name(async function click(e) {
 			closeAccountMenu();
 			await withStatus(ui("Logging out"), client.Logout(), e.currentTarget);
 			localStorageRemove("webmailcsrftoken");
@@ -8279,7 +8393,7 @@
 			applyTheme(e.target.checked ? "dark" : "light");
 		}, "change")), dom.span(dom._class("slider"), dom.span(dom._class("theme-slot", "theme-sun"), themeGlyph("sun")), dom.span(dom._class("theme-slot", "theme-moon"), themeGlyph("moon")))), dom.clickbutton(dom._class("theme-auto"), attr.id("theme-auto"), attr.title(ui("Auto")), attr.arialabel(ui("Auto")), themeGlyph("auto"), /* @__PURE__ */ __name(function click() {
 			applyTheme("auto");
-		}, "click"))))), dom.div(css("mailboxesListMsgBox", { flexGrow: "1", position: "relative" }), dom.div(dom._class("mailboxesBackdrop"), /* @__PURE__ */ __name(function click() {
+		}, "click"))))), mailboxesListMsgBox = dom.div(css("mailboxesListMsgBox", { flexGrow: "1", position: "relative" }), dom.div(dom._class("mailboxesBackdrop"), /* @__PURE__ */ __name(function click() {
 			closeMailboxesDrawer();
 		}, "click")), mailboxesElem = dom.div(mailboxesSidebarStyle, dom._class("mailboxesSidebar"), style({ width: settings.mailboxesWidth + "px" }), css("mailboxesBox", { display: "flex", flexDirection: "column", alignContent: "stretch", position: "absolute", left: 0, top: 0, bottom: 0, width: "100%", boxSizing: "border-box" }), dom.div(dom._class("pad"), yscrollAutoStyle, style({ flexGrow: "1", position: "relative" }), mailboxlistView.root)), mailboxessplitElem = dom.div(css("mailboxesListGrab", { position: "absolute", width: "5px", top: 0, bottom: 0, cursor: "ew-resize", zIndex: zindexes.splitter }), style({ left: "calc(" + settings.mailboxesWidth + "px - 2px)" }), dom.div(css("mailboxesListLine", { position: "absolute", width: "1px", top: 0, bottom: 0, left: "2px", right: "2px", backgroundColor: styles.popupBorderColor })), /* @__PURE__ */ __name(function mousedown(e) {
 			startDrag(e, (e2) => {
@@ -8589,8 +8703,8 @@
 		});
 		let eventSource = null;
 		let connecting = false;
-		let noreconnect = false;
-		let noreconnectTimer = 0;
+		let autoReconnect = 1;
+		let autoReconnectResetTimer = 0;
 		let shutdownReconnectTimer = 0;
 		let leaving = false;
 		window.addEventListener("beforeunload", (e) => {
@@ -8607,20 +8721,20 @@
 		});
 		window.addEventListener("pageshow", async (e) => {
 			if (e.persisted && !eventSource && !connecting) {
-				noreconnect = false;
+				autoReconnect = 1;
 				connect(false);
 			}
 		});
 		window.addEventListener("focus", () => {
-			if (!eventSource && !connecting) {
-				noreconnect = false;
+			if (!eventSource && !connecting && autoReconnect >= 0) {
+				autoReconnect = 0;
 				connect(true);
 			}
 		});
 		const showNotConnected = /* @__PURE__ */ __name(() => {
 			dom._kids(connectionElem, attr.role("status"), dom.span(css("connectionStatus", { backgroundColor: styles.warningBackgroundColor, padding: "2px 8px", borderRadius: styles.radius, fontSize: "12px" }), ui("Not connected"), attr.title(ui("Not receiving real-time updates, including of new deliveries."))), " ", dom.clickbutton(ui("Reconnect"), /* @__PURE__ */ __name(function click() {
 				if (!eventSource && !connecting) {
-					noreconnect = false;
+					autoReconnect = 1;
 					connect(true);
 				}
 			}, "click")));
@@ -8628,6 +8742,19 @@
 		const capitalizeFirst = /* @__PURE__ */ __name((s) => s.charAt(0).toUpperCase() + s.slice(1), "capitalizeFirst");
 		let openComposeOptions;
 		let connectOpenComposeMessageID = 0;
+		const uiConnectionStatus = /* @__PURE__ */ __name((connected) => {
+			faviconDraw();
+			composeBtn.disabled = !connected;
+			settingsBtn.disabled = !connected;
+			const toggle = /* @__PURE__ */ __name((e) => {
+				e.style.opacity = connected ? "" : ".3";
+				e.style.pointerEvents = connected ? "" : "none";
+				e.toggleAttribute("inert", !connected);
+			}, "toggle");
+			toggle(searchbarElemBox);
+			toggle(mailboxesListMsgBox);
+		}, "uiConnectionStatus");
+		uiConnectionStatus(false);
 		const connect = /* @__PURE__ */ __name(async (isreconnect) => {
 			if (shutdownReconnectTimer) {
 				window.clearTimeout(shutdownReconnectTimer);
@@ -8636,14 +8763,14 @@
 			connectionElem.classList.toggle("loading", true);
 			dom._kids(connectionElem);
 			connectionElem.classList.toggle("loading", false);
-			noreconnect = isreconnect;
+			autoReconnect = isreconnect ? 0 : 1;
 			connecting = true;
 			let token;
 			try {
 				token = await withStatus(ui("Fetching token for connection with real-time updates"), client.Token(), void 0, true);
 			} catch (err) {
 				connecting = false;
-				noreconnect = true;
+				autoReconnect = 0;
 				dom._kids(statusElem, capitalizeFirst(err.message || ui("Error fetching connection token")) + ui(", not automatically retrying. "));
 				showNotConnected();
 				return;
@@ -8714,13 +8841,14 @@
 				dom._kids(connectionElem);
 			});
 			const sseError = /* @__PURE__ */ __name((errmsg2, addNotRetrying) => {
+				uiConnectionStatus(false);
 				sseID = 0;
 				eventSource.close();
 				eventSource = null;
 				connecting = false;
-				if (noreconnectTimer) {
-					clearTimeout(noreconnectTimer);
-					noreconnectTimer = 0;
+				if (autoReconnectResetTimer) {
+					clearTimeout(autoReconnectResetTimer);
+					autoReconnectResetTimer = 0;
 				}
 				if (leaving) {
 					return;
@@ -8731,7 +8859,7 @@
 				}
 				document.title = [ui("(not connected)"), loginAddress ? loginAddress.User + "@" + formatDomain(loginAddress.Domain) : "", "Mox Webmail"].filter((s) => s).join(" - ");
 				dom._kids(connectionElem);
-				if (noreconnect) {
+				if (autoReconnect < 1) {
 					let msg = capitalizeFirst(errmsg2);
 					if (addNotRetrying) {
 						msg += ui(", not automatically retrying. ");
@@ -8753,7 +8881,7 @@
 				sseError(ui('Server error: "') + errmsg2 + '"', true);
 			});
 			eventSource.addEventListener("serverShutdown", (_) => {
-				noreconnect = true;
+				autoReconnect = 0;
 				sseError(ui("Server shutting down, will try to reconnect in a few seconds"), false);
 				shutdownReconnectTimer = window.setTimeout(() => {
 					connect(true);
@@ -8763,7 +8891,10 @@
 				try {
 					return fn();
 				} catch (err) {
-					window.alert(ui("invalid event from server: ") + (err.message || ui("(no message)")));
+					const errmsg2 = ui("invalid event from server: ") + (err.message || ui("(no message)"));
+					window.alert(errmsg2);
+					autoReconnect = -1;
+					sseError(errmsg2, true);
 					throw err;
 				}
 			}, "checkParse");
@@ -8860,10 +8991,11 @@
 				}
 				dom._kids(queryactivityElem, ui("loading..."));
 				msglistscrollElem.appendChild(listloadingElem);
-				noreconnectTimer = window.setTimeout(() => {
-					noreconnect = false;
-					noreconnectTimer = 0;
+				autoReconnectResetTimer = window.setTimeout(() => {
+					autoReconnect = 1;
+					autoReconnectResetTimer = 0;
 				}, 5 * 1e3);
+				uiConnectionStatus(true);
 			});
 			eventSource.addEventListener("viewErr", async (e) => {
 				const viewErr = checkParse(() => parser.EventViewErr(JSON.parse(e.data)));
@@ -8977,6 +9109,7 @@
 							throw new Error("unknown change tag " + tag);
 						}
 					});
+					faviconDraw();
 				} catch (err) {
 					window.alert(ui("Error processing changes (reloading advised): ") + errmsg(err));
 				}
