@@ -2,6 +2,7 @@
 
 import {dom, attr} from '../lib'
 import {css, styles, styleClasses, formatAddress, join, loadMsgheaderView} from './lib'
+import {ui} from './i18n'
 import * as api from './api'
 
 // Loaded from synchronous javascript.
@@ -19,7 +20,7 @@ const init = () => {
 			dom.div(
 				css('msgAttachments', {borderTop: '1px solid', borderTopColor: styles.borderColor}),
 				dom.div(dom._class('pad'),
-					'Attachments: ',
+					ui("Attachments: "),
 					join(mi.Attachments.map(a => a.Filename || '(unnamed)'), () => ', '),
 				),
 			)
@@ -39,7 +40,7 @@ const init = () => {
 	} else if (w === 'msghtmlexternal') {
 		iframepath = 'htmlexternal'
 	} else {
-		window.alert('Unknown message type '+w)
+		window.alert(ui("Unknown message type ")+w)
 		return
 	}
 	iframepath += '?sameorigin=true'
@@ -56,7 +57,7 @@ const init = () => {
 			msgattachmentview,
 		),
 		iframe=dom.iframe(
-			attr.title('Message body.'),
+			attr.title(ui("Message body.")),
 			attr.src(iframepath),
 			css('msgIframe', {width: '100%', height: '100%'}),
 			function load() {
@@ -77,5 +78,5 @@ const init = () => {
 try {
 	init()
 } catch (err) {
-	window.alert('Error: ' + ((err as any).message || '(no message)'))
+	window.alert(ui("Error: ") + ((err as any).message || '(no message)'))
 }

@@ -9,6 +9,7 @@
 
 import {dom, style, attr} from '../lib'
 import * as api from './api'
+import {ui, uiLocale} from './i18n'
 
 const cssStyleDark = dom.style(attr.type('text/css'))
 document.head.prepend(cssStyleDark)
@@ -184,6 +185,8 @@ ensureCSS(':root', {
 	'--popupColor': ['#2c3035', '#e3e6e9'],
 	'--popupBackgroundColor': ['#ffffff', '#1e2125'],
 	'--popupBorderColor': ['#e1e4e8', '#2e333a'],
+	'--floatBorderColor': ['#b4bdc7', 'rgba(255, 255, 255, 0.16)'],
+	'--floatShadow': ['0 1px 2px rgba(44, 48, 53, 0.06), 0 16px 40px rgba(44, 48, 53, 0.16)', '0 1px 2px rgba(0, 0, 0, 0.45), 0 18px 44px rgba(0, 0, 0, 0.58)'],
 
 	'--highlightBackground': ['#eef1f4', '#262b31'],
 	'--highlightBorderColor': ['#5b7083', '#7e95a8'],
@@ -257,6 +260,8 @@ export const styles = {
 	popupColor: 'var(--popupColor)',
 	popupBackgroundColor: 'var(--popupBackgroundColor)',
 	popupBorderColor: 'var(--popupBorderColor)',
+	floatBorderColor: 'var(--floatBorderColor)',
+	floatShadow: 'var(--floatShadow)',
 
 	highlightBackground: 'var(--highlightBackground)',
 	highlightBorderColor: 'var(--highlightBorderColor)',
@@ -532,11 +537,11 @@ const addressList = (allAddrs: boolean, l: api.MessageAddress[]) => {
 			() => ', '
 		),
 		' ',
-		dom.clickbutton('More...', attr.title('More addresses:\n'+l.slice(4).map(a => formatAddress(a)).join(',\n')), function click() {
+		dom.clickbutton(ui('More...'), attr.title(ui('More addresses:\n')+l.slice(4).map(a => formatAddress(a)).join(',\n')), function click() {
 			const nelem = dom.span(
 				join(l.map(a => formatAddressElem(a)), () => ', '),
 				' ',
-				dom.clickbutton('Less...', function click() {
+				dom.clickbutton(ui('Less...'), function click() {
 					elem.replaceWith(addressList(allAddrs, l))
 				}),
 			)
@@ -547,6 +552,54 @@ const addressList = (allAddrs: boolean, l: api.MessageAddress[]) => {
 	return elem
 }
 
+const avatarPalette = ['#4c6ef5', '#e8590c', '#2f9e44', '#9c36b5', '#1c7ed6', '#c2255c', '#0ca678', '#f08c00']
+
+const avatarColor = (key: string): string => {
+	let h = 0
+	for (const c of key) {
+		h = Math.imul(h, 31) + (c.codePointAt(0) || 0)
+	}
+	const i = (h >>> 0) % avatarPalette.length
+	return avatarPalette[i]
+}
+
+const avatarInitial = (name: string, user: string): string => {
+	const raw = name.trim() || user || '?'
+	const ch = Array.from(raw)[0] || '?'
+	return ch.toLocaleUpperCase()
+}
+
+const senderAvatar = (a: api.MessageAddress): HTMLElement => {
+	const email = a.User && a.Domain.ASCII ? (a.User + '@' + a.Domain.ASCII).trim().toLowerCase() : ''
+	const node = dom.span(
+		dom._class('msgFromAvatar'),
+		style({backgroundColor: avatarColor(email || a.Name || a.User || '?')}),
+		avatarInitial(a.Name, a.User),
+	)
+	node.setAttribute('aria-hidden', 'true')
+	if (email && typeof crypto !== 'undefined' && crypto.subtle) {
+		void crypto.subtle.digest('SHA-256', new TextEncoder().encode(email)).then(buf => {
+			const hash = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('')
+			const img = document.createElement('img')
+			img.className = 'msgFromAvatarImg'
+			img.alt = ''
+			img.referrerPolicy = 'no-referrer'
+			img.onload = () => {
+				node.replaceChildren(img)
+				node.classList.add('hasPhoto')
+			}
+			img.src = 'https://www.gravatar.com/avatar/' + hash + '?s=64&d=404'
+		}).catch(() => {})
+	}
+	return node
+}
+
+ensureCSS('.msgFromPerson', {display: 'inline-flex', alignItems: 'center', gap: '10px', maxWidth: '100%', verticalAlign: 'middle'})
+ensureCSS('.msgFromAvatar', {width: '32px', height: '32px', borderRadius: '50%', flexShrink: '0', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: '#fff', fontSize: '14px', fontWeight: '600', lineHeight: '1', userSelect: 'none'})
+ensureCSS('.msgFromAvatar.hasPhoto', {backgroundColor: 'transparent'})
+ensureCSS('.msgFromAvatarImg', {width: '100%', height: '100%', objectFit: 'cover', display: 'block'})
+ensureCSS('.msgFromIdentity', {minWidth: '0', display: 'flex', flexDirection: 'column'})
+
 // loadMsgheaderView loads the common message headers into msgheaderelem.
 // if refineKeyword is set, labels are shown and a click causes a call to
 // refineKeyword.
@@ -555,52 +608,66 @@ export const loadMsgheaderView = (msgheaderelem: HTMLTableSectionElement, mi: ap
 	const received = mi.Message.Received
 	const receivedlocal = new Date(received.getTime())
 	// Similar to webmail.ts:/headerTextMildStyle
-	const msgHeaderFieldStyle = css('msgHeaderField', {textAlign: 'right', color: styles.colorMild, whiteSpace: 'nowrap'})
+	const msgHeaderFieldStyle = css('msgHeaderField', {textAlign: 'right', color: styles.colorMild, whiteSpace: 'nowrap', fontSize: '12px'})
 	const msgAttrStyle = css('msgAttr', {padding: '0px 0.15em', fontSize: '.9em'})
 	dom._kids(msgheaderelem,
 		// todo: make addresses clickable, start search (keep current mailbox if any)
 		dom.tr(
-			dom.td('From:', msgHeaderFieldStyle),
+			dom.td(ui('From:'), msgHeaderFieldStyle),
 			dom.td(
 				style({width: '100%'}),
-				dom.div(css('msgFromReceivedSpread', {display: 'flex', justifyContent: 'space-between'}),
-					dom.div(join((msgenv.From || []).map(a => formatAddressValidated(a, mi.Message, !!msgenv.From && msgenv.From.length === 1)), () => ', ')),
+				dom.div(css('msgFromReceivedSpread', {display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start'}),
+					dom.div(css('msgFromLead', {minWidth: '0', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 14px'}),
+						(msgenv.From || []).length === 0 ? dom.span(dom._class('msgFromPerson'), senderAvatar({Name: '', User: '', Domain: {ASCII: '', Unicode: ''}}), dom.span(dom._class('msgFromName'), ui('(unknown sender)'))) : join((msgenv.From || []).map(a => {
+							const parts = formatAddressValidated(a, mi.Message, (msgenv.From || []).length === 1)
+							const detail = typeof parts[0] === 'string' && a.Name && parts[0] === a.Name + ' ' ? parts.slice(1) : parts
+							return dom.span(
+								dom._class('msgFromPerson'),
+								senderAvatar(a),
+								dom.span(
+									dom._class('msgFromIdentity'),
+									dom.span(dom._class('msgFromName'), formatAddressShort(a, !!mi.Message.Junk)),
+									dom.span(dom._class('msgFromDetail'), ...detail),
+								),
+							)
+						}), () => ', '),
+					),
 					dom.div(
-						attr.title('Received: ' + received.toString() + ';\nDate header in message: ' + (msgenv.Date ? msgenv.Date.toString() : '(missing/invalid)')),
-						receivedlocal.toDateString() + ' ' + receivedlocal.toTimeString().split(' ')[0],
+						attr.title(ui('Received: ') + received.toString() + ';\n' + ui('Date header in message: ') + (msgenv.Date ? msgenv.Date.toString() : ui('(missing/invalid)'))),
+						receivedlocal.toLocaleDateString(uiLocale()) + ' ' + receivedlocal.toLocaleTimeString(uiLocale(), {hour: '2-digit', minute: '2-digit', second: '2-digit'}),
 					),
 				)
 			),
 		),
 		(msgenv.ReplyTo || []).length === 0 ? [] : dom.tr(
-			dom.td('Reply-To:', msgHeaderFieldStyle),
+			dom.td(ui('Reply-To:'), msgHeaderFieldStyle),
 			dom.td(join((msgenv.ReplyTo || []).map(a => formatAddressElem(a)), () => ', ')),
 		),
 		dom.tr(
-			dom.td('To:', msgHeaderFieldStyle),
+			dom.td(ui('To:'), msgHeaderFieldStyle),
 			dom.td(addressList(allAddrs, msgenv.To || [])),
 		),
 		(msgenv.CC || []).length === 0 ? [] : dom.tr(
-			dom.td('Cc:', msgHeaderFieldStyle),
+			dom.td(ui('Cc:'), msgHeaderFieldStyle),
 			dom.td(addressList(allAddrs, msgenv.CC || [])),
 		),
 		(msgenv.BCC || []).length === 0 ? [] : dom.tr(
-			dom.td('Bcc:', msgHeaderFieldStyle),
+			dom.td(ui('Bcc:'), msgHeaderFieldStyle),
 			dom.td(addressList(allAddrs, msgenv.BCC || [])),
 		),
 		dom.tr(
-			dom.td('Subject:', msgHeaderFieldStyle),
+			dom.td(ui('Subject:'), msgHeaderFieldStyle),
 			dom.td(
-				dom.div(css('msgSubjectAttrsSpread', {display: 'flex', justifyContent: 'space-between'}),
+				dom.div(css('msgSubjectAttrsSpread', {display: 'flex', justifyContent: 'space-between', fontSize: '13px'}),
 					dom.div(msgenv.Subject || ''),
 					dom.div(
-						mi.Message.IsForward ? dom.span(msgAttrStyle, 'Forwarded', attr.title('Message came in from a forwarded address. Some message authentication policies, like DMARC, were not evaluated.')) : [],
-						mi.Message.IsMailingList ? dom.span(msgAttrStyle, 'Mailing list', attr.title('Message was received from a mailing list. Some message authentication policies, like DMARC, were not evaluated.')) : [],
-						mi.Message.ReceivedTLSVersion === 1 ? dom.span(msgAttrStyle, css('msgAttrNoTLS', {borderBottom: '1.5px solid', borderBottomColor: styles.underlineRed}), 'Without TLS', attr.title('Message received (last hop) without TLS.')) : [],
-						mi.Message.ReceivedTLSVersion > 1 && !mi.Message.ReceivedRequireTLS ? dom.span(msgAttrStyle, css('msgAttrTLS', {borderBottom: '1.5px solid', borderBottomColor: styles.underlineGreen}), 'With TLS', attr.title('Message received (last hop) with TLS.')) : [],
-						mi.Message.ReceivedRequireTLS ? dom.span(css('msgAttrRequireTLS', {padding: '.1em .3em', fontSize: '.9em', backgroundColor: styles.successBackground, border: '1px solid', borderColor: styles.borderColor, borderRadius: '3px'}), 'With RequireTLS', attr.title('Transported with RequireTLS, ensuring TLS along the entire delivery path from sender to recipient, with TLS certificate verification through MTA-STS and/or DANE.')) : [],
-						mi.IsSigned ? dom.span(msgAttrStyle, css('msgAttrSigned', {backgroundColor: styles.colorMild, color: styles.backgroundColorMild, borderRadius: '.15em'}), 'Message has a signature') : [],
-						mi.IsEncrypted ? dom.span(msgAttrStyle, css('msgAttrEncrypted', {backgroundColor: styles.colorMild, color: styles.backgroundColorMild, borderRadius: '.15em'}), 'Message is encrypted') : [],
+						mi.Message.IsForward ? dom.span(msgAttrStyle, ui('Forwarded'), attr.title(ui('Message came in from a forwarded address. Some message authentication policies, like DMARC, were not evaluated.'))) : [],
+						mi.Message.IsMailingList ? dom.span(msgAttrStyle, ui('Mailing list'), attr.title(ui('Message was received from a mailing list. Some message authentication policies, like DMARC, were not evaluated.'))) : [],
+						mi.Message.ReceivedTLSVersion === 1 ? dom.span(msgAttrStyle, css('msgAttrNoTLS', {borderBottom: '1.5px solid', borderBottomColor: styles.underlineRed}), ui('Without TLS'), attr.title(ui('Message received (last hop) without TLS.'))) : [],
+						mi.Message.ReceivedTLSVersion > 1 && !mi.Message.ReceivedRequireTLS ? dom.span(msgAttrStyle, css('msgAttrTLS', {borderBottom: '1.5px solid', borderBottomColor: styles.underlineGreen}), ui('With TLS'), attr.title(ui('Message received (last hop) with TLS.'))) : [],
+						mi.Message.ReceivedRequireTLS ? dom.span(css('msgAttrRequireTLS', {padding: '.1em .3em', fontSize: '.9em', backgroundColor: styles.successBackground, border: '1px solid', borderColor: styles.borderColor, borderRadius: '3px'}), ui('With RequireTLS'), attr.title(ui('Transported with RequireTLS, ensuring TLS along the entire delivery path from sender to recipient, with TLS certificate verification through MTA-STS and/or DANE.'))) : [],
+						mi.IsSigned ? dom.span(msgAttrStyle, css('msgAttrSigned', {backgroundColor: styles.colorMild, color: styles.backgroundColorMild, borderRadius: '.15em'}), ui('Message has a signature')) : [],
+						mi.IsEncrypted ? dom.span(msgAttrStyle, css('msgAttrEncrypted', {backgroundColor: styles.colorMild, color: styles.backgroundColorMild, borderRadius: '.15em'}), ui('Message is encrypted')) : [],
 						refineKeyword ? (mi.Message.Keywords || []).map(kw =>
 							dom.clickbutton(styleClasses.keyword, dom._class('keywordButton'), kw, async function click() {
 								await refineKeyword(kw)

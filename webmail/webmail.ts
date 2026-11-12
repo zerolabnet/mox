@@ -85,6 +85,7 @@ Enable consistency checking in UI updates:
 
 import {dom, style, attr, prop, ElemArg} from '../lib'
 import {css, ensureCSS, styles, styleClasses, equalAddress, formatAddress, formatAddressShort, formatEmail, loadMsgheaderView, isImage, renderText, formatDomain, join, applyTheme, themePreference} from './lib'
+import {ui, chooseLang, langPreference, uiLocale, wroteLine, mailboxLabel, unreadTitle} from './i18n'
 import * as api from './api'
 
 // If we had to reload with a cache buster after a server update, the URL will
@@ -152,7 +153,7 @@ css('btnCompact', {padding: '2px 8px', lineHeight: 1.3, fontSize: '12px', height
 css('mailboxActionBtn', {padding: '0 6px', height: '26px', minHeight: '26px', minWidth: '26px', lineHeight: 1, fontSize: '12px', alignSelf: 'center', verticalAlign: 'middle', flexShrink: 0})
 
 // Dark top navigation bar.
-ensureCSS('.topBar', {display: 'flex', flexWrap: 'wrap', backgroundColor: styles.mailboxesTopBackgroundColor, boxShadow: styles.shadowSm, color: styles.navTextColor})
+ensureCSS('.topBar', {display: 'flex', flexWrap: 'wrap', position: 'relative', zIndex: '6', backgroundColor: styles.mailboxesTopBackgroundColor, boxShadow: styles.shadowSm, color: styles.navTextColor})
 ensureCSS('.topBarNav button, .topBarNav .button, .topBarNav select', {backgroundColor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.15)', color: styles.navTextColor})
 ensureCSS('.topBarNav button:hover:not(:disabled), .topBarNav .button:hover:not(:disabled), .topBarNav select:hover:not(:disabled)', {backgroundColor: 'rgba(255,255,255,0.14)', borderColor: 'rgba(255,255,255,0.25)', color: styles.navTextHover})
 ensureCSS('.topBarNav button.active, .topBarNav .button.active', {backgroundColor: 'rgba(255,255,255,0.18)', borderColor: 'rgba(255,255,255,0.3)', color: styles.navTextHover})
@@ -168,10 +169,9 @@ ensureCSS('.topBar .btnPrimary:hover:not(:disabled)', {backgroundColor: styles.b
 ensureCSS('.topBar a', {color: styles.navTextColor})
 ensureCSS('.topBar a:hover', {color: styles.navTextHover})
 ensureCSS('.topBarNav span, .topBar .status', {color: styles.navTextColor})
-ensureCSS('.topBarUser', {display: 'inline-flex', alignItems: 'center', gap: '.5em', margin: '0 .5em'})
 
 ensureCSS('.searchOverlay', {position: 'fixed', left: 0, right: 0, top: 0, bottom: 0, zIndex: zindexes.compose, backgroundColor: styles.overlayBackgroundColor})
-ensureCSS('.searchOverlay .searchContent', {position: 'fixed', left: 0, right: 0, bottom: 0, top: 'auto', width: '100%', maxWidth: 'none', maxHeight: 'min(90dvh, calc(100dvh - 3.5em))', zIndex: 1, color: styles.popupColor, backgroundColor: styles.popupBackgroundColor, border: '1px solid', borderColor: styles.popupBorderColor, borderRadius: '12px 12px 0 0', boxShadow: styles.boxShadow, boxSizing: 'border-box', padding: 0, overflow: 'hidden', display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr) auto'})
+ensureCSS('.searchOverlay .searchContent', {position: 'fixed', left: 0, right: 0, bottom: 0, top: 'auto', width: '100%', maxWidth: 'none', maxHeight: 'min(90dvh, calc(100dvh - 3.5em))', zIndex: 1, color: styles.popupColor, backgroundColor: styles.popupBackgroundColor, border: '1px solid', borderColor: styles.floatBorderColor, borderRadius: '12px 12px 0 0', boxShadow: styles.floatShadow, boxSizing: 'border-box', padding: 0, overflow: 'hidden', display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr) auto'})
 ensureCSS('html:not(.mobile) .searchOverlay .searchContent', {left: '50%', right: 'auto', transform: 'translateX(-50%)', width: 'min(50em, calc(100vw - 2em))'})
 ensureCSS('.searchOverlay .searchContent .dialogBody', {padding: '16px'})
 ensureCSS('.searchOverlay .searchContent .dialogFooter', {padding: '12px 16px calc(12px + env(safe-area-inset-bottom, 0))'})
@@ -205,9 +205,12 @@ ensureCSS('.searchDateRow > span', {color: styles.colorMild, padding: '0 2px'})
 ensureCSS('.searchDateRow .btnIcon', {width: '38px', minWidth: '38px', height: '38px', minHeight: '38px', padding: 0, boxSizing: 'border-box'})
 ensureCSS('.attachmentsDownloadHeader .button', {flexShrink: 0})
 
-ensureCSS('.refineBar', {display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: '6px', minWidth: 0, width: '100%'})
-ensureCSS('.refineBar .refineTitle', {display: 'inline', margin: 0, whiteSpace: 'nowrap'})
-ensureCSS('.msgListFilterSortingControls', {display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', flexShrink: 0})
+ensureCSS('.refineBar', {display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: '6px', minWidth: 0, flex: '1 1 auto', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin'})
+ensureCSS('.refineBar .refineTitle', {display: 'inline', margin: 0, whiteSpace: 'nowrap', position: 'sticky', left: 0, zIndex: 1, flexShrink: 0, backgroundColor: styles.backgroundColorMild})
+ensureCSS('.refineBar .btngroup', {flexWrap: 'nowrap', flexShrink: 0})
+ensureCSS('.msgListFilterSortingControls', {display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', flexShrink: 0, minWidth: 0})
+ensureCSS('.threadModeLabel', {color: styles.colorMild, whiteSpace: 'nowrap'})
+ensureCSS('.msgListFilterSortingControls .threadModeSelect', {width: '6.6em', maxWidth: '6.6em'})
 ensureCSS('.msgListFilterSortingControls > span:empty', {display: 'none'})
 ensureCSS('.mailboxesRegion', {width: '100%', boxSizing: 'border-box', backgroundColor: styles.mailboxesSidebarBackground})
 ensureCSS('.mailboxesBox > .pad', {padding: '14px 10px'})
@@ -225,13 +228,15 @@ ensureCSS('.mailboxActions', {display: 'flex', alignItems: 'center', gap: '4px',
 ensureCSS('.mailboxUnreadBadge', {display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '18px', height: '18px', padding: '0 6px', borderRadius: '9px', fontSize: '11px', fontWeight: 600, lineHeight: 1, flexShrink: 0, boxSizing: 'border-box', backgroundColor: styles.buttonPrimaryBackground, color: '#fff'})
 ensureCSS('.mailboxUnreadBadge.isEmpty', {display: 'none'})
 ensureCSS('.mailboxItem.active .mailboxUnreadBadge', {backgroundColor: styles.buttonPrimaryBackground, color: '#fff'})
-ensureCSS('.topBarComposeDesktop', {display: 'flex', justifyContent: 'center', alignItems: 'center', boxSizing: 'border-box', padding: '.45em .5em'})
+ensureCSS('.topBarComposeDesktop', {display: 'flex', justifyContent: 'center', alignItems: 'center', boxSizing: 'border-box', padding: '.45em .5em', flex: 'none'})
 ensureCSS('.topBarComposeDesktop .btnPrimary', {width: '100%', boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px'})
 ensureCSS('.mailboxItem.active .mailboxActionBtn', {backgroundColor: 'transparent', borderColor: styles.accent})
-ensureCSS('.msgItem', {display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'flex-start', width: '100%', boxSizing: 'border-box', userSelect: 'none', cursor: 'pointer', border: '1px solid transparent', borderLeft: '3px solid transparent', borderBottom: '1px solid', borderBottomColor: styles.borderColor, borderRadius: 0, margin: 0, transition: 'background .15s, border-color .15s'})
+ensureCSS('.msgItem', {display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'flex-start', position: 'relative', width: '100%', boxSizing: 'border-box', userSelect: 'none', cursor: 'pointer', border: '1px solid transparent', borderLeft: '3px solid transparent', borderBottom: '1px solid', borderBottomColor: styles.borderColor, borderRadius: 0, margin: 0, transition: 'background .15s, border-color .15s'})
 ensureCSS('.msgItem .scriptswitch', {textDecoration: 'none'})
 ensureCSS('.msgItemCell', {padding: '4px 6px', boxSizing: 'border-box'})
 ensureCSS('.msgItemFlags', {flex: '0 0 auto', flexShrink: 0, boxSizing: 'border-box', overflow: 'hidden'})
+ensureCSS('.msgThreadToggle', {display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', minWidth: '22px', height: '22px', padding: '0 5px', lineHeight: '1', fontSize: '12px', fontWeight: '600', flexShrink: '0'})
+ensureCSS('.msgThreadToggle svg', {width: '14px', height: '14px', display: 'block'})
 ensureCSS('.msgItemAge', {flex: '0 0 auto', flexShrink: 0, boxSizing: 'border-box', whiteSpace: 'nowrap', overflow: 'hidden'})
 ensureCSS('.msgItemMain', {display: 'flex', flexDirection: 'column', gap: '1px', overflow: 'hidden', position: 'relative', minWidth: 0, flex: '1 1 auto'})
 ensureCSS('.msgItemFromRow', {display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', minWidth: 0})
@@ -252,10 +257,10 @@ ensureCSS('.keywordButton:hover:not(:disabled)', {backgroundColor: styles.highli
 ensureCSS('.topBarStatusRow', {display: 'flex', flexGrow: 1, alignItems: 'center', minWidth: 0})
 ensureCSS('.topBarSearchRow', {display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 auto', minWidth: 0})
 ensureCSS('html:not(.mobile) .topBar', {flexWrap: 'nowrap', alignItems: 'center'})
-ensureCSS('html:not(.mobile) .topBarStatusRow', {flexGrow: 0, flexShrink: 1, minWidth: 0, justifyContent: 'flex-end'})
-ensureCSS('html:not(.mobile) .topBarStatusRow .status', {flexGrow: 0, minWidth: 0})
-ensureCSS('html:not(.mobile) .topBarNav', {display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end', alignItems: 'center', paddingLeft: '1em'})
-ensureCSS('.theme-toggle-container', {display: 'flex', alignItems: 'center', alignSelf: 'center', gap: '.45rem', flex: 'none'})
+ensureCSS('html:not(.mobile) .topBarStatusRow', {flexGrow: 0, flexShrink: 0, minWidth: 0, justifyContent: 'flex-end'})
+ensureCSS('html:not(.mobile) .topBarStatusRow .status', {flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'})
+ensureCSS('html:not(.mobile) .topBarNav', {display: 'flex', flexWrap: 'nowrap', flexShrink: 0, gap: '6px', justifyContent: 'flex-end', alignItems: 'center', paddingLeft: '1em'})
+ensureCSS('.theme-toggle-container', {display: 'flex', alignItems: 'center', alignSelf: 'center', gap: 0, flex: 'none', flexShrink: 0})
 ensureCSS('html:not(.mobile) .theme-toggle-container', {marginLeft: '10px', paddingLeft: '14px', borderLeft: '1px solid rgba(255,255,255,.15)'})
 ensureCSS('html.mobile .theme-toggle-container', {marginLeft: 'auto', paddingLeft: 0, borderLeft: 0})
 ensureCSS('.theme-toggle', {position: 'relative', display: 'inline-block', width: '3.26rem', height: '1.61rem', flex: 'none', cursor: 'pointer'})
@@ -269,13 +274,49 @@ ensureCSS('.theme-sun', {left: '.18rem'})
 ensureCSS('.theme-moon', {right: '.18rem'})
 ensureCSS('.theme-slot .icon', {width: '.78rem', height: '.78rem'})
 ensureCSS('.theme-toggle input:not(:checked) + .slider .theme-sun, .theme-toggle input:checked + .slider .theme-moon', {color: '#1c2430'})
-ensureCSS('.theme-auto, .theme-auto:hover, .theme-auto.active, .theme-auto.active:hover', {display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.61rem', minWidth: '1.61rem', height: '1.61rem', minHeight: '1.61rem', padding: 0, border: 0, borderRadius: '999px', backgroundColor: 'transparent', boxShadow: 'none', color: 'rgba(255,255,255,.45)', cursor: 'pointer', lineHeight: 1})
-ensureCSS('.theme-auto:hover, .theme-auto.active, .theme-auto.active:hover', {color: '#fff', backgroundColor: 'transparent', borderColor: 'transparent'})
+ensureCSS('.theme-toggle-container button.theme-auto, .theme-toggle-container button.theme-auto:hover, .theme-toggle-container button.theme-auto:hover:not(:disabled), .theme-toggle-container button.theme-auto.active, .theme-toggle-container button.theme-auto.active:hover', {display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.61rem', minWidth: '1.61rem', height: '1.61rem', minHeight: '1.61rem', padding: 0, border: 0, borderRadius: '999px', backgroundColor: 'transparent', boxShadow: 'none', color: 'rgba(255,255,255,.45)', cursor: 'pointer', lineHeight: 1})
+ensureCSS('.theme-toggle-container button.theme-auto:hover, .theme-toggle-container button.theme-auto:hover:not(:disabled), .theme-toggle-container button.theme-auto.active, .theme-toggle-container button.theme-auto.active:hover', {color: '#fff', backgroundColor: 'transparent', borderColor: 'transparent'})
 ensureCSS('.theme-auto .icon', {width: '.95rem', height: '.95rem'})
 ensureCSS('.theme-auto:focus-visible', {outline: '2px solid #fff', outlineOffset: '2px'})
+ensureCSS('.theme-toggle-container button.lang-choice, .theme-toggle-container button.lang-choice:hover, .theme-toggle-container button.lang-choice:hover:not(:disabled)', {display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.61rem', minWidth: '1.61rem', height: '1.61rem', minHeight: '1.61rem', padding: 0, border: 0, borderRadius: '999px', backgroundColor: 'transparent', boxShadow: 'none', color: 'rgba(255,255,255,.45)', cursor: 'pointer', lineHeight: 1})
+ensureCSS('.theme-toggle-container button.lang-choice:hover, .theme-toggle-container button.lang-choice:hover:not(:disabled)', {color: '#fff', backgroundColor: 'transparent', borderColor: 'transparent'})
+ensureCSS('.theme-toggle-container .lang-choice .icon', {width: '.95rem', height: '.95rem'})
+ensureCSS('.theme-toggle-container .lang-choice:focus-visible', {outline: '2px solid #fff', outlineOffset: '2px'})
+ensureCSS('.theme-switch-group', {display: 'flex', alignItems: 'center', gap: '.45rem', marginLeft: '14px', paddingLeft: '14px', borderLeft: '1px solid rgba(255,255,255,.15)'})
+ensureCSS('.nav-account', {position: 'relative'})
+ensureCSS('.nav-account button.nav-account-toggle, .nav-account button.nav-account-toggle:hover:not(:disabled)', {display: 'inline-flex', alignItems: 'center', gap: '.5rem', padding: '8px 12px', border: 0, borderRadius: '8px', backgroundColor: 'transparent', boxShadow: 'none', color: 'inherit', cursor: 'pointer'})
+ensureCSS('.nav-account button.nav-account-toggle:hover:not(:disabled)', {backgroundColor: 'rgba(255,255,255,.08)', color: '#fff'})
+ensureCSS('.nav-account-label', {maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'})
+ensureCSS('.nav-account .icon', {width: '1.15em', height: '1.15em', flex: 'none'})
+ensureCSS('.nav-account .icon.nav-account-caret', {width: '1em', height: '1em', opacity: '.7'})
+ensureCSS('.nav-account-menu', {display: 'none', flexDirection: 'column', position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: '30', width: 'max-content', padding: '6px 0', backgroundColor: '#353a40', color: 'inherit', border: '1px solid rgba(255,255,255,.12)', borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,.28)'})
+ensureCSS('.nav-account.open .nav-account-menu', {display: 'flex'})
+ensureCSS('.nav-account button.nav-account-item, .nav-account button.nav-account-item:hover:not(:disabled), a.nav-account-item, a.nav-account-item:hover:not(:disabled)', {display: 'flex', alignItems: 'center', alignSelf: 'stretch', gap: '10px', width: 'auto', boxSizing: 'border-box', textAlign: 'left', textDecoration: 'none', whiteSpace: 'nowrap', padding: '9px 14px', border: 0, borderRadius: 0, backgroundColor: 'transparent', boxShadow: 'none', color: 'inherit', fontSize: '13px', cursor: 'pointer'})
+ensureCSS('.nav-account button.nav-account-item:hover:not(:disabled), a.nav-account-item:hover:not(:disabled)', {backgroundColor: 'rgba(255,255,255,.08)', color: '#fff'})
+ensureCSS('.nav-account-item[hidden]', {display: 'none'})
+ensureCSS('.nav-account-divider', {height: '1px', margin: '6px 0', backgroundColor: 'rgba(255,255,255,.12)'})
+ensureCSS('.nav-account-layouts', {display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px 14px'})
+ensureCSS('.nav-account button.nav-layout, .nav-account button.nav-layout:hover:not(:disabled)', {display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '2rem', height: '2rem', padding: 0, border: 0, borderRadius: '8px', backgroundColor: 'transparent', boxShadow: 'none', color: 'rgba(255,255,255,.45)', cursor: 'pointer'})
+ensureCSS('.nav-account button.nav-layout:hover:not(:disabled)', {color: '#fff', backgroundColor: 'rgba(255,255,255,.08)'})
+ensureCSS('.nav-account button.nav-layout.isOn, .nav-account button.nav-layout.isOn:hover:not(:disabled)', {color: '#fff', backgroundColor: 'rgba(255,255,255,.16)'})
+ensureCSS('.nav-account button.nav-layout .icon', {width: '1.15em', height: '1.15em'})
 ensureCSS('.msgActionRow', {display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '.45em .65em'})
 ensureCSS('.msgActionRow button', {flex: '0 1 auto'})
-ensureCSS('.multimsgBox .msgActionRow', {justifyContent: 'center', padding: 0})
+ensureCSS('.msgListActionBar', {display: 'none', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '.45em .65em', borderBottom: '1px solid', borderBottomColor: styles.borderColor, backgroundColor: styles.backgroundColorMild})
+ensureCSS('.msgListActionBar.isOpen', {display: 'flex'})
+ensureCSS('.msgItemFlagBtn, .msgItemFlagBtn:hover:not(:disabled)', {flexShrink: '0', padding: '2px', lineHeight: '1', minWidth: '22px', backgroundColor: 'transparent', borderColor: 'transparent', boxShadow: 'none', color: styles.colorMild})
+ensureCSS('.msgItemFlagBtn.isOn, .msgItemFlagBtn.isOn:hover:not(:disabled)', {backgroundColor: 'transparent', borderColor: 'transparent', color: ['#d1242f', '#ff5c5c']})
+ensureCSS('.msgItemFlagBtn.isOn .msgItemFlagCloth', {fill: 'currentColor'})
+ensureCSS('.msgItemHoverActions', {display: 'none', position: 'absolute', right: '6px', top: '6px', gap: '4px', zIndex: '1', padding: '4px', backgroundColor: ['inherit', styles.popupBackgroundColor], border: '1px solid', borderColor: styles.popupBorderColor, borderRadius: styles.radius, boxShadow: styles.boxShadow})
+ensureCSS('html:not(.mobile) .msgItem:hover .msgItemHoverActions', {display: 'flex'})
+ensureCSS('.msgItemHoverActions button', {padding: '2px 8px', lineHeight: '1.3', fontSize: '12px'})
+ensureCSS('.msgItemHoverActions button.msgItemHoverIcon', {width: '28px', minWidth: '28px', height: '28px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: 0, boxShadow: 'none', lineHeight: 1, color: 'inherit'})
+ensureCSS('.msgItemHoverActions button.msgItemHoverIcon:hover:not(:disabled)', {backgroundColor: 'transparent', borderColor: 'transparent', color: styles.accent})
+ensureCSS('.msgItemHoverActions button.msgItemHoverIcon.msgItemHoverDanger, .msgItemHoverActions button.msgItemHoverIcon.msgItemHoverDanger:hover:not(:disabled)', {backgroundColor: 'transparent', borderColor: 'transparent', color: ['#d1242f', '#ff5c5c']})
+ensureCSS('.msgFromName', {fontSize: '16px', fontWeight: '600', lineHeight: '1.3'})
+ensureCSS('.msgFromDetail', {fontSize: '12px', color: styles.colorMild})
+ensureCSS('.moveUndoBar', {position: 'absolute', right: '12px', bottom: '12px', zIndex: zindexes.popup, display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', backgroundColor: styles.popupBackgroundColor, color: styles.popupColor, border: '1px solid', borderColor: styles.popupBorderColor, borderRadius: styles.radius, boxShadow: styles.boxShadow, maxWidth: 'calc(100% - 24px)'})
+ensureCSS('.moveUndoBarFloating', {position: 'fixed', right: '12px', bottom: 'max(12px, env(safe-area-inset-bottom))'})
 ensureCSS('.topBarMessageRow', {display: 'none', alignItems: 'center', gap: '6px', flex: '1 1 100%', minWidth: 0})
 ensureCSS('.topBarMobileOverflow', {minWidth: '44px', minHeight: '44px', padding: '0 10px', flexShrink: 0})
 ensureCSS('.topBarMobileOnly', {display: 'none'})
@@ -329,7 +370,7 @@ ensureCSS('html.mobile .refineBar .btngroup', {flexWrap: 'nowrap', flexShrink: 0
 ensureCSS('html.mobile .refineBar .btngroup button', {minHeight: '36px', padding: '6px 10px'})
 ensureCSS('html.mobile .msgListFilterSortingControls', {marginLeft: 'auto', flexShrink: 0})
 ensureCSS('html.mobile .msgListFilterSortingControls select, html.mobile .msgListFilterSortingControls button', {minHeight: '36px', padding: '6px 10px', boxSizing: 'border-box', fontSize: '13px'})
-ensureCSS('html.mobile .msgListFilterSortingControls .threadModeSelect', {width: 'auto', minWidth: '8.5em', maxWidth: '12em'})
+ensureCSS('html.mobile .msgListFilterSortingControls .threadModeSelect', {width: '6.6em', minWidth: 0, maxWidth: '6.6em'})
 ensureCSS('html.mobile .msgListFilterSortingControls .threadSortBtn', {minWidth: '36px', padding: '6px 8px'})
 ensureCSS('html.mobile .msgItemCell', {padding: '8px 6px', minHeight: '44px'})
 ensureCSS('html.mobile .msgItemAge', {overflow: 'visible', paddingRight: '2px'})
@@ -348,14 +389,20 @@ ensureCSS('html.mobile .msgbuttonMobile', {padding: '6px 10px', borderBottom: '1
 ensureCSS('html.mobile .msgbuttonMobile .msgActionRow', {flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', gap: '6px', padding: 0})
 ensureCSS('html.mobile .msgbuttonMobile .msgActionRow button', {flexShrink: 0, minHeight: '32px', padding: '5px 12px', fontSize: '13px'})
 ensureCSS('.menuList', {backgroundColor: styles.popupBackgroundColor, border: '1px solid', borderColor: styles.popupBorderColor, borderRadius: styles.radius, boxShadow: styles.boxShadow, overflow: 'hidden', minWidth: '12em', color: styles.popupColor})
+ensureCSS('.menuList.menuListFit', {display: 'inline-grid', minWidth: 0, width: 'max-content', verticalAlign: 'top'})
+ensureCSS('.menuList.menuListFit .menuItem', {display: 'grid'})
+ensureCSS('.menuList.menuListFit .menuItem button', {width: 'auto', justifySelf: 'stretch', whiteSpace: 'nowrap', boxSizing: 'border-box'})
 ensureCSS('.menuItem', {borderBottom: '1px solid', borderBottomColor: styles.borderColor})
 ensureCSS('.menuItem:last-child', {borderBottom: 'none'})
 ensureCSS('.menuItem button', {display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'left', border: 'none', borderRadius: 0, backgroundColor: 'transparent', padding: '10px 14px', minHeight: '40px', fontSize: '13px', color: styles.color})
 ensureCSS('.menuItem button:hover:not(:disabled)', {backgroundColor: styles.buttonHoverBackground})
+ensureCSS('.menuItem button.langItem', {display: 'flex', alignItems: 'center', gap: '8px'})
+ensureCSS('.menuItem button.active, .menuItem button.active:hover:not(:disabled)', {display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: styles.accentSoft, color: styles.accent})
+ensureCSS('.menuItem button .icon', {width: '1em', height: '1em', flex: 'none'})
 ensureCSS('.menuItem > label', {display: 'flex', alignItems: 'center', gap: '8px', width: '100%', boxSizing: 'border-box', padding: '10px 14px', fontWeight: 400, cursor: 'pointer'})
 ensureCSS('.menuItemForm', {padding: '10px 14px'})
 
-ensureCSS('.popupContent', {padding: '0', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0, backgroundColor: styles.popupBackgroundColor, boxShadow: styles.boxShadow, border: '1px solid', borderColor: styles.popupBorderColor, borderRadius: styles.radius, maxWidth: '95vw', maxHeight: 'min(90dvh, calc(100dvh - 2em))', boxSizing: 'border-box'})
+ensureCSS('.popupContent', {padding: '0', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0, backgroundColor: styles.popupBackgroundColor, boxShadow: styles.floatShadow, border: '1px solid', borderColor: styles.floatBorderColor, borderRadius: styles.radius, maxWidth: '95vw', maxHeight: 'min(90dvh, calc(100dvh - 2em))', boxSizing: 'border-box'})
 ensureCSS('.popupOverlay > .popupContent', {minHeight: 0, flexShrink: 0, margin: 'auto'})
 ensureCSS('.popupContent > .dialogPanel, .popupContent > .dialogForm.dialogPanel', {flex: '1 1 auto', minHeight: 0, maxHeight: '100%', overflow: 'hidden'})
 ensureCSS('.dialogPanel', {display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr) auto', overflow: 'hidden', width: 'min(50em, calc(100vw - 2em))', minWidth: '0', maxWidth: '100%', maxHeight: 'min(90dvh, calc(100dvh - 2em))', boxSizing: 'border-box', backgroundColor: styles.popupBackgroundColor})
@@ -422,7 +469,7 @@ ensureCSS('html.mobile .msgModeBar .btngroup', {flexShrink: 0})
 ensureCSS('html.mobile .msgModeBar .btngroup button', {padding: '5px 10px', fontSize: '12px', whiteSpace: 'nowrap'})
 ensureCSS('html.mobile .inlineAttachmentsLine', {fontSize: '12px'})
 ensureCSS('html.mobile .headerBodySeparator', {display: 'none'})
-ensureCSS('html:not(.mobile) .composePopup', {padding: '0', minWidth: '42em', overflow: 'hidden'})
+ensureCSS('html:not(.mobile) .composePopup', {padding: '0', width: 'min(42em, calc(100vw - 2rem))', minWidth: '0', maxWidth: 'calc(100vw - 2rem)', overflow: 'hidden', border: '1px solid', borderColor: styles.floatBorderColor, boxShadow: styles.floatShadow})
 ensureCSS('html:not(.mobile) .composeForm', {minHeight: 0, overflow: 'hidden'})
 ensureCSS('html:not(.mobile) .composeFields', {flex: '1 1 auto', minHeight: 0, overflowY: 'auto', gap: '0', border: 'none', margin: 0, padding: 0})
 ensureCSS('html:not(.mobile) .composeFields table', {borderCollapse: 'separate', borderSpacing: '0'})
@@ -441,7 +488,7 @@ ensureCSS('html:not(.mobile) .composeAddrRow td', {borderBottom: '1px solid', bo
 ensureCSS('html:not(.mobile) .composeFields table tr.composeSubjectRow td', {borderBottom: '1px solid', borderBottomColor: styles.borderColor})
 ensureCSS('html:not(.mobile) .composeCell > span', {display: 'flex', alignItems: 'stretch', gap: '6px', width: '100%', marginBottom: '4px'})
 ensureCSS('html:not(.mobile) .composeCell > span:last-child', {marginBottom: 0})
-ensureCSS('html:not(.mobile) .composeCell .autosize', {flex: '1 1 0', minWidth: 0, display: 'grid', width: 'auto', maxWidth: 'none'})
+ensureCSS('html:not(.mobile) .composeCell .autosize', {flex: '1 1 0', minWidth: 0, display: 'grid', width: '100%', maxWidth: '100%'})
 ensureCSS('html:not(.mobile) .composeCell input, html:not(.mobile) .composeFields table tr.composeSubjectRow input', {width: '100%', boxSizing: 'border-box', height: '34px', minHeight: '34px', padding: '0 10px'})
 ensureCSS('html:not(.mobile) .composeCell .btnIcon', {width: '34px', minWidth: '34px', height: '34px', minHeight: '34px', flexShrink: 0, alignSelf: 'auto', boxSizing: 'border-box'})
 ensureCSS('html:not(.mobile) .composeFields textarea.mono', {display: 'block', flex: '1 1 auto', minHeight: '14em', margin: '0', padding: '12px 16px', width: '100%', boxSizing: 'border-box', border: 'none', borderTop: '1px solid', borderBottom: '1px solid', borderColor: styles.borderColor, borderRadius: 0, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5})
@@ -451,7 +498,7 @@ ensureCSS('html:not(.mobile) .composeMeta label select, html:not(.mobile) .compo
 ensureCSS('html:not(.mobile) .composeSchedulePresets', {display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px'})
 ensureCSS('html:not(.mobile) .composeFooter', {display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '12px 16px', borderTop: '1px solid', borderTopColor: styles.borderColor, backgroundColor: styles.backgroundColorMild, flexShrink: 0})
 ensureCSS('html:not(.mobile) .composeFooter button[type=submit]', {minWidth: '6em', padding: '8px 20px', fontWeight: 600})
-ensureCSS('html.mobile .composePopupMobile', {position: 'fixed', inset: '0', width: '100%', height: '100%', maxWidth: 'none', minWidth: '0', borderRadius: '0', margin: '0', padding: '0', paddingTop: 'env(safe-area-inset-top, 0)', paddingBottom: 'env(safe-area-inset-bottom, 0)', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'})
+ensureCSS('html.mobile .composePopupMobile', {position: 'fixed', inset: '0', width: '100%', height: '100%', maxWidth: 'none', minWidth: '0', borderRadius: '0', border: 'none', boxShadow: 'none', margin: '0', padding: '0', paddingTop: 'env(safe-area-inset-top, 0)', paddingBottom: 'env(safe-area-inset-bottom, 0)', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'})
 ensureCSS('html.mobile .composePopupMobile .composeResizeGrab', {display: 'none'})
 ensureCSS('html.mobile .composePopupMobile .composeForm', {flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0'})
 ensureCSS('html.mobile .composePopupMobile .composeFields', {flex: '1 1 auto', minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0', border: 'none', margin: 0, padding: 0})
@@ -475,7 +522,7 @@ ensureCSS('html.mobile .composePopupMobile .composeSubjectRow', {padding: '10px 
 ensureCSS('html.mobile .composePopupMobile .composeSubjectRow td', {padding: '0'})
 ensureCSS('html.mobile .composePopupMobile .composeCell > span', {display: 'flex', alignItems: 'stretch', gap: '8px', width: '100%', marginBottom: '6px'})
 ensureCSS('html.mobile .composePopupMobile .composeCell > span:last-child', {marginBottom: 0})
-ensureCSS('html.mobile .composePopupMobile .composeCell .autosize', {flex: '1 1 0', minWidth: 0, display: 'grid', width: 'auto', maxWidth: 'none'})
+ensureCSS('html.mobile .composePopupMobile .composeCell .autosize', {flex: '1 1 0', minWidth: 0, display: 'grid', width: '100%', maxWidth: '100%'})
 ensureCSS('html.mobile .composePopupMobile td .autosize', {display: 'grid', width: '100%', maxWidth: '100%', boxSizing: 'border-box'})
 ensureCSS('html.mobile .composePopupMobile .composeCell input, html.mobile .composePopupMobile .composeSubjectRow input', {width: '100%', boxSizing: 'border-box', height: '44px', minHeight: '44px', padding: '0 10px'})
 ensureCSS('html.mobile .composePopupMobile .autosize.input', {width: '100%'})
@@ -501,7 +548,7 @@ const yscrollAutoStyle = css('yscrollAuto', {overflowY: 'auto', position: 'absol
 // Input elements that automatically grow based on input, with additional JS.
 css('autosize', {display: 'inline-grid', maxWidth: '90vw'})
 ensureCSS('.autosize.input', {gridArea: '1 / 2'})
-ensureCSS('.autosize::after', {content: 'attr(data-value)', marginRight: '1em', lineHeight: 0, visibility: 'hidden', whiteSpace: 'pre-wrap', overflowX: 'hidden'})
+ensureCSS('.autosize::after', {content: 'attr(data-value)', marginRight: '1em', lineHeight: 0, visibility: 'hidden', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', overflowX: 'hidden'})
 
 
 // From HTML.
@@ -526,7 +573,7 @@ let introboxMailbox: string = ''
 
 const defaultSettings = {
 	mailboxesWidth: 240,
-	layout: 'auto', // Automatic switching between left/right and top/bottom layout, based on screen width.
+	layout: 'leftright', // leftright, topbottom, or auto. Auto still follows the window width.
 	leftWidthPct: 50, // Split in percentage of remaining width for left/right layout.
 	topHeightPct: 40, // Split in percentage of remaining height for top/bottom layout.
 	msglistflagsWidth: 40, // Width in pixels of flags column in message list.
@@ -650,9 +697,9 @@ const login = async (reason: string) => {
 				dom.div(
 					css('loginPopup', {
 						backgroundColor: styles.popupBackgroundColor,
-						boxShadow: styles.boxShadow,
+						boxShadow: styles.floatShadow,
 						border: '1px solid',
-						borderColor: styles.popupBorderColor,
+						borderColor: styles.floatBorderColor,
 						borderRadius: styles.radius,
 						padding: '1.5em',
 						maxWidth: '95vw',
@@ -684,17 +731,17 @@ const login = async (reason: string) => {
 								popupOpen = false
 								resolve(token)
 							} catch (err) {
-								console.log('login error', err)
-								window.alert('Error: ' + errmsg(err))
+								console.log(ui("login error"), err)
+								window.alert(ui("Error: ") + errmsg(err))
 							} finally {
 								fieldset.disabled = false
 							}
 						},
 						fieldset=dom.fieldset(
-							dom.h1('Mail'),
+							dom.h1(ui('Mail')),
 							dom.label(
 								style({display: 'block', marginBottom: '2ex'}),
-								dom.div('Email address', style({marginBottom: '.5ex'})),
+								dom.div(ui("Email address"), style({marginBottom: '.5ex'})),
 								autosize=dom.span(dom._class('autosize'),
 									username=dom.input(
 										attr.required(''),
@@ -707,12 +754,12 @@ const login = async (reason: string) => {
 							),
 							dom.label(
 								style({display: 'block', marginBottom: '2ex'}),
-								dom.div('Password', style({marginBottom: '.5ex'})),
+								dom.div(ui("Password"), style({marginBottom: '.5ex'})),
 								password=dom.input(attr.type('password'), attr.autocomplete('current-password'), attr.required('')),
 							),
 							dom.div(
 								style({textAlign: 'center'}),
-								dom.submitbutton('Login'),
+								dom.submitbutton(ui("Login")),
 							),
 						),
 					)
@@ -1143,10 +1190,13 @@ const flagList = (miv: MsgitemView): HTMLElement[] => {
 			seen.add(name)
 		}
 	}
-	const addFlags = (mi: api.MessageItem) => {
+	const addFlags = (mi: api.MessageItem, ownRow: boolean) => {
 		const m = mi.Message
 		flag(m.Answered, 'r', 'Replied/answered')
-		flag(m.Flagged, '!', 'Flagged')
+		// The row button shows this message's flagged state. A collapsed child still uses the mark.
+		if (!ownRow) {
+			flag(m.Flagged, '!', 'Flagged')
+		}
 		flag(m.Forwarded, 'f', 'Forwarded')
 		flag(m.Junk, 'j', 'Junk')
 		flag(m.Deleted, 'D', 'Deleted, used in IMAP, message will likely be removed soon.')
@@ -1158,11 +1208,11 @@ const flagList = (miv: MsgitemView): HTMLElement[] => {
 			flag(true, 'm', 'Muted, new messages are automatically marked as read.')
 		}
 	}
-	addFlags(miv.messageitem)
+	addFlags(miv.messageitem, true)
 	if (miv.isCollapsedThreadRoot()) {
 		l = othermsgflags
 		for (miv of miv.descendants()) {
-			addFlags(miv.messageitem)
+			addFlags(miv.messageitem, false)
 		}
 	}
 
@@ -1356,6 +1406,83 @@ const withStatus = async <T>(action: string, promise: Promise<T>, disablable?: D
 	}
 }
 
+// One pending move can be undone. A newer move replaces it. The original message
+// id survives MessageMove. The new id is only the expunged tombstone.
+type MoveUndoGroup = { mailboxID: number, ids: number[] }
+let moveUndo: { groups: MoveUndoGroup[] } | null = null
+let moveUndoBar: HTMLElement | null = null
+let moveUndoHost: HTMLElement | null = null
+
+const clearMoveUndo = () => {
+	moveUndo = null
+	if (moveUndoBar) {
+		moveUndoBar.remove()
+		moveUndoBar = null
+	}
+}
+
+const groupMoveSources = (sources: { id: number, mailboxID: number }[]): MoveUndoGroup[] => {
+	const byBox = new Map<number, number[]>()
+	for (const source of sources) {
+		const ids = byBox.get(source.mailboxID)
+		if (ids) {
+			ids.push(source.id)
+		} else {
+			byBox.set(source.mailboxID, [source.id])
+		}
+	}
+	return [...byBox].map(([mailboxID, ids]) => ({ mailboxID, ids }))
+}
+
+const offerMoveUndo = (sources: { id: number, mailboxID: number }[]) => {
+	const groups = groupMoveSources(sources)
+	if (groups.length === 0) {
+		return
+	}
+	clearMoveUndo()
+	const pending = { groups }
+	moveUndo = pending
+	moveUndoBar = dom.div(
+		dom._class('moveUndoBar'),
+		attr.role('status'),
+		ui('Moved'),
+		dom.clickbutton(ui('Undo'), async function click() {
+			if (moveUndo !== pending) {
+				return
+			}
+			clearMoveUndo()
+			for (let i = 0; i < groups.length; i++) {
+				try {
+					await withStatus(ui('Moving back'), client.MessageMove(groups[i].ids, groups[i].mailboxID, false))
+				} catch (err) {
+					log({err})
+					offerMoveUndo(groups.slice(i).flatMap(g => g.ids.map(id => ({ id, mailboxID: g.mailboxID }))))
+					return
+				}
+			}
+		}),
+	)
+	const onOpenMessage = document.documentElement.classList.contains('mobile') && document.documentElement.classList.contains('mobile-pane-message')
+	const host = !onOpenMessage && moveUndoHost ? moveUndoHost : document.body
+	if (host === document.body) {
+		moveUndoBar.classList.add('moveUndoBarFloating')
+	}
+	host.appendChild(moveUndoBar)
+}
+
+const dismissMoveUndoUnless = (id: number) => {
+	if (!moveUndo || moveUndo.groups.some(g => g.ids.includes(id))) {
+		return
+	}
+	clearMoveUndo()
+}
+
+const forgetMovedMessages = (ids: number[]) => {
+	if (moveUndo && ids.some(id => moveUndo!.groups.some(g => g.ids.includes(id)))) {
+		clearMoveUndo()
+	}
+}
+
 const withDisabled = async <T>(elem: {disabled: boolean}, p: Promise<T>): Promise<T> => {
 	try {
 		elem.disabled = true
@@ -1380,6 +1507,7 @@ const withDisabled = async <T>(elem: {disabled: boolean}, p: Promise<T>): Promis
 // width or height, it is positioned towards the other direction. The div with
 // kids is scrollable if needed.
 const popover = (target: HTMLElement, opts: {transparent?: boolean, fullscreen?: boolean}, ...kids: HTMLElement[]) => {
+	clearMoveUndo()
 	const origFocus = document.activeElement
 	const pos = target.getBoundingClientRect()
 	const close = () => {
@@ -1435,9 +1563,9 @@ const popover = (target: HTMLElement, opts: {transparent?: boolean, fullscreen?:
 					backgroundColor: styles.popupBackgroundColor,
 					padding: '1em',
 					borderRadius: styles.radius,
-					boxShadow: styles.boxShadow,
+					boxShadow: styles.floatShadow,
 					border: '1px solid',
-					borderColor: styles.popupBorderColor,
+					borderColor: styles.floatBorderColor,
 					color: styles.popupColor,
 				}),
 			],
@@ -1454,10 +1582,10 @@ const popover = (target: HTMLElement, opts: {transparent?: boolean, fullscreen?:
 	return close
 }
 
-const menuPopover = (target: HTMLElement, items: (HTMLElement | HTMLElement[])[]): (() => void) => {
+const menuPopover = (target: HTMLElement, items: (HTMLElement | HTMLElement[])[], fit = false): (() => void) => {
 	const flat = items.flat().filter((b): b is HTMLElement => b instanceof HTMLElement)
 	return popover(target, {transparent: true},
-		dom.div(dom._class('menuList'),
+		dom.div(dom._class('menuList', ...(fit ? ['menuListFit'] : [])),
 			...flat.map(item => dom.div(dom._class('menuItem'), item)),
 		),
 	)
@@ -1471,6 +1599,7 @@ const menuPopover = (target: HTMLElement, items: (HTMLElement | HTMLElement[])[]
 // to handle keys themselves, e.g. for scrolling.
 let popupOpen = false
 const popup = (...kids: ElemArg[]) => {
+	clearMoveUndo()
 	const origFocus = document.activeElement
 	const close = () => {
 		if (!root.parentNode) {
@@ -1545,87 +1674,87 @@ const cmdSettings = async () => {
 				remove()
 			},
 			dom.div(dom._class('dialogHeader'),
-				dom.h1('Settings'),
-				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Close'), attr.title('Close without saving.'), function click() {
+				dom.h1(ui('Settings')),
+				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui('Close')), attr.title(ui('Close without saving.')), function click() {
 					remove()
 				}),
 			),
 			dom.div(dom._class('dialogBody'),
 				fieldset=dom.fieldset(
 					dom.div(dom._class('dialogField'),
-						dom.label(dom._class('dialogFieldLabel'), 'Signature'),
+						dom.label(dom._class('dialogFieldLabel'), ui('Signature')),
 						signature=dom.textarea(
 							new String(accountSettings.Signature),
 							attr.rows(''+Math.max(3, 1+accountSettings.Signature.split('\n').length)),
 						),
 					),
 					dom.div(dom._class('dialogField'),
-						dom.label(dom._class('dialogFieldLabel'), 'Reply above/below original', attr.title('Auto: If text is selected, only the replied text is quoted and editing starts below. Otherwise, the full message is quoted and editing starts at the top.')),
+						dom.label(dom._class('dialogFieldLabel'), ui('Reply above/below original'), attr.title(ui('Auto: If text is selected, only the replied text is quoted and editing starts below. Otherwise, the full message is quoted and editing starts at the top.'))),
 						quoting=dom.select(
-							dom.option(attr.value(''), 'Auto'),
-							dom.option(attr.value('bottom'), 'Bottom', accountSettings.Quoting === api.Quoting.Bottom ? attr.selected('') : []),
-							dom.option(attr.value('top'), 'Top', accountSettings.Quoting === api.Quoting.Top ? attr.selected('') : []),
+							dom.option(attr.value(''), ui('Auto')),
+							dom.option(attr.value('bottom'), ui('Bottom'), accountSettings.Quoting === api.Quoting.Bottom ? attr.selected('') : []),
+							dom.option(attr.value('top'), ui('Top'), accountSettings.Quoting === api.Quoting.Top ? attr.selected('') : []),
 						),
 					),
 					dom.label(dom._class('dialogCheckField'),
 						showAddressSecurity=dom.input(attr.type('checkbox'), accountSettings.ShowAddressSecurity ? attr.checked('') : []),
-						dom.span('Show address security indications', attr.title('Show bars underneath address input fields, indicating support for STARTTLS/DNSSEC/DANE/MTA-STS/RequireTLS.')),
+						dom.span(ui('Show address security indications'), attr.title(ui('Show bars underneath address input fields, indicating support for STARTTLS/DNSSEC/DANE/MTA-STS/RequireTLS.'))),
 					),
 					dom.label(dom._class('dialogCheckField'),
 						showHTML=dom.input(attr.type('checkbox'), accountSettings.ShowHTML ? attr.checked('') : []),
-						dom.span('Show email as HTML instead of text by default for first-time senders', attr.title('Whether to show HTML or text is remembered per sender. This sets the default for unknown correspondents.')),
+						dom.span(ui('Show email as HTML instead of text by default for first-time senders'), attr.title(ui('Whether to show HTML or text is remembered per sender. This sets the default for unknown correspondents.'))),
 					),
 					dom.label(dom._class('dialogCheckField'),
 						showShortcuts=dom.input(attr.type('checkbox'), accountSettings.NoShowShortcuts ? [] : attr.checked('')),
-						dom.span('Show shortcut keys in bottom left after interaction with mouse'),
+						dom.span(ui('Show shortcut keys in bottom left after interaction with mouse')),
 					),
 					dom.div(dom._class('dialogField'),
-						dom.label(dom._class('dialogFieldLabel'), 'Show additional headers'),
+						dom.label(dom._class('dialogFieldLabel'), ui('Show additional headers')),
 						showHeaders=dom.textarea(
 							new String((accountSettings.ShowHeaders || []).join('\n')),
 							attr.rows(''+Math.max(3, 1+(accountSettings.ShowHeaders || []).length)),
 						),
-						dom.p(dom._class('dialogFieldHint'), 'One header name per line, for example Delivered-To, X-Mox-Reason, User-Agent, … Refresh mailbox view for changes to take effect.'),
+						dom.p(dom._class('dialogFieldHint'), ui('One header name per line, for example Delivered-To, X-Mox-Reason, User-Agent, … Refresh mailbox view for changes to take effect.')),
 					),
 					dom.div(dom._class('dialogSection'),
-						dom.div(dom._class('dialogSectionTitle'), 'Mailto links'),
-						dom.p(dom._class('dialogSectionText'), 'Register "mailto:" links with the browser or operating system to compose a message in webmail.'),
+						dom.div(dom._class('dialogSectionTitle'), ui('Mailto links')),
+						dom.p(dom._class('dialogSectionText'), ui('Register "mailto:" links with the browser or operating system to compose a message in webmail.')),
 						dom.div(dom._class('dialogActions'),
-							dom.clickbutton('Register', attr.title('In most browsers, registering is only allowed on HTTPS URLs. Your browser may ask for confirmation. If nothing appears to happen, the registration may already have been present.'), function click() {
+							dom.clickbutton(ui('Register'), attr.title(ui('In most browsers, registering is only allowed on HTTPS URLs. Your browser may ask for confirmation. If nothing appears to happen, the registration may already have been present.')), function click() {
 								if (!window.navigator.registerProtocolHandler) {
-									window.alert('Registering a protocol handler ("mailto:") is not supported by your browser.')
+									window.alert(ui('Registering a protocol handler ("mailto:") is not supported by your browser.'))
 									return
 								}
 								try {
 									window.navigator.registerProtocolHandler('mailto', '#compose %s')
-									window.alert('"mailto:"-links have been registered')
+									window.alert(ui('"mailto:"-links have been registered'))
 								} catch (err) {
-									window.alert('Error registering "mailto:" protocol handler: '+errmsg(err))
+									window.alert(ui('Error registering "mailto:" protocol handler: ')+errmsg(err))
 								}
 							}),
-							dom.clickbutton('Unregister', attr.title('Not all browsers implement unregistering via JavaScript.'), function click() {
+							dom.clickbutton(ui('Unregister'), attr.title(ui('Not all browsers implement unregistering via JavaScript.')), function click() {
 								if (!(window.navigator as any).unregisterProtocolHandler) {
-									window.alert('Unregistering a protocol handler ("mailto:") via JavaScript is not supported by your browser. See your browser settings to unregister.')
+									window.alert(ui('Unregistering a protocol handler ("mailto:") via JavaScript is not supported by your browser. See your browser settings to unregister.'))
 									return
 								}
 								try {
 									(window.navigator as any).unregisterProtocolHandler('mailto', '#compose %s')
 								} catch (err) {
-									window.alert('Error unregistering "mailto:" protocol handler: '+errmsg(err))
+									window.alert(ui('Error unregistering "mailto:" protocol handler: ')+errmsg(err))
 									return
 								}
-								window.alert('"mailto:" protocol handler unregistered.')
+								window.alert(ui('"mailto:" protocol handler unregistered.'))
 							}),
 						),
 					),
 				),
 			),
 			dom.div(dom._class('dialogFooter'),
-				dom.clickbutton('Cancel', function click(e: MouseEvent) {
+				dom.clickbutton(ui('Cancel'), function click(e: MouseEvent) {
 					e.preventDefault()
 					remove()
 				}),
-				dom.submitbutton(dom._class('btnPrimary'), 'Save'),
+				dom.submitbutton(dom._class('btnPrimary'), ui('Save')),
 			),
 		),
 	)
@@ -1638,8 +1767,8 @@ const cmdHelp = async () => {
 			dom._class('dialogPanel'),
 			dom._class('helpPanel'),
 			dom.div(dom._class('dialogHeader'),
-				dom.h1('Help and keyboard shortcuts'),
-				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Close'), attr.title('Close help.'), function click() {
+				dom.h1(ui('Help and keyboard shortcuts')),
+				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui('Close')), attr.title(ui('Close help.')), function click() {
 					remove()
 				}),
 			),
@@ -1647,7 +1776,7 @@ const cmdHelp = async () => {
 				dom.div(dom._class('helpColumns'),
 			dom.div(
 				dom.table(
-					dom.tr(dom.td(attr.colspan('2'), dom.h2('Global', style({margin: '0'})))),
+					dom.tr(dom.td(attr.colspan('2'), dom.h2(ui('Global'), style({margin: '0'})))),
 					[
 						['c', 'compose new message'],
 						['/', 'search'],
@@ -1655,34 +1784,34 @@ const cmdHelp = async () => {
 						['?', 'help'],
 						['ctrl ?', 'tooltip for focused element'],
 						['ctrl m', 'focus message'],
-					].map(t => dom.tr(dom.td(t[0]), dom.td(t[1]))),
+					].map(t => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))),
 
-					dom.tr(dom.td(attr.colspan('2'), dom.h2('Mailbox', style({margin: '0'})))),
+					dom.tr(dom.td(attr.colspan('2'), dom.h2(ui('Mailbox'), style({margin: '0'})))),
 					[
 						['←', 'collapse'],
 						['→', 'expand'],
 						['b', 'show more actions'],
-					].map(t => dom.tr(dom.td(t[0]), dom.td(t[1]))),
+					].map(t => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))),
 
-					dom.tr(dom.td(attr.colspan('2'), dom.h2('Message list', style({margin: '1ex 0 0 0'})))),
+					dom.tr(dom.td(attr.colspan('2'), dom.h2(ui('Message list'), style({margin: '1ex 0 0 0'})))),
 					dom.tr(
 						dom.td('↓', ', j'),
-						dom.td('down one message'),
+						dom.td(ui('down one message')),
 						dom.td(
 							attr.rowspan('6'),
 							css('helpSideNote', {color: styles.colorMilder, borderLeft: '2px solid', borderLeftColor: styles.accent, paddingLeft: '.5em'}),
-							dom.div('hold ctrl to only move focus', attr.title('ctrl-l and ctrl-u are left for the browser the handle')),
-							dom.div('hold shift to expand selection'),
+							dom.div(ui('hold ctrl to only move focus'), attr.title(ui('ctrl-l and ctrl-u are left for the browser the handle'))),
+							dom.div(ui('hold shift to expand selection')),
 						),
 					),
+					dom.tr(dom.td('↑', ', k'), dom.td(ui('up one message'))),
 					[
-						[['↑', ', k'], 'up one message'],
 						['PageDown, l', 'down one screen'],
 						['PageUp, h', 'up one screen'],
 						['End, .', 'to last message'],
 						['Home, ,', 'to first message'],
 						['Space', 'toggle selection of message'],
-					].map(t => dom.tr(dom.td(t[0]), dom.td(t[1]))),
+					].map(t => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))),
 
 					[
 						['', ''],
@@ -1701,12 +1830,12 @@ const cmdHelp = async () => {
 						['X', 'toggle thread mute, automatically marking new messages as read'],
 						['←', 'collapse thread'],
 						['→', 'expand thread'],
-					].map(t => dom.tr(dom.td(t[0]), dom.td(t[1]))),
+					].map(t => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))),
 				),
 			),
 			dom.div(
 				dom.table(
-					dom.tr(dom.td(attr.colspan('2'), dom.h2('Compose', style({margin: '0'})))),
+					dom.tr(dom.td(attr.colspan('2'), dom.h2(ui('Compose'), style({margin: '0'})))),
 					[
 						['ctrl Enter', 'send message'],
 						['ctrl shift Enter', 'send message and archive thread'],
@@ -1717,9 +1846,9 @@ const cmdHelp = async () => {
 						['ctrl Y', 'add Reply-To'],
 						['ctrl Backspace', 'remove current address if empty'],
 						['ctrl +', 'add address of same type'],
-					].map(t => dom.tr(dom.td(t[0]), dom.td(t[1]))),
+					].map(t => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))),
 
-					dom.tr(dom.td(attr.colspan('2'), dom.h2('Message', style({margin: '1ex 0 0 0'})))),
+					dom.tr(dom.td(attr.colspan('2'), dom.h2(ui('Message'), style({margin: '1ex 0 0 0'})))),
 					[
 						['r', 'reply or list reply'],
 						['R', 'reply all'],
@@ -1738,27 +1867,27 @@ const cmdHelp = async () => {
 						['alt j, alt ArrowDown', 'scroll down'],
 						['alt K', 'scroll to top'],
 						['alt J', 'scroll to end'],
-					].map(t => dom.tr(dom.td(t[0]), dom.td(t[1]))),
+					].map(t => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))),
 
-					dom.tr(dom.td(dom.h2('Attachments', style({margin: '1ex 0 0 0'})))),
+					dom.tr(dom.td(dom.h2(ui('Attachments'), style({margin: '1ex 0 0 0'})))),
 					[
 						['left, h', 'previous attachment'],
 						['right, l', 'next attachment'],
 						['0', 'first attachment'],
 						['$', 'next attachment'],
 						['d', 'download'],
-					].map(t => dom.tr(dom.td(t[0]), dom.td(t[1]))),
+					].map(t => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))),
 				),
-				dom.div(style({marginTop: '2ex', marginBottom: '1ex'}), dom.span('Underdotted text', attr.title('Underdotted text shows additional information on hover.')), ' show an explanation or additional information when hovered.'),
-				dom.div(style({marginBottom: '1ex'}), 'Multiple messages can be selected by clicking messages while holding the control and/or shift keys. Dragging messages and dropping them on a mailbox moves the messages to that mailbox.'),
-				dom.div(style({marginBottom: '1ex'}), 'Text that changes ', dom.span(attr.title('Unicode blocks, e.g. from basic latin to cyrillic, or to emoticons.'), '"character groups"'), ' without whitespace has an ', dom.span(dom._class('scriptswitch'), 'orange underline'), ', which can be a sign of an intent to mislead (e.g. phishing).'),
+				dom.div(style({marginTop: '2ex', marginBottom: '1ex'}), dom.span(ui('Underdotted text'), attr.title(ui('Underdotted text shows additional information on hover.'))), ui(' show an explanation or additional information when hovered.')),
+				dom.div(style({marginBottom: '1ex'}), ui('Multiple messages can be selected by clicking messages while holding the control and/or shift keys. Dragging messages and dropping them on a mailbox moves the messages to that mailbox.')),
+				dom.div(style({marginBottom: '1ex'}), ui('A word that mixes scripts, such as Latin and Cyrillic, with no space between them has an '), dom.span(dom._class('scriptswitch'), ui('orange underline')), ui('. That can be a sign of an intent to mislead (e.g. phishing).')),
 
-				dom.div(style({marginTop: '2ex'}), 'Mox is open source email server software, this is version ', moxversion, ', see ', dom.a(attr.href('licenses.txt'), 'licenses'), '.', dom.br(), 'Feedback, including bug reports, is appreciated! ', link('https://github.com/mjl-/mox/issues/new')),
+				dom.div(style({marginTop: '2ex'}), ui('Mox is open source email server software, this is version '), moxversion, ', see ', dom.a(attr.href('licenses.txt'), ui('licenses')), '.', dom.br(), ui('Feedback, including bug reports, is appreciated! '), link('https://github.com/mjl-/mox/issues/new')),
 			),
 				),
 			),
 			dom.div(dom._class('dialogFooter'),
-				dom.clickbutton('Close', function click() {
+				dom.clickbutton(ui('Close'), function click() {
 					remove()
 				}),
 			),
@@ -1791,13 +1920,22 @@ const cmdTooltip = async () => {
 		})
 	}
 	if (elems.length === 0) {
-		window.alert('No active elements with tooltips found.')
+		window.alert(ui('No active elements with tooltips found.'))
 		return
 	}
 	popover(document.body, {transparent: true, fullscreen: true},
 		...elems.map(e => {
 			const title = e.getAttribute('title') || ''
 			const pos = e.getBoundingClientRect()
+			const hidden = pos.width === 0 && pos.height === 0
+			if (hidden) {
+				const bar = document.querySelector('.topBar')?.getBoundingClientRect()
+				return dom.div(
+					css('tooltipContent', {position: 'absolute', backgroundColor: [styles.mailboxesTopBackgroundColor, styles.backgroundColorMild], color: [styles.navTextHover, styles.color], borderRadius: styles.radius, padding: '.35em .5em', maxWidth: '50em', boxShadow: styles.shadowSm}),
+					style({left: '50%', transform: 'translateX(-50%)', top: ((bar ? bar.bottom : 48) + 8) + 'px'}),
+					title,
+				)
+			}
 			return dom.div(
 				css('tooltipContent', {position: 'absolute', backgroundColor: [styles.mailboxesTopBackgroundColor, styles.backgroundColorMild], color: [styles.navTextHover, styles.color], borderRadius: styles.radius, padding: '.35em .5em', maxWidth: '50em', boxShadow: styles.shadowSm}),
 				pos.x < window.innerWidth/3 ?
@@ -1851,7 +1989,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 
 	if (composeView) {
 		// todo: should allow multiple
-		window.alert('Can only compose one message at a time.')
+		window.alert(ui("Can only compose one message at a time."))
 		return
 	}
 
@@ -1905,7 +2043,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 		}
 		draftSaveTimer = window.setTimeout(async () => {
 			draftSaveTimer = 0
-			await withStatus('Saving draft', draftSave())
+			await withStatus(ui("Saving draft"), draftSave())
 			draftScheduleSave()
 		}, 60*1000)
 	}
@@ -1929,7 +2067,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 		}
 		const mbdrafts = listMailboxes().find(mb => mb.Draft)
 		if (!mbdrafts) {
-			throw new Error('no designated drafts mailbox')
+			throw new Error(ui("no designated drafts mailbox"))
 		}
 		draftSavePromise = client.MessageCompose(cm, mbdrafts.ID)
 		try {
@@ -1965,25 +2103,25 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 						dom._class('dialogPanel'),
 						dom._class('confirmPanel'),
 						dom.div(dom._class('dialogHeader'),
-							dom.h1('Unsaved changes'),
-							dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Close'), attr.title('Keep editing.'), function click() {
+							dom.h1(ui("Unsaved changes")),
+							dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Keep editing.")), function click() {
 								close('cancel')
 							}),
 						),
 						dom.div(dom._class('dialogBody'),
-							dom.p('The message has unsaved changes. What would you like to do?'),
+							dom.p(ui("The message has unsaved changes. What would you like to do?")),
 						),
 						dom.div(dom._class('dialogFooter'),
-							dom.clickbutton('Cancel', function click() {
+							dom.clickbutton(ui("Cancel"), function click() {
 								close('cancel')
 							}),
-							dom.clickbutton('Discard changes', function click() {
+							dom.clickbutton(ui("Discard changes"), function click() {
 								close('discard')
 							}),
-							draftMessageID ? dom.clickbutton('Remove draft', function click() {
+							draftMessageID ? dom.clickbutton(ui("Remove draft"), function click() {
 								close('remove')
 							}) : [],
-							dom.clickbutton(dom._class('btnPrimary'), 'Save draft', function click() {
+							dom.clickbutton(dom._class('btnPrimary'), ui("Save draft"), function click() {
 								close('save')
 							}),
 						),
@@ -1991,10 +2129,11 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 				)
 			})
 			if (action === 'save') {
-				await withStatus('Saving draft', draftSave())
+				await withStatus(ui("Saving draft"), draftSave())
 			} else if (action === 'remove') {
 				if (draftMessageID) {
-					await withStatus('Removing draft', client.MessageDelete([draftMessageID]))
+					forgetMovedMessages([draftMessageID])
+					await withStatus(ui("Removing draft"), client.MessageDelete([draftMessageID]))
 				}
 			} else if (action === 'cancel') {
 				return
@@ -2008,7 +2147,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 	const cmdSave = async () => {
 		draftCancelSaveTimer()
 		await draftSavePromise
-		await withStatus('Saving draft', draftSave())
+		await withStatus(ui("Saving draft"), draftSave())
 	}
 
 	const submit = async (archive: boolean) => {
@@ -2069,10 +2208,10 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 	}
 
 	const cmdSend = async () => {
-		await withStatus('Sending email', submit(false), fieldset)
+		await withStatus(ui("Sending email"), submit(false), fieldset)
 	}
 	const cmdSendArchive = async () => {
-		await withStatus('Sending email and archive', submit(true), fieldset)
+		await withStatus(ui("Sending email and archive"), submit(true), fieldset)
 	}
 
 	const cmdAddTo = async () => { newAddrView('', true, true, toViews, toBtn, toCell, toRow) }
@@ -2083,7 +2222,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 		if (customFrom) {
 			return
 		}
-		customFrom = dom.input(attr.value(from.value), attr.required(''), focusPlaceholder('Jane <jane@example.org>'))
+		customFrom = dom.input(attr.value(from.value), attr.required(''), focusPlaceholder(ui("Jane <jane@example.org>")))
 		from.replaceWith(customFrom)
 		customFromBtn.remove()
 	}
@@ -2194,7 +2333,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 				}
 			}, () => {
 				setBar('#888', '#888', '#888', '#888', '#888')
-				inputElem.setAttribute('title', 'Error fetching security mechanisms known to be implemented by the recipient domain...\n\n'+recipientSecurityTitle)
+				inputElem.setAttribute('title', ui("Error fetching security mechanisms known to be implemented by the recipient domain...\n\n")+recipientSecurityTitle)
 				aborter.abort = undefined
 				if (requiretls.value === 'yes') {
 					requiretls.value = ''
@@ -2207,8 +2346,8 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 			autosizeElem=dom.span(
 				dom._class('autosize'),
 				inputElem=dom.input(
-					focusPlaceholder('Jane <jane@example.org>'),
-					style({width: 'auto'}),
+					focusPlaceholder(ui("Jane <jane@example.org>")),
+					style({width: '100%'}),
 					attr.value(addr),
 					newAddressComplete(),
 					accountSettings?.ShowAddressSecurity ? attr.title(recipientSecurityTitle) : [],
@@ -2259,7 +2398,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 					}),
 				),
 			),
-			dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.minus), attr.arialabel('Remove address.'), attr.title('Remove address.'), function click() {
+			dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.minus), attr.arialabel(ui("Remove address.")), attr.title(ui("Remove address.")), function click() {
 				remove()
 				if (single && views.length === 0) {
 					btn.style.display = ''
@@ -2359,10 +2498,10 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 	const pad0 = (v: number) => v >= 10 ? ''+v : '0'+v
 	const localdate = (d: Date) => [d.getFullYear(), pad0(d.getMonth()+1), pad0(d.getDate())].join('-')
 	const localdatetime = (d: Date) => localdate(d) + 'T' + pad0(d.getHours()) + ':' + pad0(d.getMinutes()) + ':00'
-	const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 	const scheduleTimeChanged = () => {
 		log('datetime change', scheduleTime.value)
-		dom._kids(scheduleWeekday, weekdays[new Date(scheduleTime.value).getDay()])
+		const d = new Date(scheduleTime.value)
+		dom._kids(scheduleWeekday, Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(uiLocale(), {weekday: 'long'}))
 	}
 
 	let resizeLast: {x: number, y: number} | null = null
@@ -2380,11 +2519,12 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 			right: '1ex',
 			zIndex: zindexes.compose,
 			backgroundColor: styles.popupBackgroundColor,
-			boxShadow: styles.boxShadow,
+			boxShadow: styles.floatShadow,
 			border: '1px solid',
-			borderColor: styles.popupBorderColor,
-			minWidth: '40em',
-			maxWidth: '95vw',
+			borderColor: styles.floatBorderColor,
+			width: 'min(42em, calc(100vw - 2rem))',
+			minWidth: '0',
+			maxWidth: 'calc(100vw - 2rem)',
 			borderRadius: styles.radius,
 			display: 'flex',
 			flexDirection: 'column',
@@ -2437,18 +2577,17 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 					dom.tr(dom._class('composeHeaderRow'),
 						dom.td(attr.colspan('2'),
 							dom.div(dom._class('composeFromBar'),
-								dom.label(dom._class('composeFromLabel'), 'From',
+								dom.label(dom._class('composeFromLabel'), ui('From'),
 									from=dom.select(
 										attr.required(''),
-										style({width: 'auto'}),
 										fromOptions,
 									),
 								),
 								dom.div(dom._class('composeHeaderActions'),
 									listMailboxes().find(mb => mb.Draft) ? [
-										dom.clickbutton('Save', attr.title('Save draft message.'), clickCmd(cmdSave, shortcuts)),
+										dom.clickbutton(ui("Save"), attr.title(ui("Save draft message.")), clickCmd(cmdSave, shortcuts)),
 									] : [],
-									dom.clickbutton('Close', attr.title('Close window, saving draft message if body has changed or a draft was saved earlier.'), clickCmd(cmdClose, shortcuts)),
+									dom.clickbutton(ui("Close"), attr.title(ui("Close window, saving draft message if body has changed or a draft was saved earlier.")), clickCmd(cmdClose, shortcuts)),
 								),
 							),
 						),
@@ -2456,32 +2595,32 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 					dom.tr(dom._class('composeToolbarRow'),
 						dom.td(attr.colspan('2'),
 							dom.div(dom._class('composeToolbarBtns'),
-								toBtn=dom.clickbutton('To', clickCmd(cmdAddTo, shortcuts)),
-								ccBtn=dom.clickbutton('Cc', clickCmd(cmdAddCc, shortcuts)),
-								bccBtn=dom.clickbutton('Bcc', clickCmd(cmdAddBcc, shortcuts)),
-								replyToBtn=dom.clickbutton('Reply-To', clickCmd(cmdReplyTo, shortcuts)),
-								customFromBtn=dom.clickbutton('Custom From', attr.title('Set custom From address/name.'), clickCmd(cmdCustomFrom, shortcuts)),
+								toBtn=dom.clickbutton(ui("To"), clickCmd(cmdAddTo, shortcuts)),
+								ccBtn=dom.clickbutton(ui("Cc"), clickCmd(cmdAddCc, shortcuts)),
+								bccBtn=dom.clickbutton(ui("Bcc"), clickCmd(cmdAddBcc, shortcuts)),
+								replyToBtn=dom.clickbutton(ui("Reply-To"), clickCmd(cmdReplyTo, shortcuts)),
+								customFromBtn=dom.clickbutton(ui("Custom From"), attr.title(ui("Set custom From address/name.")), clickCmd(cmdCustomFrom, shortcuts)),
 							),
 						),
 					),
 					toRow=dom.tr(dom._class('composeAddrRow'),
-						dom.td('To:', composeTextMildStyle),
+						dom.td(ui("To:"), composeTextMildStyle),
 						toCell=dom.td(composeCellStyle),
 					),
 					replyToRow=dom.tr(dom._class('composeAddrRow'),
-						dom.td('Reply-To:', composeTextMildStyle),
+						dom.td(ui("Reply-To:"), composeTextMildStyle),
 						replyToCell=dom.td(composeCellStyle),
 					),
 					ccRow=dom.tr(dom._class('composeAddrRow'),
-						dom.td('Cc:', composeTextMildStyle),
+						dom.td(ui("Cc:"), composeTextMildStyle),
 						ccCell=dom.td(composeCellStyle),
 					),
 					bccRow=dom.tr(dom._class('composeAddrRow'),
-						dom.td('Bcc:', composeTextMildStyle),
+						dom.td(ui("Bcc:"), composeTextMildStyle),
 						bccCell=dom.td(composeCellStyle),
 					),
 					dom.tr(dom._class('composeSubjectRow'),
-						dom.td('Subject:', composeTextMildStyle),
+						dom.td(ui("Subject:"), composeTextMildStyle),
 						dom.td(
 							subjectAutosize=dom.span(
 								dom._class('autosize'),
@@ -2490,7 +2629,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 									style({width: '100%'}),
 									attr.value(opts.subject || ''),
 									attr.required(''),
-									focusPlaceholder('subject...'),
+									focusPlaceholder(ui("subject...")),
 									function input() {
 										subjectAutosize.dataset.value = subject.value
 									},
@@ -2521,7 +2660,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 				),
 				dom.div(dom._class('composeMeta'),
 					!(opts.attachmentsMessageItem && opts.attachmentsMessageItem.Attachments && opts.attachmentsMessageItem.Attachments.length > 0) ? [] : dom.div(
-						'Forward attachments: ',
+						ui("Forward attachments: "),
 						forwardAttachmentViews=(opts.attachmentsMessageItem?.Attachments || []).map(a => {
 							const filename = a.Filename || '(unnamed)'
 							const size = formatSize(a.Part.DecodedSize)
@@ -2536,21 +2675,21 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 						}),
 						dom.label(styleClasses.textMild, dom.input(attr.type('checkbox'), function change(e: Event) {
 							forwardAttachmentViews.forEach(v => v.checkbox.checked = (e.target! as HTMLInputElement).checked)
-						}), ' (Toggle all)')
+						}), ui(" (Toggle all)"))
 					),
-					noAttachmentsWarning=dom.div(style({display: 'none'}), css('composeNoAttachmentsWarning', {backgroundColor: styles.warningBackgroundColor, padding: '0.35em .5em', borderRadius: styles.radius}), 'Message mentions attachments, but no files are attached.'),
-					dom.label('Attachments ', attachments=dom.input(attr.type('file'), attr.multiple(''), function change() { checkAttachments() })),
+					noAttachmentsWarning=dom.div(style({display: 'none'}), css('composeNoAttachmentsWarning', {backgroundColor: styles.warningBackgroundColor, padding: '0.35em .5em', borderRadius: styles.radius}), ui("Message mentions attachments, but no files are attached.")),
+					dom.label(ui("Attachments "), attachments=dom.input(attr.type('file'), attr.multiple(''), function change() { checkAttachments() })),
 					dom.label(
-						attr.title('How to use TLS for message delivery over SMTP:\n\nDefault: Delivery attempts follow the policies published by the recipient domain: Verification with MTA-STS and/or DANE, or optional opportunistic unverified STARTTLS if the domain does not specify a policy.\n\nWith RequireTLS: For sensitive messages, you may want to require verified TLS. The recipient destination domain SMTP server must support the REQUIRETLS SMTP extension for delivery to succeed. It is automatically chosen when the destination domain mail servers of all recipients are known to support it.\n\nFallback to insecure: If delivery fails due to MTA-STS and/or DANE policies specified by the recipient domain, and the content is not sensitive, you may choose to ignore the recipient domain TLS policies so delivery can succeed.'),
-						'TLS ',
+						attr.title(ui("How to use TLS for message delivery over SMTP:\n\nDefault: Delivery attempts follow the policies published by the recipient domain: Verification with MTA-STS and/or DANE, or optional opportunistic unverified STARTTLS if the domain does not specify a policy.\n\nWith RequireTLS: For sensitive messages, you may want to require verified TLS. The recipient destination domain SMTP server must support the REQUIRETLS SMTP extension for delivery to succeed. It is automatically chosen when the destination domain mail servers of all recipients are known to support it.\n\nFallback to insecure: If delivery fails due to MTA-STS and/or DANE policies specified by the recipient domain, and the content is not sensitive, you may choose to ignore the recipient domain TLS policies so delivery can succeed.")),
+						ui("TLS "),
 						requiretls=dom.select(
-							dom.option(attr.value(''), 'Default'),
-							dom.option(attr.value('yes'), 'With RequireTLS'),
-							dom.option(attr.value('no'), 'Fallback to insecure'),
+							dom.option(attr.value(''), ui("Default")),
+							dom.option(attr.value('yes'), ui("With RequireTLS")),
+							dom.option(attr.value('no'), ui("Fallback to insecure")),
 						),
 					),
 					dom.div(
-						scheduleLink=dom.a(attr.href(''), 'Schedule', function click(e: MouseEvent) {
+						scheduleLink=dom.a(attr.href(''), ui('Schedule'), function click(e: MouseEvent) {
 							e.preventDefault()
 							scheduleTime.value = localdatetime(new Date())
 							scheduleTimeChanged()
@@ -2561,31 +2700,31 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 						scheduleElem=dom.div(
 							style({display: 'none'}),
 							dom.div(dom._class('composeSchedulePresets'),
-								dom.clickbutton('Start of next day', function click(e: MouseEvent) {
+								dom.clickbutton(ui("Start of next day"), function click(e: MouseEvent) {
 									e.preventDefault()
 									const d = new Date(scheduleTime.value)
 									const nextday = new Date(d.getTime() + 24*3600*1000)
 									scheduleTime.value = localdate(nextday) + 'T09:00:00'
 									scheduleTimeChanged()
 								}),
-								dom.clickbutton('+1 hour', function click(e: MouseEvent) {
+								dom.clickbutton(ui("+1 hour"), function click(e: MouseEvent) {
 									e.preventDefault()
 									const d = new Date(scheduleTime.value)
 									scheduleTime.value = localdatetime(new Date(d.getTime() + 3600*1000))
 									scheduleTimeChanged()
 								}),
-								dom.clickbutton('+1 day', function click(e: MouseEvent) {
+								dom.clickbutton(ui("+1 day"), function click(e: MouseEvent) {
 									e.preventDefault()
 									const d = new Date(scheduleTime.value)
 									scheduleTime.value = localdatetime(new Date(d.getTime() + 24*3600*1000))
 									scheduleTimeChanged()
 								}),
-								dom.clickbutton('Now', function click(e: MouseEvent) {
+								dom.clickbutton(ui("Now"), function click(e: MouseEvent) {
 									e.preventDefault()
 									scheduleTime.value = localdatetime(new Date())
 									scheduleTimeChanged()
 								}),
-								dom.clickbutton('Cancel', function click(e: MouseEvent) {
+								dom.clickbutton(ui("Cancel"), function click(e: MouseEvent) {
 									e.preventDefault()
 									scheduleLink.style.display = ''
 									scheduleElem.style.display = 'none'
@@ -2597,7 +2736,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 								scheduleTime=dom.input(attr.type('datetime-local'), function change() {
 									scheduleTimeChanged()
 								}),
-								' in local timezone ' + (Intl.DateTimeFormat().resolvedOptions().timeZone || '') + ', ',
+								ui(" in local timezone ") + (Intl.DateTimeFormat().resolvedOptions().timeZone || '') + ', ',
 								scheduleWeekday=dom.span(),
 							),
 						),
@@ -2605,8 +2744,8 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 				),
 			),
 			dom.div(dom._class('composeFooter'),
-				opts.responseMessageID && listMailboxes().find(mb => mb.Archive) ? dom.clickbutton('Send and archive', clickCmd(cmdSendArchive, shortcuts)) : [],
-				dom.submitbutton(dom._class('btnPrimary'), 'Send'),
+				opts.responseMessageID && listMailboxes().find(mb => mb.Archive) ? dom.clickbutton(ui("Send and archive"), clickCmd(cmdSendArchive, shortcuts)) : [],
+				dom.submitbutton(dom._class('btnPrimary'), ui("Send")),
 			),
 			async function submit(e: SubmitEvent) {
 				e.preventDefault()
@@ -2633,6 +2772,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 		replyToRow.style.display = 'none'
 	}
 
+	clearMoveUndo()
 	document.body.appendChild(composeElem)
 	if (toViews.length > 0 && !toViews[0].input.value) {
 		toViews[0].input.focus()
@@ -2656,7 +2796,7 @@ const composeDraft = async (mi: api.MessageItem, pm: api.ParsedMessage, listMail
 	const draftMailboxID = listMailboxes().find(mb => mb.Draft)?.ID
 
 	if (m.MailboxID !== draftMailboxID) {
-		throw new Error('only messages in draft mailbox can be edited')
+		throw new Error(ui("only messages in draft mailbox can be edited"))
 	}
 
 	// Compose based on message. Most information is available, we just need to find
@@ -2665,7 +2805,7 @@ const composeDraft = async (mi: api.MessageItem, pm: api.ParsedMessage, listMail
 	const env = mi.Envelope
 	let refMsgID = 0
 	if (env.InReplyTo) {
-		refMsgID = await withStatus('Looking up referenced message', client.MessageFindMessageID(env.InReplyTo))
+		refMsgID = await withStatus(ui("Looking up referenced message"), client.MessageFindMessageID(env.InReplyTo))
 	}
 
 	const isForward = !!env.Subject.match(/^\[?fwd?:/i) || !!env.Subject.match(/\(fwd\)[ \t]*$/i)
@@ -2704,16 +2844,16 @@ const labelsPopover = (e: MouseEvent, msgs: api.Message[], possibleLabels: possi
 						dom.input(
 							attr.type('checkbox'),
 							activeLabels.includes(l) ? attr.checked('') : [],
-							attr.title('Add/remove this label to the message(s), leaving other labels unchanged.'),
+							attr.title(ui("Add/remove this label to the message(s), leaving other labels unchanged.")),
 							async function change(e: Event) {
 								const input = e.target as HTMLInputElement
 								if (input.checked) {
-									await withStatus('Adding label', client.FlagsAdd(msgIDs, [l]), input)
+									await withStatus(ui("Adding label"), client.FlagsAdd(msgIDs, [l]), input)
 									if (!activeLabels.includes(l)) {
 										activeLabels.push(l)
 									}
 								} else {
-									await withStatus('Removing label', client.FlagsClear(msgIDs, [l]), input)
+									await withStatus(ui("Removing label"), client.FlagsClear(msgIDs, [l]), input)
 									const i = activeLabels.indexOf(l)
 									if (i >= 0) {
 										activeLabels.splice(i, 1)
@@ -2729,13 +2869,13 @@ const labelsPopover = (e: MouseEvent, msgs: api.Message[], possibleLabels: possi
 				dom.form(
 					async function submit(e: SubmitEvent) {
 						e.preventDefault()
-						await withStatus('Adding new label', client.FlagsAdd(msgIDs, [newlabel.value]), fieldsetnew)
+						await withStatus(ui("Adding new label"), client.FlagsAdd(msgIDs, [newlabel.value]), fieldsetnew)
 						remove()
 					},
 					fieldsetnew=dom.fieldset(
 						dom.div(style({display: 'flex', gap: '6px', flexWrap: 'wrap'}),
-							newlabel=dom.input(focusPlaceholder('new-label'), attr.required(''), style({flex: '1 1 8em', minWidth: 0}), attr.title('New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"\].')),
-							dom.submitbutton('Add new label', attr.title('Add this label to the message(s), leaving other labels unchanged.')),
+							newlabel=dom.input(focusPlaceholder(ui("new-label")), attr.required(''), style({flex: '1 1 8em', minWidth: 0}), attr.title('New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"\].')),
+							dom.submitbutton(ui("Add new label"), attr.title(ui("Add this label to the message(s), leaving other labels unchanged."))),
 						),
 					),
 				),
@@ -2754,12 +2894,13 @@ const movePopover = (e: MouseEvent, mailboxes: api.Mailbox[], msgs: api.Message[
 	const remove = menuPopover(e.target! as HTMLElement,
 		mailboxes.map(mb =>
 			dom.clickbutton(
-				mb.Name,
+				mailboxLabel(mb, mb.Name),
 				mb.ID === msgsMailboxID ? attr.disabled('') : [],
 				async function click() {
 					const moveMsgs = msgs.filter(m => m.MailboxID !== mb.ID)
 					const msgIDs = moveMsgs.map(m => m.ID)
-					await withStatus('Moving to mailbox', client.MessageMove(msgIDs, mb.ID, false))
+					await withStatus(ui("Moving to mailbox"), client.MessageMove(msgIDs, mb.ID, false))
+					offerMoveUndo(moveMsgs.map(m => ({ id: m.ID, mailboxID: m.MailboxID })))
 					if (moveMsgs.length === 1) {
 						await moveAskRuleset(moveMsgs[0].ID, moveMsgs[0].MailboxID, mb, mailboxes)
 					}
@@ -2783,7 +2924,7 @@ const moveAskRuleset = async (msgID: number, mbSrcID: number, mbDst: api.Mailbox
 		return
 	}
 
-	const [listID, msgFrom, isRemove, rcptTo, ruleset] = await withStatus('Checking rulesets', client.RulesetSuggestMove(msgID, mbSrc.ID, mbDst.ID))
+	const [listID, msgFrom, isRemove, rcptTo, ruleset] = await withStatus(ui("Checking rulesets"), client.RulesetSuggestMove(msgID, mbSrc.ID, mbDst.ID))
 	if (!ruleset) {
 		return
 	}
@@ -2796,30 +2937,30 @@ const moveAskRuleset = async (msgID: number, mbSrcID: number, mbDst: api.Mailbox
 				dom._class('dialogPanel'),
 				dom._class('confirmPanel'),
 				dom.div(dom._class('dialogHeader'),
-					dom.h1('Remove rule?'),
-					dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Close'), attr.title('Close without removing rule.'), function click() {
+					dom.h1(ui("Remove rule?")),
+					dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close without removing rule.")), function click() {
 						remove()
 					}),
 				),
 				dom.div(dom._class('dialogBody'),
-					dom.p('Would you like to remove the server-side rule that automatically delivers messages from ', what, ' to mailbox "', mbDst.Name, '"?'),
+					dom.p(ui("Would you like to remove the server-side rule that automatically delivers messages from "), what, ui(" to mailbox \""), mailboxLabel(mbDst, mbDst.Name), '"?'),
 					dom.div(dom._class('dialogActionsStack'),
-						dom.clickbutton("No, and don't ask again for ", what, async function click() {
-							await withStatus('Store ruleset response', client.RulesetMessageNever(rcptTo, listID, msgFrom, true))
+						dom.clickbutton(ui("No, and don't ask again for "), what, async function click() {
+							await withStatus(ui("Store ruleset response"), client.RulesetMessageNever(rcptTo, listID, msgFrom, true))
 							remove()
 						}),
-						dom.clickbutton("No, and don't ask again when moving messages out of \"", mbSrc.Name, '"', async function click() {
-							await withStatus('Store ruleset response', client.RulesetMailboxNever(mbSrc.ID, false))
+						dom.clickbutton(ui("No, and don't ask again when moving messages out of \""), mailboxLabel(mbSrc, mbSrc.Name), '"', async function click() {
+							await withStatus(ui("Store ruleset response"), client.RulesetMailboxNever(mbSrc.ID, false))
 							remove()
 						}),
 					),
 				),
 				dom.div(dom._class('dialogFooter'),
-					dom.clickbutton('Not now', function click() {
+					dom.clickbutton(ui("Not now"), function click() {
 						remove()
 					}),
-					dom.clickbutton(dom._class('btnPrimary'), 'Yes, remove rule', async function click() {
-						await withStatus('Remove ruleset', client.RulesetRemove(rcptTo, ruleset))
+					dom.clickbutton(dom._class('btnPrimary'), ui("Yes, remove rule"), async function click() {
+						await withStatus(ui("Remove ruleset"), client.RulesetRemove(rcptTo, ruleset))
 						remove()
 					}),
 				),
@@ -2832,30 +2973,30 @@ const moveAskRuleset = async (msgID: number, mbSrcID: number, mbDst: api.Mailbox
 			dom._class('dialogPanel'),
 			dom._class('confirmPanel'),
 			dom.div(dom._class('dialogHeader'),
-				dom.h1('Add rule?'),
-				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Close'), attr.title('Close without adding rule.'), function click() {
+				dom.h1(ui("Add rule?")),
+				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close without adding rule.")), function click() {
 					remove()
 				}),
 			),
 			dom.div(dom._class('dialogBody'),
-				dom.p('Would you like to create a server-side ruleset that automatically delivers future messages from ', what, ' to mailbox "', mbDst.Name, '"?'),
+				dom.p(ui("Would you like to create a server-side ruleset that automatically delivers future messages from "), what, ui(" to mailbox \""), mailboxLabel(mbDst, mbDst.Name), '"?'),
 				dom.div(dom._class('dialogActionsStack'),
-					dom.clickbutton("No, and don't ask again for ", what, async function click() {
-						await withStatus('Store ruleset response', client.RulesetMessageNever(rcptTo, listID, msgFrom, false))
+					dom.clickbutton(ui("No, and don't ask again for "), what, async function click() {
+						await withStatus(ui("Store ruleset response"), client.RulesetMessageNever(rcptTo, listID, msgFrom, false))
 						remove()
 					}),
-					dom.clickbutton("No, and don't ask again when moving messages to \"", mbDst.Name, '"', async function click() {
-						await withStatus('Store ruleset response', client.RulesetMailboxNever(mbDst.ID, true))
+					dom.clickbutton(ui("No, and don't ask again when moving messages to \""), mailboxLabel(mbDst, mbDst.Name), '"', async function click() {
+						await withStatus(ui("Store ruleset response"), client.RulesetMailboxNever(mbDst.ID, true))
 						remove()
 					}),
 				),
 			),
 			dom.div(dom._class('dialogFooter'),
-				dom.clickbutton('Not now', function click() {
+				dom.clickbutton(ui("Not now"), function click() {
 					remove()
 				}),
-				dom.clickbutton(dom._class('btnPrimary'), 'Yes, add rule', async function click() {
-					await withStatus('Add ruleset', client.RulesetAdd(rcptTo, ruleset))
+				dom.clickbutton(dom._class('btnPrimary'), ui("Yes, add rule"), async function click() {
+					await withStatus(ui("Add ruleset"), client.RulesetAdd(rcptTo, ruleset))
 					remove()
 				}),
 			),
@@ -2922,14 +3063,14 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 	const identityHeader: HTMLElement[] = []
 	if (!envelopeIdentity(mi.Envelope.From || []) && !envelopeIdentity(mi.Envelope.To || [])) {
 		if (envelopeIdentity(mi.Envelope.CC || [])) {
-			identityHeader.push(identityTag('cc', 'You are in the CC header'))
+			identityHeader.push(identityTag('cc', ui("You are in the CC header")))
 		}
 		if (envelopeIdentity(mi.Envelope.BCC || [])) {
-			identityHeader.push(identityTag('bcc', 'You are in the BCC header'))
+			identityHeader.push(identityTag('bcc', ui("You are in the BCC header")))
 		}
 		// todo: don't include this if this is a message to a mailing list, based on list-* headers.
 		if (identityHeader.length === 0) {
-			identityHeader.push(identityTag('-', 'You are not in any To, From, CC, BCC header. Could message to a mailing list or Bcc without Bcc message header.'))
+			identityHeader.push(identityTag('-', ui("You are not in any To, From, CC, BCC header. Could message to a mailing list or Bcc without Bcc message header.")))
 		}
 	}
 
@@ -2942,7 +3083,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 	}
 
 	const age = (date: Date): HTMLElement => {
-		const r = dom.span(dom._class('notooltip'), attr.title(date.toString()))
+		const r = dom.span(dom._class('notooltip'), attr.title(date.toLocaleString(uiLocale())))
 
 		const set = () => {
 			const nowSecs = new Date().getTime()/1000
@@ -2958,7 +3099,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 			const month = 30*day
 			const year = 365*day
 			const periods = [year, month, day, hour, minute]
-			const suffix = ['y', 'mo', 'd', 'h', 'min']
+			const suffix = [ui('y'), ui("mo"), ui("d"), ui("h"), ui("min")]
 			let s
 			let nextSecs = 0
 			for (let i = 0; i < periods.length; i++) {
@@ -2972,7 +3113,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 				}
 			}
 			if (t < 60) {
-				s = '<1min'
+				s = ui('<1min')
 				nextSecs = 60-t
 				// Prevent showing '-<1min' when browser and server have relatively small time drift of max 1 minute.
 				negative = ''
@@ -3085,7 +3226,8 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 		const mailboxtags: HTMLElement[] = []
 		const mailboxIDs = new Set<number>()
 		const addMailboxTag = (mb: api.Mailbox, isCollapsedKid: boolean) => {
-			let name = mb.Name
+			const full = mailboxLabel(mb, mb.Name)
+			let name = full
 			mailboxIDs.add(mb.ID)
 			if (name.length > 8+1+3+1+8+4) {
 				const t = name.split('/')
@@ -3100,7 +3242,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 			const e = dom.span(
 				css('msgItemMailbox', {padding: '2px 8px', marginLeft: '.15em', borderRadius: '20px', fontWeight: '600', fontSize: '11px', whiteSpace: 'nowrap', background: styles.accentSoft, color: styles.accent, border: '1px solid', borderColor: styles.borderColor}),
 				isCollapsedKid ? css('msgItemMailboxCollapsed', {background: styles.accentSoft, color: styles.colorMild}, true) : [],
-				name === mb.Name ? [] : attr.title(mb.Name),
+				name === full ? [] : attr.title(full),
 				name,
 			)
 			mailboxtags.push(e)
@@ -3115,7 +3257,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 				if (!mailboxIDs.has(m.MailboxID) && otherMailbox(m.MailboxID)) {
 					const mb = listMailboxes().find(mb => mb.ID === m.MailboxID)
 					if (!mb) {
-						throw new ConsistencyError('missing mailbox for message in thread')
+						throw new ConsistencyError(ui("missing mailbox for message in thread"))
 					}
 					addMailboxTag(mb, true)
 				}
@@ -3215,7 +3357,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 					e.stopPropagation() // Prevent selection.
 					if (settings.threading === api.ThreadMode.ThreadOn) {
 						// No await, we don't wait for the result.
-						withStatus('Saving thread expand/collapse', client.ThreadCollapse([msgitemView.messageitem.Message.ID], !msgitemView.collapsed))
+						withStatus(ui("Saving thread expand/collapse"), client.ThreadCollapse([msgitemView.messageitem.Message.ID], !msgitemView.collapsed))
 					}
 					if (msgitemView.collapsed) {
 						msglistView.threadExpand(msgitemView)
@@ -3229,21 +3371,21 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 			isRelevant() ? [] : css('msgItemNotRelevant', {opacity: '.4'}),
 			dom.div(dom._class('msgItemCell'), dom._class('msgItemFlags'),
 				dom.div(
-					css('msgItemFlagsSpread', {display: 'flex', justifyContent: 'space-between'}),
+					css('msgItemFlagsSpread', {display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px'}),
 					dom.div(flagList(msgitemView)),
 					!msgitemView.parent && msgitemView.kids.length > 0 && msgitemView.collapsed ?
-						dom.clickbutton('' + (1+msgitemView.descendants().length), attr.tabindex('-1'), attr.title('Expand thread.'), attr.arialabel('Expand thread.'), function click(e: MouseEvent) {
+						dom.clickbutton(dom._class('msgThreadToggle'), '' + (1+msgitemView.descendants().length), attr.tabindex('-1'), attr.title(ui("Expand thread.")), attr.arialabel(ui("Expand thread.")), function click(e: MouseEvent) {
 							e.stopPropagation() // Prevent selection.
 							if (settings.threading === api.ThreadMode.ThreadOn) {
-								withStatus('Saving thread expanded', client.ThreadCollapse([msgitemView.messageitem.Message.ID], false))
+								withStatus(ui("Saving thread expanded"), client.ThreadCollapse([msgitemView.messageitem.Message.ID], false))
 							}
 							msglistView.threadExpand(msgitemView)
 						}) : [],
 					!msgitemView.parent && msgitemView.kids.length > 0 && !msgitemView.collapsed ?
-						dom.clickbutton('-', style({width: '1em'}), attr.tabindex('-1'), attr.title('Collapse thread.'), attr.arialabel('Collapse thread.'), function click(e: MouseEvent) {
+						dom.clickbutton(dom._class('msgThreadToggle'), threadCollapseIcon(), attr.tabindex('-1'), attr.title(ui("Collapse thread.")), attr.arialabel(ui("Collapse thread.")), function click(e: MouseEvent) {
 							e.stopPropagation() // Prevent selection.
 							if (settings.threading === api.ThreadMode.ThreadOn) {
-								withStatus('Saving thread expanded', client.ThreadCollapse([msgitemView.messageitem.Message.ID], true))
+								withStatus(ui("Saving thread expanded"), client.ThreadCollapse([msgitemView.messageitem.Message.ID], true))
 							}
 							msglistView.threadCollapse(msgitemView)
 							msglistView.viewportEnsureMessages()
@@ -3252,6 +3394,23 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 			),
 			dom.div(dom._class('msgItemCell'), dom._class('msgItemMain'),
 				dom.div(dom._class('msgItemFromRow'),
+					dom.clickbutton(
+						dom._class('msgItemFlagBtn'),
+						mi.Message.Flagged ? dom._class('isOn') : [],
+						flagMarkIcon(mi.Message.Flagged),
+						attr.arialabel(mi.Message.Flagged ? 'Remove flag' : 'Flag message'),
+						attr.title(mi.Message.Flagged ? 'Remove flag.' : 'Flag message.'),
+						async function click(e: MouseEvent) {
+							e.preventDefault()
+							e.stopPropagation()
+							const id = mi.Message.ID
+							if (mi.Message.Flagged) {
+								await withStatus(ui("Removing flag"), client.FlagsClear([id], ['\\Flagged']))
+							} else {
+								await withStatus('Flagging', client.FlagsAdd([id], ['\\Flagged']))
+							}
+						},
+					),
 					dom.div(
 						dom._class('silenttitle'),
 						dom._class('msgItemFromText'),
@@ -3286,6 +3445,58 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 					) : []
 			),
 			dom.div(dom._class('msgItemCell'), dom._class('msgItemAge'), age(received())),
+			dom.div(dom._class('msgItemHoverActions'),
+					mi.Message.MailboxID === msglistView.mailboxes().find(box => box.Trash)?.ID ?
+						dom.clickbutton(dom._class('msgItemHoverIcon'), dom._class('msgItemHoverDanger'), strokeIcon(strokePaths.trash), attr.arialabel(ui("Delete")), attr.title(ui("Permanently delete message.")), async function click(e: MouseEvent) {
+							e.preventDefault()
+							e.stopPropagation()
+							if (msglistView.selected().includes(msgitemView)) {
+								await msglistView.cmdDelete()
+								return
+							}
+							if (!window.confirm(ui("Are you sure you want to permanently delete?"))) {
+								return
+							}
+							forgetMovedMessages([mi.Message.ID])
+							await withStatus(ui("Permanently deleting messages"), client.MessageDelete([mi.Message.ID]))
+						}) :
+						dom.clickbutton(dom._class('msgItemHoverIcon'), strokeIcon(strokePaths.trash), attr.arialabel(ui("Trash")), attr.title(ui("Move to the Trash mailbox.")), async function click(e: MouseEvent) {
+							e.preventDefault()
+							e.stopPropagation()
+							if (msglistView.selected().includes(msgitemView)) {
+								await msglistView.cmdTrash()
+								return
+							}
+							const mb = msglistView.mailboxes().find(box => box.Trash)
+							if (!mb) {
+								window.alert(ui("No mailbox configured for trash yet."))
+								return
+							}
+							if (mi.Message.MailboxID === mb.ID) {
+								return
+							}
+							await withStatus(ui("Moving to trash mailbox"), client.MessageMove([mi.Message.ID], mb.ID, true))
+							offerMoveUndo([{id: mi.Message.ID, mailboxID: mi.Message.MailboxID}])
+						}),
+					dom.clickbutton(dom._class('msgItemHoverIcon'), strokeIcon(strokePaths.archive), attr.arialabel(ui("Archive")), attr.title(ui("Move to the Archive mailbox.")), async function click(e: MouseEvent) {
+						e.preventDefault()
+						e.stopPropagation()
+						if (msglistView.selected().includes(msgitemView)) {
+							await msglistView.cmdArchive()
+							return
+						}
+						const mb = msglistView.mailboxes().find(box => box.Archive)
+						if (!mb) {
+							window.alert(ui("No mailbox configured for archiving yet."))
+							return
+						}
+						if (mi.Message.MailboxID === mb.ID) {
+							return
+						}
+						await withStatus(ui("Moving to archive mailbox"), client.MessageMove([mi.Message.ID], mb.ID, true))
+						offerMoveUndo([{id: mi.Message.ID, mailboxID: mi.Message.MailboxID}])
+					}),
+				),
 			function click(e: MouseEvent) {
 				e.preventDefault()
 				e.stopPropagation()
@@ -3421,14 +3632,23 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 
 			let prefix = `\n\n---- Forwarded Message ----\n`
 
-			const padspace = (s: string, size: number) => s + ' '.repeat(size-s.length)
+			const fields: [string, string[]][] = [
+				[ui("Subject:"), subject],
+				[ui("Date:"), date],
+				[ui("From:"), from],
+				[ui("Reply-To:"), replyTo],
+				[ui("To:"), to],
+				[ui("Cc:"), cc],
+			]
+			const labelWidth = fields.reduce((n, [k, l]) => l.length === 0 ? n : Math.max(n, k.length), 0)
+			const padspace = (s: string, size: number) => s + ' '.repeat(Math.max(0, size-s.length))
 			const add = (k: string, l: string[]) => {
 				if (l.length === 0) {
 					return
 				}
 				const last = l.length-1
 				l.map((v: string, i: number) => {
-					prefix += padspace(k, 10) + ' ' + v
+					prefix += padspace(k, labelWidth) + ' ' + v
 					if (i < last) {
 						prefix += ','
 					}
@@ -3436,12 +3656,9 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 					k = ''
 				})
 			}
-			add('Subject:', subject)
-			add('Date:', date)
-			add('From:', from)
-			add('Reply-To:', replyTo)
-			add('To:', to)
-			add('Cc:', cc)
+			for (const [k, l] of fields) {
+				add(k, l)
+			}
 
 			body = prefix+'\n'+body
 		} else {
@@ -3458,8 +3675,8 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 					const name = from.Name || formatEmail(from)
 					// If message did not have Date header, we'll get the Go zero value, with year 1. Use time received instead in that case.
 					const dt = mi.Envelope.Date.getFullYear() === 1 ?  m.Received : mi.Envelope.Date
-					const datetime = dt.toLocaleDateString(undefined, {weekday: "short", year: "numeric", month: "short", day: "numeric"}) + ' at ' + dt.toLocaleTimeString()
-					onWroteLine = 'On ' + datetime + ', ' + name + ' wrote:\n'
+					const datetime = dt.toLocaleString(uiLocale(), {weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit"})
+					onWroteLine = wroteLine(datetime, name)
 				}
 				body = '\n\n' + sig + '\n' + onWroteLine + body
 			}
@@ -3548,7 +3765,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 			path = pm.HTMLPath
 		}
 		if (!path) {
-			window.alert('Part not found.')
+			window.alert(ui("Part not found."))
 			return
 		}
 		window.open('msg/'+m.ID+'/viewtext/'+[0, ...path].join('.'), '_blank')
@@ -3587,7 +3804,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 	const fromAddressSettingsSave = async (mode: api.ViewMode) => {
 		const froms = mi.Envelope.From || []
 		if (froms.length === 1) {
-			await withStatus('Saving view mode settings for address', client.FromAddressSettingsSave({FromAddress: froms[0].User + "@" + (froms[0].Domain.Unicode || froms[0].Domain.ASCII), ViewMode: mode}))
+			await withStatus(ui("Saving view mode settings for address"), client.FromAddressSettingsSave({FromAddress: froms[0].User + "@" + (froms[0].Domain.Unicode || froms[0].Domain.ASCII), ViewMode: mode}))
 		}
 	}
 
@@ -3637,29 +3854,29 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 				dom._class('dialogPanel'),
 				dom._class('internalsPanel'),
 				dom.div(dom._class('dialogHeader'),
-					dom.h1('MIME internals'),
-					dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Close'), attr.title('Close internals.'), function click() {
+					dom.h1(ui("MIME internals")),
+					dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close internals.")), function click() {
 						remove()
 					}),
 				),
 				dom.div(dom._class('dialogBody'),
 					dom.div(dom._class('internalsColumns'),
 						dom.div(
-							dom.h2('Mime structure'),
+							dom.h2(ui("Mime structure")),
 							dom.ul(dom._class('internalsList'), mimepart(pm.Part)),
 						),
 						dom.div(
-							dom.h2('Message'),
+							dom.h2(ui("Message")),
 							dom.pre(dom._class('internalsPre'), JSON.stringify(m, undefined, '\t')),
 						),
 						dom.div(
-							dom.h2('Part'),
+							dom.h2(ui('Part')),
 							dom.pre(dom._class('internalsPre'), JSON.stringify(pm.Part, undefined, '\t')),
 						),
 					),
 				),
 				dom.div(dom._class('dialogFooter'),
-					dom.clickbutton('Close', function click() {
+					dom.clickbutton(ui("Close"), function click() {
 						remove()
 					}),
 				),
@@ -3713,7 +3930,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 
 	const msgmetaElem = dom.div(
 		css('msgmeta', {backgroundColor: styles.backgroundColorMild, borderBottom: '5px solid', borderBottomColor: ['white', 'black'], maxHeight: '90%', overflowY: 'auto'}),
-		attr.role('region'), attr.arialabel('Buttons and headers for message'),
+		attr.role('region'), attr.arialabel(ui("Buttons and headers for message")),
 		msgmobileSummaryElem=dom.div(dom._class('msgMobileSummary')),
 		msgbuttonElem=dom.div(),
 		dom.div(
@@ -3734,7 +3951,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 	)
 
 	const msgscrollElem = dom.div(dom._class('pad'), yscrollAutoStyle,
-		attr.role('region'), attr.arialabel('Message body'),
+		attr.role('region'), attr.arialabel(ui("Message body")),
 		css('msgscroll', {backgroundColor: styles.backgroundColor}),
 	)
 	const msgcontentElem = dom.div(
@@ -3745,89 +3962,54 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 	const draftMailboxID = listMailboxes().find(mb => mb.Draft)?.ID
 	let buttonPm: api.ParsedMessage | null = parsedMessageOpt || null
 
-	const mobileTrashBtn = () => m.MailboxID === trashMailboxID ?
-		dom.clickbutton('Delete', attr.title('Permanently delete message.'), clickCmd(msglistView.cmdDelete, shortcuts)) :
-		dom.clickbutton('Trash', attr.title('Move to the Trash mailbox.'), clickCmd(msglistView.cmdTrash, shortcuts))
+	const trashOrDeleteBtn = () => m.MailboxID === trashMailboxID ?
+		dom.clickbutton(ui("Delete"), attr.title(ui("Permanently delete message.")), clickCmd(msglistView.cmdDelete, shortcuts)) :
+		dom.clickbutton(ui("Trash"), attr.title(ui("Move to the Trash mailbox.")), clickCmd(msglistView.cmdTrash, shortcuts))
 
 	const moreActionsPopover = (ref: HTMLElement) => {
-		const mobileExtra = isMobile() ? [
-			m.MailboxID === draftMailboxID ? dom.clickbutton('Edit', attr.title('Continue editing this draft message.'), clickCmd(cmdComposeDraft, shortcuts)) : [],
-			dom.clickbutton('Junk', attr.title('Move to Junk mailbox.'), clickCmd(msglistView.cmdJunk, shortcuts)),
-			(!buttonPm || !buttonPm.ListReplyAddress) ? [] : dom.clickbutton('Reply to list', attr.title('Compose a reply to this mailing list.'), clickCmd(cmdReplyList, shortcuts)),
-			(mi.Envelope.To || []).length <= 1 && (mi.Envelope.CC || []).length === 0 && (mi.Envelope.BCC || []).length === 0 ? [] :
-				dom.clickbutton('Reply all', attr.title('Compose a reply to all participants of this message.'), clickCmd(cmdReplyAll, shortcuts)),
-			dom.clickbutton('Move to...', function click(e: MouseEvent) {
+		menuPopover(ref, [
+			(!buttonPm || !buttonPm.ListReplyAddress) ? [] : dom.clickbutton(ui("Reply to list"), attr.title(ui("Compose a reply to this mailing list.")), clickCmd(cmdReplyList, shortcuts)),
+			dom.clickbutton(ui("Junk"), attr.title(ui("Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages.")), clickCmd(msglistView.cmdJunk, shortcuts)),
+			dom.clickbutton(ui("Move to..."), function click(e: MouseEvent) {
 				movePopover(e, listMailboxes(), [m])
 			}),
-			dom.clickbutton('Labels...', function click(e: MouseEvent) {
+			dom.clickbutton(ui("Labels..."), function click(e: MouseEvent) {
 				labelsPopover(e, [m], possibleLabels)
 			}),
-		] : []
-		menuPopover(ref, [
-			...mobileExtra,
-			dom.clickbutton('Print', attr.title('Print message, opens in new tab and opens print dialog.'), clickCmd(cmdPrint, shortcuts)),
-			dom.clickbutton('Mark Not Junk', attr.title('Mark as not junk, causing this message to be used in spam classification of new incoming messages.'), clickCmd(msglistView.cmdMarkNotJunk, shortcuts)),
-			dom.clickbutton('Mark Read', clickCmd(msglistView.cmdMarkRead, shortcuts)),
-			dom.clickbutton('Mark Unread', clickCmd(msglistView.cmdMarkUnread, shortcuts)),
-			dom.clickbutton('Mute thread', clickCmd(msglistView.cmdMute, shortcuts)),
-			dom.clickbutton('Unmute thread', clickCmd(msglistView.cmdUnmute, shortcuts)),
-			dom.clickbutton('Open in new tab', clickCmd(cmdOpenNewTab, shortcuts)),
-			dom.clickbutton('Download raw original message', clickCmd(cmdDownloadRaw, shortcuts)),
-			dom.clickbutton('Export as ...', function click(e: {target: HTMLElement}) {
+			dom.clickbutton(ui("Print"), attr.title(ui("Print message, opens in new tab and opens print dialog.")), clickCmd(cmdPrint, shortcuts)),
+			dom.clickbutton(ui("Mark Not Junk"), attr.title(ui("Mark as not junk, causing this message to be used in spam classification of new incoming messages.")), clickCmd(msglistView.cmdMarkNotJunk, shortcuts)),
+			dom.clickbutton(ui("Mark Read"), clickCmd(msglistView.cmdMarkRead, shortcuts)),
+			dom.clickbutton(ui("Mark Unread"), clickCmd(msglistView.cmdMarkUnread, shortcuts)),
+			dom.clickbutton(ui("Mute thread"), clickCmd(msglistView.cmdMute, shortcuts)),
+			dom.clickbutton(ui("Unmute thread"), clickCmd(msglistView.cmdUnmute, shortcuts)),
+			dom.clickbutton(ui("Open in new tab"), clickCmd(cmdOpenNewTab, shortcuts)),
+			dom.clickbutton(ui("Download raw original message"), clickCmd(cmdDownloadRaw, shortcuts)),
+			dom.clickbutton(ui("Export as ..."), function click(e: {target: HTMLElement}) {
 				popoverExport(e.target, '', [m.ID])
 			}),
-			dom.clickbutton('Show raw original message in new tab', clickCmd(cmdOpenRaw, shortcuts)),
-			dom.clickbutton('Show currently displayed part as decoded text', clickCmd(cmdOpenRawPart, shortcuts)),
-			dom.clickbutton('Show internals in popup', clickCmd(cmdShowInternals, shortcuts)),
+			dom.clickbutton(ui("Show raw original message in new tab"), clickCmd(cmdOpenRaw, shortcuts)),
+			dom.clickbutton(ui("Show currently displayed part as decoded text"), clickCmd(cmdOpenRawPart, shortcuts)),
+			dom.clickbutton(ui("Show internals in popup"), clickCmd(cmdShowInternals, shortcuts)),
 		])
 	}
 
 	// Initially called with potentially null pm, once loaded called again with pm set.
 	const loadButtons = (pm: api.ParsedMessage | null) => {
 		buttonPm = pm
-		if (isMobile()) {
-			dom._kids(msgbuttonElem,
-				dom.div(dom._class('msgbuttonMobile'),
-					dom.div(dom._class('msgActionRow'),
-						m.MailboxID === draftMailboxID ? dom.clickbutton('Edit', attr.title('Continue editing this draft message.'), clickCmd(cmdComposeDraft, shortcuts)) : [],
-						(pm && pm.ListReplyAddress && formatEmail(pm.ListReplyAddress) === fromAddress) ? [] : dom.clickbutton('Reply', attr.title('Compose a reply to the sender of this message.'), clickCmd(cmdReply, shortcuts)),
-						dom.clickbutton('Forward', attr.title('Compose a forwarding message, optionally including attachments.'), clickCmd(cmdForward, shortcuts)),
-						dom.clickbutton('Archive', attr.title('Move to the Archive mailbox.'), clickCmd(msglistView.cmdArchive, shortcuts)),
-						mobileTrashBtn(),
-						dom.clickbutton('More', attr.title('More actions.'), function click(e: MouseEvent) {
-							moreActionsPopover(e.target! as HTMLElement)
-						}),
-					),
-				),
-			)
-			return
-		}
-		const desktopTrashBtn = m.MailboxID === trashMailboxID ?
-			dom.clickbutton('Delete', attr.title('Permanently delete message.'), clickCmd(msglistView.cmdDelete, shortcuts)) :
-			dom.clickbutton('Trash', attr.title('Move to the Trash mailbox.'), clickCmd(msglistView.cmdTrash, shortcuts))
+		const oneRecipient = (mi.Envelope.To || []).length <= 1 && (mi.Envelope.CC || []).length === 0 && (mi.Envelope.BCC || []).length === 0
+		const row = dom.div(dom._class('msgActionRow'),
+			m.MailboxID === draftMailboxID ? dom.clickbutton(ui("Edit"), attr.title(ui("Continue editing this draft message.")), clickCmd(cmdComposeDraft, shortcuts)) : [],
+			(pm && pm.ListReplyAddress && formatEmail(pm.ListReplyAddress) === fromAddress) ? [] : dom.clickbutton(ui("Reply"), attr.title(ui("Compose a reply to the sender of this message.")), clickCmd(cmdReply, shortcuts)),
+			oneRecipient ? [] : dom.clickbutton(ui("Reply all"), attr.title(ui("Compose a reply to all participants of this message.")), clickCmd(cmdReplyAll, shortcuts)),
+			dom.clickbutton(ui("Forward"), attr.title(ui("Compose a forwarding message, optionally including attachments.")), clickCmd(cmdForward, shortcuts)),
+			trashOrDeleteBtn(),
+			dom.clickbutton(ui("Archive"), attr.title(ui("Move to the Archive mailbox.")), clickCmd(msglistView.cmdArchive, shortcuts)),
+			dom.clickbutton(ui("More"), attr.title(ui("More actions.")), function click(e: MouseEvent) {
+				moreActionsPopover(e.target! as HTMLElement)
+			}),
+		)
 		dom._kids(msgbuttonElem,
-			dom.div(dom._class('msgbuttonScroll'),
-				dom.div(dom._class('msgActionRow'),
-					m.MailboxID === draftMailboxID ? dom.clickbutton('Edit', attr.title('Continue editing this draft message.'), clickCmd(cmdComposeDraft, shortcuts)) : [],
-					(!pm || !pm.ListReplyAddress) ? [] : dom.clickbutton('Reply to list', attr.title('Compose a reply to this mailing list.'), clickCmd(cmdReplyList, shortcuts)),
-					(pm && pm.ListReplyAddress && formatEmail(pm.ListReplyAddress) === fromAddress) ? [] : dom.clickbutton('Reply', attr.title('Compose a reply to the sender of this message.'), clickCmd(cmdReply, shortcuts)),
-					(mi.Envelope.To || []).length <= 1 && (mi.Envelope.CC || []).length === 0 && (mi.Envelope.BCC || []).length === 0 ? [] :
-						dom.clickbutton('Reply all', attr.title('Compose a reply to all participants of this message.'), clickCmd(cmdReplyAll, shortcuts)),
-					dom.clickbutton('Forward', attr.title('Compose a forwarding message, optionally including attachments.'), clickCmd(cmdForward, shortcuts)),
-					dom.clickbutton('Archive', attr.title('Move to the Archive mailbox.'), clickCmd(msglistView.cmdArchive, shortcuts)),
-					desktopTrashBtn,
-					dom.clickbutton('Junk', attr.title('Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages.'), clickCmd(msglistView.cmdJunk, shortcuts)),
-					dom.clickbutton('Move to...', function click(e: MouseEvent) {
-						movePopover(e, listMailboxes(), [m])
-					}),
-					dom.clickbutton('Labels...', attr.title('Add/remove labels.'), function click(e: MouseEvent) {
-						labelsPopover(e, [m], possibleLabels)
-					}),
-					dom.clickbutton('More...', attr.title('Show more actions.'), function click(e: MouseEvent) {
-						moreActionsPopover(e.target! as HTMLElement)
-					}),
-				),
-			),
+			isMobile() ? dom.div(dom._class('msgbuttonMobile'), row) : dom.div(dom._class('msgbuttonScroll'), row),
 		)
 	}
 	loadButtons(parsedMessageOpt || null)
@@ -3842,7 +4024,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 
 	const recipientsShort = (addrs: api.MessageAddress[]) => {
 		if (addrs.length === 0) {
-			return 'undisclosed recipients'
+			return ui('undisclosed recipients')
 		}
 		const names = addrs.map(recipientLabel)
 		if (names.length <= 2) {
@@ -3859,26 +4041,26 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 		const msgenv = mi.Envelope
 		const received = mi.Message.Received
 		const receivedlocal = new Date(received.getTime())
-		const dateStr = receivedlocal.toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) + ' ' + receivedlocal.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})
+		const dateStr = receivedlocal.toLocaleDateString(uiLocale(), {month: 'short', day: 'numeric'}) + ' ' + receivedlocal.toLocaleTimeString(uiLocale(), {hour: '2-digit', minute: '2-digit'})
 		const from = (msgenv.From || [])[0]
-		const fromStr = from ? formatAddressShort(from, false) : '(unknown sender)'
-		let toLine = 'To: ' + recipientsShort(msgenv.To || [])
+		const fromStr = from ? formatAddressShort(from, false) : ui('(unknown sender)')
+		let toLine = ui('To: ') + recipientsShort(msgenv.To || [])
 		const cc = msgenv.CC || []
 		if (cc.length > 0) {
-			toLine += ' · Cc: ' + recipientsShort(cc)
+			toLine += ui(' · Cc: ') + recipientsShort(cc)
 		}
 		const chips: HTMLElement[] = []
 		if (mi.Message.IsForward) {
-			chips.push(dom.span(dom._class('msgMobileSummaryChip'), 'Forwarded'))
+			chips.push(dom.span(dom._class('msgMobileSummaryChip'), ui("Forwarded")))
 		}
 		if (mi.Message.IsMailingList) {
-			chips.push(dom.span(dom._class('msgMobileSummaryChip'), 'Mailing list'))
+			chips.push(dom.span(dom._class('msgMobileSummaryChip'), ui("Mailing list")))
 		}
 		if (mi.IsSigned) {
-			chips.push(dom.span(dom._class('msgMobileSummaryChip'), 'Signed'))
+			chips.push(dom.span(dom._class('msgMobileSummaryChip'), ui('Signed')))
 		}
 		if (mi.IsEncrypted) {
-			chips.push(dom.span(dom._class('msgMobileSummaryChip'), 'Encrypted'))
+			chips.push(dom.span(dom._class('msgMobileSummaryChip'), ui('Encrypted')))
 		}
 		if (refineKeyword) {
 			for (const kw of mi.Message.Keywords || []) {
@@ -3896,7 +4078,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 				dom.div(dom._class('msgMobileSummaryFrom'), fromStr),
 				dom.div(
 					dom._class('msgMobileSummaryDate'),
-					attr.title('Received: ' + received.toString() + ';\nDate header in message: ' + (msgenv.Date ? msgenv.Date.toString() : '(missing/invalid)')),
+					attr.title(ui("Received: ") + received.toString() + ';\n' + ui('Date header in message: ') + (msgenv.Date ? msgenv.Date.toString() : ui('(missing/invalid)'))),
 					dateStr,
 				),
 			),
@@ -3904,7 +4086,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 				dom.span(dom._class('msgMobileSummaryTo'), toLine),
 				dom.clickbutton(
 					dom._class('msgMobileDetailsToggle'),
-					msgheaderDetailsExpanded ? 'Less' : 'Details',
+					msgheaderDetailsExpanded ? ui('Less') : ui('Details'),
 					attr.title(msgheaderDetailsExpanded ? 'Hide full headers.' : 'Show full headers.'),
 					function click() {
 						msgheaderDetailsExpanded = !msgheaderDetailsExpanded
@@ -4007,7 +4189,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 				css('attachmentsPrevious', {position: 'absolute', left: '1em', top: 0, bottom: 0, fontSize: '1.5em', width: '2em', display: 'flex', alignItems: 'center', cursor: 'pointer'}),
 				dom.div(dom._class('silenttitle'),
 					attachmentsArrowStyle,
-					attr.title('To previous viewable attachment.'),
+					attr.title(ui("To previous viewable attachment.")),
 					'←',
 				),
 				attr.tabindex('0'),
@@ -4037,13 +4219,13 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 				) : (
 					isText(a) ?
 						dom.iframe(
-							attr.title('Attachment shown as text.'),
+							attr.title(ui("Attachment shown as text.")),
 							attachmentsIframeStyle,
 							attr.src('msg/'+m.ID+'/viewtext/'+pathStr)
 						) : (
 							isPDF(a) ?
 								dom.iframe(
-									attr.title('Attachment as PDF.'),
+									attr.title(ui("Attachment as PDF.")),
 									attachmentsIframeStyle,
 									attr.src('msg/'+m.ID+'/view/'+pathStr)
 								) :
@@ -4052,11 +4234,11 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 										e.stopPropagation()
 									},
 									css('attachmentsBinary', {minWidth: '30em', padding: '2ex', boxShadow: styles.boxShadow, backgroundColor: styles.popupBackgroundColor, margin: '0 5em', textAlign: 'center'}),
-									dom.div(style({marginBottom: '2ex'}), 'Attachment could be a binary file.'),
-									dom.clickbutton('View as text', function click() {
+									dom.div(style({marginBottom: '2ex'}), ui("Attachment could be a binary file.")),
+									dom.clickbutton(ui("View as text"), function click() {
 										content.replaceWith(
 											dom.iframe(
-												attr.title('Attachment shown as text, though it could be a binary file.'),
+												attr.title(ui("Attachment shown as text, though it could be a binary file.")),
 												attachmentsIframeStyle,
 												attr.src('msg/'+m.ID+'/viewtext/'+pathStr)
 											)
@@ -4069,7 +4251,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 				css('attachmentsNext', {position: 'absolute', right: '1em', top: 0, bottom: 0, fontSize: '1.5em', width: '2em', display: 'flex', alignItems: 'center', cursor: 'pointer'}),
 				dom.div(dom._class('silenttitle'),
 					attachmentsArrowStyle,
-					attr.title('To next viewable attachment.'),
+					attr.title(ui("To next viewable attachment.")),
 					'→',
 				),
 				attr.tabindex('0'),
@@ -4089,7 +4271,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 			(l && l.length === 0) ? [] : dom.div(
 				css('inlineAttachmentsSeparator', {borderTop: '1px solid', borderTopColor: styles.borderColor}),
 				dom.div(dom._class('pad'), dom._class('inlineAttachmentsLine'),
-					'Attachments: ',
+					ui("Attachments: "),
 					l.slice(0, filesAll ? l.length : 4).map(a => {
 						const name = a.Filename || '(unnamed)'
 						const viewable = isViewable(a)
@@ -4097,17 +4279,17 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 						const eye = '👁'
 						const dl = '⤓' // \u2913, actually ⭳ \u2b73 would be better, but in fewer fonts (at least macos)
 						const dlurl = 'msg/'+m.ID+'/download/'+[0].concat(a.Path || []).join('.')
-						const viewbtn = dom.clickbutton(eye, viewable ? ' '+new String(name) : [], attr.title('View this file. Size: '+size), function click() {
+						const viewbtn = dom.clickbutton(eye, viewable ? ' '+new String(name) : [], attr.title(ui("View this file. Size: ")+size), function click() {
 							view(a)
 						})
-						const dlbtn = dom.a(dom._class('button'), attr.download(''), attr.href(dlurl), dl, viewable ? [] : ' '+new String(name), attr.title('Download this file. Size: '+size))
+						const dlbtn = dom.a(dom._class('button'), attr.download(''), attr.href(dlurl), dl, viewable ? [] : ' '+new String(name), attr.title(ui("Download this file. Size: ")+size))
 						return dom.span(dom._class('btngroup'), urlType === 'text' && isImage(a) ? style({opacity: '.6'}) : [], viewbtn, dlbtn)
 					}),
-					filesAll || l.length < 6 ? [] : dom.clickbutton('More...', function click() {
+					filesAll || l.length < 6 ? [] : dom.clickbutton(ui("More..."), function click() {
 						filesAll = true
 						renderAttachments()
 					}), ' ',
-					dom.a('Download all as zip', attr.download(''), style({color: 'inherit'}), attr.href('msg/'+m.ID+'/attachments.zip')),
+					dom.a(ui("Download all as zip"), attr.download(''), style({color: 'inherit'}), attr.href('msg/'+m.ID+'/attachments.zip')),
 				),
 			)
 		)
@@ -4149,7 +4331,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 		dom._kids(msgcontentElem,
 			dom.iframe(
 				attr.tabindex('0'),
-				attr.title('HTML version of message with images inlined, without external resources loaded.'),
+				attr.title(ui("HTML version of message with images inlined, without external resources loaded.")),
 				attr.src('msg/'+m.ID+'/'+urlType),
 				css('msgIframeHTML', {position: 'absolute', width: '100%', height: '100%'}),
 			)
@@ -4161,7 +4343,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 		dom._kids(msgcontentElem,
 			dom.iframe(
 				attr.tabindex('0'),
-				attr.title('HTML version of message with images inlined and with external resources loaded.'),
+				attr.title(ui("HTML version of message with images inlined and with external resources loaded.")),
 				attr.src('msg/'+m.ID+'/'+urlType),
 				css('msgIframeHTML', {position: 'absolute', width: '100%', height: '100%'}),
 			)
@@ -4188,14 +4370,14 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 			pm = parsedMessageOpt
 			parsedMessageResolve(pm)
 		} else {
-			const promise = withStatus('Loading message', client.withOptions({aborter: mv.aborter}).ParsedMessage(m.ID))
+			const promise = withStatus(ui("Loading message"), client.withOptions({aborter: mv.aborter}).ParsedMessage(m.ID))
 			try {
 				pm = await promise
 			} catch (err) {
 				if (err instanceof Error) {
 					parsedMessageReject(err)
 				} else {
-					parsedMessageReject(new Error('fetching message failed'))
+					parsedMessageReject(new Error(ui("fetching message failed")))
 				}
 				throw err
 			}
@@ -4215,7 +4397,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 			dom._kids(msgmodeElem,
 				dom.div(dom._class('pad'),
 					msgHeaderSeparatorStyle,
-					dom.span('No textual content', msgModeWarningStyle),
+					dom.span(ui("No textual content"), msgModeWarningStyle),
 				),
 			)
 		} else if (haveText && !pm.HasHTML) {
@@ -4226,15 +4408,15 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 			dom._kids(msgmodeElem,
 				dom.div(dom._class('pad'), dom._class('msgModeBar'),
 					msgHeaderSeparatorStyle,
-					!haveText ? dom.span('HTML-only message', attr.title(htmlNote), msgModeWarningStyle) : [],
+					!haveText ? dom.span(ui("HTML-only message"), attr.title(htmlNote), msgModeWarningStyle) : [],
 					dom.span(dom._class('btngroup'),
-						haveText ? textbtn=dom.clickbutton(text ? dom._class('active') : [], 'Text', clickCmd(cmdShowText, shortcuts)) : [],
-						htmlbtn=dom.clickbutton(text || !text && pm.ViewMode == api.ViewMode.ModeHTMLExt ? [] : dom._class('active'), 'HTML', attr.title(htmlNote), async function click() {
+						haveText ? textbtn=dom.clickbutton(text ? dom._class('active') : [], ui("Text"), clickCmd(cmdShowText, shortcuts)) : [],
+						htmlbtn=dom.clickbutton(text || !text && pm.ViewMode == api.ViewMode.ModeHTMLExt ? [] : dom._class('active'), ui("HTML"), attr.title(htmlNote), async function click() {
 							// Shortcuts has a function that cycles through html and htmlexternal.
 							showShortcut('T')
 							await cmdShowHTML()
 						}),
-						htmlextbtn=dom.clickbutton(text || !text && pm.ViewMode != api.ViewMode.ModeHTMLExt ? [] : dom._class('active'), isMobile() ? 'HTML ext' : 'HTML with external resources', attr.title(htmlNote), clickCmd(cmdShowHTMLExternal, shortcuts)),
+						htmlextbtn=dom.clickbutton(text || !text && pm.ViewMode != api.ViewMode.ModeHTMLExt ? [] : dom._class('active'), isMobile() ? ui('HTML ext') : ui('HTML with external resources'), attr.title(htmlNote), clickCmd(cmdShowHTMLExternal, shortcuts)),
 					),
 				)
 			)
@@ -4271,7 +4453,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 		if (!miv.messageitem.Message.Seen) {
 			const tid = window.setTimeout(async () => {
 				if (!miv.messageitem.Message.Seen && miv.messageitem.Message.ID === msglistView.activeMessageID()) {
-					await withStatus('Marking current message as read', client.FlagsAdd([miv.messageitem.Message.ID], ['\\seen']))
+					await withStatus(ui("Marking current message as read"), client.FlagsAdd([miv.messageitem.Message.ID], ['\\seen']))
 				}
 				tidRemove(tid)
 			}, 500)
@@ -4281,7 +4463,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 			const tid = window.setTimeout(async () => {
 				const mailboxSpecial = () => !!listMailboxes().find(mb => mb.ID === miv.messageitem.Message.MailboxID && (mb.Name === rejectsMailbox || mb.Name == introboxMailbox))
 				if (!miv.messageitem.Message.Junk && !miv.messageitem.Message.Notjunk && miv.messageitem.Message.Seen && miv.messageitem.Message.ID === msglistView.activeMessageID() && !mailboxSpecial()) {
-					await withStatus('Marking current message as not junk', client.FlagsAdd([miv.messageitem.Message.ID], ['$notjunk']))
+					await withStatus(ui("Marking current message as not junk"), client.FlagsAdd([miv.messageitem.Message.ID], ['$notjunk']))
 				}
 				tidRemove(tid)
 			}, 5*1000)
@@ -4323,6 +4505,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 // query is opened.
 interface MsglistView {
 	root: HTMLElement
+	actionBar: HTMLElement
 
 	updateFlags: (mailboxID: number, uid: number, modseq: number, mask: api.Flags, flags: api.Flags, keywords: string[]) => void
 	addMessageItems: (messageItems: (api.MessageItem[] | null)[], isChange: boolean, requestMsgID: number) => void
@@ -4390,29 +4573,32 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 	// that are (already) in skipMBID. And we skip messages that are in the designated
 	// Sent mailbox, unless there is only one selected message or the view is for the
 	// Sent mailbox, then it must be intentional.
-	const moveActionMsgIDs = (skipMBID: number) => {
+	const moveActionSources = (skipMBID: number) => {
 		const sentMailboxID = listMailboxes().find(mb => mb.Sent)?.ID
 		const effselected = mlv.selected()
 		return effselected
 			.filter(miv => miv.messageitem.Message.MailboxID !== skipMBID)
 			.map(miv => miv.messageitem.Message)
 			.filter(m => effselected.length === 1 || !sentMailboxID || m.MailboxID !== sentMailboxID || !otherMailbox(sentMailboxID))
-			.map(m => m.ID)
+			.map(m => ({ id: m.ID, mailboxID: m.MailboxID }))
 	}
 
 	const cmdArchive = async () => {
 		const mb = listMailboxes().find(mb => mb.Archive)
 		if (mb) {
-			await withStatus('Moving to archive mailbox', client.MessageMove(moveActionMsgIDs(mb.ID), mb.ID, true))
+			const sources = moveActionSources(mb.ID)
+			await withStatus(ui("Moving to archive mailbox"), client.MessageMove(sources.map(s => s.id), mb.ID, true))
+			offerMoveUndo(sources)
 		} else {
-			window.alert('No mailbox configured for archiving yet.')
+			window.alert(ui("No mailbox configured for archiving yet."))
 		}
 	}
 	const cmdDelete = async () => {
-		if (!window.confirm('Are you sure you want to permanently delete?')) {
+		if (!window.confirm(ui("Are you sure you want to permanently delete?"))) {
 			return
 		}
 		const ids = mlv.selected().map(miv => miv.messageitem.Message.ID)
+		forgetMovedMessages(ids)
 		// Cancel pending timers that may mark these messages as read or non-junk, to
 		// prevent error messages about non-existent (removed) messages.
 		for (const id of ids) {
@@ -4421,30 +4607,34 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 			}
 			scheduledTimers.delete(id)
 		}
-		await withStatus('Permanently deleting messages', client.MessageDelete(ids))
+		await withStatus(ui("Permanently deleting messages"), client.MessageDelete(ids))
 	}
 	const cmdTrash = async () => {
 		const mb = listMailboxes().find(mb => mb.Trash)
 		if (mb) {
-			await withStatus('Moving to trash mailbox', client.MessageMove(moveActionMsgIDs(mb.ID), mb.ID, true))
+			const sources = moveActionSources(mb.ID)
+			await withStatus(ui("Moving to trash mailbox"), client.MessageMove(sources.map(s => s.id), mb.ID, true))
+			offerMoveUndo(sources)
 		} else {
-			window.alert('No mailbox configured for trash yet.')
+			window.alert(ui("No mailbox configured for trash yet."))
 		}
 	}
 	const cmdJunk = async () => {
 		const mb = listMailboxes().find(mb => mb.Junk)
 		if (mb) {
-			await withStatus('Moving to junk mailbox', client.MessageMove(moveActionMsgIDs(mb.ID), mb.ID, true))
+			const sources = moveActionSources(mb.ID)
+			await withStatus(ui("Moving to junk mailbox"), client.MessageMove(sources.map(s => s.id), mb.ID, true))
+			offerMoveUndo(sources)
 		} else {
-			window.alert('No mailbox configured for junk yet.')
+			window.alert(ui("No mailbox configured for junk yet."))
 		}
 	}
-	const cmdMarkNotJunk = async () => { await withStatus('Marking as not junk', client.FlagsAdd(mlv.selected().map(miv => miv.messageitem.Message.ID), ['$notjunk'])) }
-	const cmdMarkRead = async () => { await withStatus('Marking as read', client.FlagsAdd(mlv.selected().map(miv => miv.messageitem.Message.ID), ['\\seen'])) }
-	const cmdMarkUnread = async () => { await withStatus('Marking as not read', client.FlagsClear(mlv.selected().map(miv => miv.messageitem.Message.ID), ['\\seen', '$junk', '$notjunk'])) }
+	const cmdMarkNotJunk = async () => { await withStatus(ui("Marking as not junk"), client.FlagsAdd(mlv.selected().map(miv => miv.messageitem.Message.ID), ['$notjunk'])) }
+	const cmdMarkRead = async () => { await withStatus(ui("Marking as read"), client.FlagsAdd(mlv.selected().map(miv => miv.messageitem.Message.ID), ['\\seen'])) }
+	const cmdMarkUnread = async () => { await withStatus(ui("Marking as not read"), client.FlagsClear(mlv.selected().map(miv => miv.messageitem.Message.ID), ['\\seen', '$junk', '$notjunk'])) }
 	const cmdMute = async () => {
 		const l = mlv.selected()
-		await withStatus('Muting thread', client.ThreadMute(l.map(miv => miv.messageitem.Message.ID), true))
+		await withStatus(ui("Muting thread"), client.ThreadMute(l.map(miv => miv.messageitem.Message.ID), true))
 		const oldstate = state()
 		for (const miv of l) {
 			if (!miv.parent && miv.kids.length > 0 && !miv.collapsed) {
@@ -4454,7 +4644,7 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 		updateState(oldstate)
 		viewportEnsureMessages()
 	}
-	const cmdUnmute = async () => { await withStatus('Unmuting thread', client.ThreadMute(mlv.selected().map(miv => miv.messageitem.Message.ID), false)) }
+	const cmdUnmute = async () => { await withStatus(ui("Unmuting thread"), client.ThreadMute(mlv.selected().map(miv => miv.messageitem.Message.ID), false)) }
 
 	const selectedRoots = () => {
 		const mivs: MsgitemView[] = []
@@ -4469,7 +4659,7 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 
 	const cmdToggleMute = async () => {
 		if (settings.threading === api.ThreadMode.ThreadOff) {
-			alert('Toggle muting threads is only available when threading is enabled.')
+			alert(ui("Toggle muting threads is only available when threading is enabled."))
 			return
 		}
 		const rootmivs = selectedRoots()
@@ -4489,7 +4679,7 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 
 	const cmdToggleCollapse = async () => {
 		if (settings.threading === api.ThreadMode.ThreadOff) {
-			alert('Toggling thread collapse/expand is only available when threading is enabled.')
+			alert(ui("Toggling thread collapse/expand is only available when threading is enabled."))
 			return
 		}
 
@@ -4535,7 +4725,7 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 
 	const cmdCollapseExpand = async (collapse: boolean) => {
 		if (settings.threading === api.ThreadMode.ThreadOff) {
-			alert('Toggling thread collapse/expand is only available when threading is enabled.')
+			alert(ui("Toggling thread collapse/expand is only available when threading is enabled."))
 			return
 		}
 		const oldstate = state()
@@ -4698,6 +4888,49 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 		}
 		return {active: active, focus: focus}
 	}
+	const listActionBar = dom.div(
+		dom._class('msgListActionBar'),
+		attr.role('region'),
+		attr.arialabel('Actions for selected messages'),
+	)
+	const fillListActionBar = (rows: MsgitemView[]) => {
+		if (rows.length < 2) {
+			listActionBar.classList.remove('isOpen')
+			dom._kids(listActionBar)
+			return
+		}
+		const trashMailboxID = listMailboxes().find(mb => mb.Trash)?.ID
+		const allTrash = trashMailboxID && !rows.find(miv => miv.messageitem.Message.MailboxID !== trashMailboxID)
+		const sentMailboxID = listMailboxes().find(mb => mb.Sent)?.ID
+		const movable = rows.map(miv => miv.messageitem.Message).filter(m => rows.length === 1 || !sentMailboxID || m.MailboxID !== sentMailboxID || !otherMailbox(sentMailboxID))
+		listActionBar.classList.add('isOpen')
+		dom._kids(listActionBar,
+			dom.clickbutton(ui("Archive"), attr.title(ui("Move to the Archive mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdArchive, shortcuts)),
+			allTrash ?
+				dom.clickbutton(ui("Delete"), attr.title(ui("Permanently delete messages.")), clickCmd(cmdDelete, shortcuts)) :
+				dom.clickbutton(ui("Trash"), attr.title(ui("Move to the Trash mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdTrash, shortcuts)),
+			dom.clickbutton(ui("More"), attr.title(ui("More actions.")), function click(e: MouseEvent) {
+				menuPopover(e.target! as HTMLElement, [
+					dom.clickbutton(ui("Junk"), attr.title(ui("Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdJunk, shortcuts)),
+					dom.clickbutton(ui("Move to..."), function click(ev: MouseEvent) {
+						movePopover(ev, listMailboxes(), movable)
+					}),
+					dom.clickbutton(ui("Labels..."), attr.title(ui("Add/remove labels ...")), function click(ev: MouseEvent) {
+						labelsPopover(ev, rows.map(miv => miv.messageitem.Message), possibleLabels)
+					}),
+					dom.clickbutton(ui("Mark Read"), clickCmd(cmdMarkRead, shortcuts)),
+					dom.clickbutton(ui("Mark Unread"), clickCmd(cmdMarkUnread, shortcuts)),
+					dom.clickbutton(ui("Mark Not Junk"), attr.title(ui("Mark as not junk, causing this message to be used in spam classification of new incoming messages.")), clickCmd(cmdMarkNotJunk, shortcuts)),
+					dom.clickbutton(ui("Mute thread"), clickCmd(cmdMute, shortcuts)),
+					dom.clickbutton(ui("Unmute thread"), clickCmd(cmdUnmute, shortcuts)),
+					dom.clickbutton(ui("Export as..."), function click(ev: {target: HTMLElement}) {
+						popoverExport(ev.target, '', rows.map(miv => miv.messageitem.Message.ID))
+					}),
+				])
+			}),
+		)
+	}
+
 	const updateState = async (oldstate: state, initial?: boolean, parsedMessageOpt?: api.ParsedMessage): Promise<void> => {
 		// Set new focus & active classes.
 		const newstate = state()
@@ -4739,6 +4972,7 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 		}
 		msgView = null
 
+		fillListActionBar(effselected)
 		if (effselected.length === 0) {
 			dom._kids(msgElem)
 		} else if (effselected.length === 1) {
@@ -4747,48 +4981,17 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 			msgView = newMsgView(effselected[0], mlv, listMailboxes, setLocationHash, possibleLabels, loaded, refineKeyword, parsedMessageOpt)
 			dom._kids(msgElem, msgView)
 		} else {
-			const trashMailboxID = listMailboxes().find(mb => mb.Trash)?.ID
-			const allTrash = trashMailboxID && !effselected.find(miv => miv.messageitem.Message.MailboxID !== trashMailboxID)
 			dom._kids(msgElem,
 				dom.div(
-					attr.role('region'), attr.arialabel('Buttons for multiple messages'),
-					css('multimsgBg', {position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, display: 'flex', alignItems: 'center', justifyContent: 'center'}),
-					dom.div(
-						css('multimsgBox', {backgroundColor: styles.backgroundColorMild, border: '1px solid', borderColor: styles.borderColor, padding: '4ex', borderRadius: styles.radius, boxShadow: styles.shadowSm}),
-						dom.div(
-							style({textAlign: 'center', marginBottom: '4ex'}),
-							''+effselected.length+' messages selected',
-						),
-						dom.div(
-							dom._class('msgActionRow'),
-							dom.clickbutton('Archive', attr.title('Move to the Archive mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.'), clickCmd(cmdArchive, shortcuts)),
-							allTrash ?
-								dom.clickbutton('Delete', attr.title('Permanently delete messages.'), clickCmd(cmdDelete, shortcuts)) :
-								dom.clickbutton('Trash', attr.title('Move to the Trash mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.'), clickCmd(cmdTrash, shortcuts)),
-							dom.clickbutton('Junk', attr.title('Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.'), clickCmd(cmdJunk, shortcuts)),
-							dom.clickbutton('Move to...', function click(e: MouseEvent) {
-								const sentMailboxID = listMailboxes().find(mb => mb.Sent)?.ID
-								movePopover(e, listMailboxes(), effselected.map(miv => miv.messageitem.Message).filter(m => effselected.length === 1 || !sentMailboxID || m.MailboxID !== sentMailboxID || !otherMailbox(sentMailboxID)))
-							}),
-							dom.clickbutton('Labels...', attr.title('Add/remove labels ...'), function click(e: MouseEvent) {
-								labelsPopover(e, effselected.map(miv => miv.messageitem.Message), possibleLabels)
-							}),
-							dom.clickbutton('Mark Not Junk', attr.title('Mark as not junk, causing this message to be used in spam classification of new incoming messages.'), clickCmd(cmdMarkNotJunk, shortcuts)),
-							dom.clickbutton('Mark Read', clickCmd(cmdMarkRead, shortcuts)),
-							dom.clickbutton('Mark Unread', clickCmd(cmdMarkUnread, shortcuts)),
-							dom.clickbutton('Mute thread', clickCmd(cmdMute, shortcuts)),
-							dom.clickbutton('Unmute thread', clickCmd(cmdUnmute, shortcuts)),
-							dom.clickbutton('Export as...', function click(e: {target: HTMLElement}) {
-								popoverExport(e.target, '', effselected.map(miv => miv.messageitem.Message.ID))
-							}),
-						),
-					),
+					attr.role('region'), attr.arialabel(ui("Selected messages")),
+					css('msgSelectionNote', {padding: '2em', textAlign: 'center', color: styles.colorMild}),
+					''+effselected.length+' messages selected',
 				),
 			)
 		}
 		setLocationHash()
 		if (activeChanged && onMessagePane && isMobile()) {
-			onMessagePane(effselected.length > 0)
+			onMessagePane(effselected.length === 1)
 		}
 	}
 
@@ -5560,6 +5763,7 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 				// todo: could move focus to the nearest expanded message in this thread, if any?
 				return false
 			}
+			dismissMoveUndoUnless(parsedMessage.ID)
 			const oldstate = state()
 			focus = miv
 			selected = [miv]
@@ -5570,6 +5774,9 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 		click: (miv: MsgitemView, ctrl: boolean, shift: boolean) => {
 			if (msgitemViews.length === 0) {
 				return
+			}
+			if (!(selected.length === 1 && selected[0] === miv)) {
+				dismissMoveUndoUnless(miv.messageitem.Message.ID)
 			}
 
 			const oldstate = state()
@@ -5735,6 +5942,7 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 		threadToggle: threadToggle,
 		viewportEnsureMessages: viewportEnsureMessages,
 
+		actionBar: listActionBar,
 		cmdArchive: cmdArchive,
 		cmdTrash: cmdTrash,
 		cmdDelete: cmdDelete,
@@ -5776,7 +5984,7 @@ const popoverExport = (reference: HTMLElement, mailboxName: string, messageIDs: 
 	let archive: HTMLInputElement
 	let mboxbtn: HTMLButtonElement
 	const removeExport = popover(reference, {},
-		dom.h1('Export'),
+		dom.h1(ui('Export')),
 		dom.form(
 			function submit() {
 				// If we would remove the popup immediately, the form would be deleted too and never submitted.
@@ -5790,9 +5998,9 @@ const popoverExport = (reference: HTMLElement, mailboxName: string, messageIDs: 
 			archive=dom.input(attr.type('hidden'), attr.name('archive')),
 
 			dom.div(css('exportFields', {display: 'flex', flexDirection: 'column', gap: '.5ex'}),
-				mailboxName ? dom.div(dom.label(dom.input(attr.type('checkbox'), attr.name('recursive'), attr.value('on'), function change(e: {target: HTMLInputElement}) { mboxbtn.disabled = e.target.checked }), ' Recursive')) : [],
+				mailboxName ? dom.div(dom.label(dom.input(attr.type('checkbox'), attr.name('recursive'), attr.value('on'), function change(e: {target: HTMLInputElement}) { mboxbtn.disabled = e.target.checked }), ui(" Recursive"))) : [],
 				dom.div(
-					!mailboxName && !messageIDs ? 'Mbox ' : mboxbtn=dom.submitbutton('Mbox', attr.title('Export as mbox file, not wrapped in an archive.'), function click() {
+					!mailboxName && !messageIDs ? 'Mbox ' : mboxbtn=dom.submitbutton('Mbox', attr.title(ui("Export as mbox file, not wrapped in an archive.")), function click() {
 						format.value = 'mbox'
 						archive.value = 'none'
 					}), ' ',
@@ -5810,7 +6018,7 @@ const popoverExport = (reference: HTMLElement, mailboxName: string, messageIDs: 
 					}),
 				),
 				dom.div(
-					'Maildir ',
+					ui("Maildir "),
 					dom.submitbutton('zip', function click() {
 						format.value = 'maildir'
 						archive.value = 'zip'
@@ -5881,6 +6089,7 @@ const strokePaths = {
 	],
 	back: ['m12 19-7-7 7-7', 'M19 12H5'],
 	x: ['M18 6 6 18', 'm6 6 12 12'],
+	flag: ['M6 22V2.8a.8.8 0 0 1 1.17-.71l11.38 5.69a.8.8 0 0 1 0 1.44L6 15.5'],
 	plus: ['M5 12h14', 'M12 5v14'],
 	minus: ['M5 12h14'],
 	sun: [
@@ -5901,9 +6110,25 @@ const strokePaths = {
 		'm19 5-1.256 1.256',
 		'M20 12h2',
 	],
+	languages: [
+		'm5 8 6 6',
+		'm4 14 6-6 2-3',
+		'M2 5h12',
+		'M7 2h1',
+		'm22 22-5-10-5 10',
+		'M14 18h6',
+	],
+	chevronDown: ['m6 9 6 6 6-6'],
+	circleUser: ['M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662'],
+	user: ['M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2'],
+	info: ['M12 16v-4', 'M12 8h.01'],
+	bookOpen: ['M12 5v16', 'M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z'],
+	settings: ['M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915'],
+	logOut: ['m16 17 5-5-5-5', 'M21 12H9', 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'],
+	check: ['M20 6 9 17l-5-5'],
 }
 
-const strokeIcon = (paths: string[], circles?: Array<[string, string, string]>): SVGSVGElement => {
+const strokeIcon = (paths: string[], circles?: Array<[string, string, string]>, rects?: Array<{x: number, y: number, width: number, height: number, rx: number}>): SVGSVGElement => {
 	const ns = 'http://www.w3.org/2000/svg'
 	const svg = document.createElementNS(ns, 'svg')
 	svg.setAttribute('viewBox', '0 0 24 24')
@@ -5923,12 +6148,38 @@ const strokeIcon = (paths: string[], circles?: Array<[string, string, string]>):
 		circle.setAttribute('r', r)
 		svg.appendChild(circle)
 	}
+	for (const rect of rects || []) {
+		const el = document.createElementNS(ns, 'rect')
+		el.setAttribute('x', ''+rect.x)
+		el.setAttribute('y', ''+rect.y)
+		el.setAttribute('width', ''+rect.width)
+		el.setAttribute('height', ''+rect.height)
+		el.setAttribute('rx', ''+rect.rx)
+		svg.appendChild(el)
+	}
 	for (const d of paths) {
 		const path = document.createElementNS(ns, 'path')
 		path.setAttribute('d', d)
 		svg.appendChild(path)
 	}
 	return svg
+}
+
+const threadCollapseIcon = (): SVGSVGElement => {
+	const icon = strokeIcon(strokePaths.minus)
+	icon.setAttribute('width', '14')
+	icon.setAttribute('height', '14')
+	return icon
+}
+
+const flagMarkIcon = (on: boolean): SVGSVGElement => {
+	const icon = strokeIcon(strokePaths.flag)
+	const cloth = icon.querySelector('path')
+	if (on && cloth) {
+		cloth.setAttribute('fill', 'currentColor')
+		cloth.setAttribute('class', 'msgItemFlagCloth')
+	}
+	return icon
 }
 
 const mailboxStrokeIcon = (mb: api.Mailbox): SVGSVGElement => {
@@ -5956,6 +6207,36 @@ const mailboxStrokeIcon = (mb: api.Mailbox): SVGSVGElement => {
 const themeGlyph = (kind: 'sun' | 'moon' | 'auto'): SVGSVGElement => {
 	const svg = kind === 'sun' ? strokeIcon(strokePaths.sun, [['12', '12', '4']]) : kind === 'moon' ? strokeIcon(strokePaths.moon) : strokeIcon(strokePaths.sunMoon)
 	svg.classList.add('icon')
+	return svg
+}
+
+const langGlyph = (): SVGSVGElement => {
+	const svg = strokeIcon(strokePaths.languages)
+	svg.classList.add('icon')
+	return svg
+}
+
+const layoutGlyph = (id: 'leftright' | 'topbottom' | 'auto'): SVGSVGElement => {
+	const frame = {x: 3, y: 3, width: 18, height: 18, rx: 2}
+	let rects = [frame]
+	let paths: string[]
+	if (id === 'leftright') {
+		paths = ['M9 3v18']
+	} else if (id === 'topbottom') {
+		paths = ['M3 9h18']
+	} else {
+		rects = [{x: 2, y: 4, width: 20, height: 16, rx: 2}]
+		paths = ['M12 9v11', 'M2 9h13a2 2 0 0 1 2 2v9']
+	}
+	const svg = strokeIcon(paths, undefined, rects)
+	svg.classList.add('icon')
+	return svg
+}
+
+const navIcon = (paths: string[], circles?: Array<[string, string, string]>, extra?: string): SVGSVGElement => {
+	const svg = strokeIcon(paths, circles)
+	svg.classList.add('icon')
+	if (extra) svg.classList.add(extra)
 	return svg
 }
 
@@ -5990,12 +6271,12 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 		const trashmb = mailboxlistView.mailboxes().find(mb => mb.Trash)
 
 		const remove = menuPopover(actionBtn, [
-			dom.clickbutton('Mark as read', attr.title('Mark all messages in the mailbox and its sub mailboxes as read.'), async function click() {
+			dom.clickbutton(ui("Mark as read"), attr.title(ui("Mark all messages in the mailbox and its sub mailboxes as read.")), async function click() {
 				remove()
 				const mailboxIDs = [mbv.mailbox.ID, ...mailboxlistView.mailboxes().filter(mb => mb.Name.startsWith(mbv.mailbox.Name+'/')).map(mb => mb.ID)]
-				await withStatus('Marking mailboxes as read', client.MailboxesMarkRead(mailboxIDs))
+				await withStatus(ui("Marking mailboxes as read"), client.MailboxesMarkRead(mailboxIDs))
 			}),
-			dom.clickbutton('Create mailbox', attr.title('Create new mailbox within this mailbox.'), function click(e: MouseEvent) {
+			dom.clickbutton(ui("Create mailbox"), attr.title(ui("Create new mailbox within this mailbox.")), function click(e: MouseEvent) {
 				let fieldset: HTMLFieldSetElement
 				let name: HTMLInputElement
 				const ref = e.target! as HTMLElement
@@ -6003,48 +6284,48 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 					dom.form(
 						async function submit(e: SubmitEvent) {
 							e.preventDefault()
-							await withStatus('Creating mailbox', client.MailboxCreate(mbv.mailbox.Name + '/' + name.value), fieldset)
+							await withStatus(ui("Creating mailbox"), client.MailboxCreate(mbv.mailbox.Name + '/' + name.value), fieldset)
 							removeCreate()
 						},
 						fieldset=dom.fieldset(
 							dom.label(
-								'Name ',
+								ui("Name "),
 								name=dom.input(attr.required('yes')),
 							),
 							' ',
-							dom.submitbutton('Create'),
+							dom.submitbutton(ui("Create")),
 						),
 					),
 				)
 				remove()
 				name.focus()
 			}),
-			dom.clickbutton('Move to trash', attr.title('Move mailbox, its messages and its mailboxes to the trash.'), async function click() {
+			dom.clickbutton(ui("Move to trash"), attr.title(ui("Move mailbox, its messages and its mailboxes to the trash.")), async function click() {
 				if (!trashmb) {
-					window.alert('No mailbox configured for trash yet.')
+					window.alert(ui("No mailbox configured for trash yet."))
 					return
 				}
-				if (!window.confirm('Are you sure you want to move this mailbox, its messages and its mailboxes to the trash?')) {
-					return
-				}
-				remove()
-				await withStatus('Moving mailbox to trash', client.MailboxRename(mbv.mailbox.ID, trashmb.Name + '/' + mbv.mailbox.Name))
-			}),
-			dom.clickbutton('Delete mailbox', attr.title('Permanently delete this mailbox and all its messages.'), async function click() {
-				if (!window.confirm('Are you sure you want to permanently delete this mailbox and all its messages?')) {
+				if (!window.confirm(ui("Are you sure you want to move this mailbox, its messages and its mailboxes to the trash?"))) {
 					return
 				}
 				remove()
-				await withStatus('Deleting mailbox', client.MailboxDelete(mbv.mailbox.ID))
+				await withStatus(ui("Moving mailbox to trash"), client.MailboxRename(mbv.mailbox.ID, trashmb.Name + '/' + mbv.mailbox.Name))
 			}),
-			dom.clickbutton('Empty mailbox', attr.title('Remove all messages from the mailbox, but not mailboxes inside this mailbox or their messages.'), async function click() {
-				if (!window.confirm('Are you sure you want to empty this mailbox, permanently removing its messages? Mailboxes inside this mailbox are not affected.')) {
+			dom.clickbutton(ui("Delete mailbox"), attr.title(ui("Permanently delete this mailbox and all its messages.")), async function click() {
+				if (!window.confirm(ui("Are you sure you want to permanently delete this mailbox and all its messages?"))) {
 					return
 				}
 				remove()
-				await withStatus('Emptying mailbox', client.MailboxEmpty(mbv.mailbox.ID))
+				await withStatus(ui("Deleting mailbox"), client.MailboxDelete(mbv.mailbox.ID))
 			}),
-			dom.clickbutton('Rename mailbox', function click() {
+			dom.clickbutton(ui("Empty mailbox"), attr.title(ui("Remove all messages from the mailbox, but not mailboxes inside this mailbox or their messages.")), async function click() {
+				if (!window.confirm(ui("Are you sure you want to empty this mailbox, permanently removing its messages? Mailboxes inside this mailbox are not affected."))) {
+					return
+				}
+				remove()
+				await withStatus(ui("Emptying mailbox"), client.MailboxEmpty(mbv.mailbox.ID))
+			}),
+			dom.clickbutton(ui("Rename mailbox"), function click() {
 				remove()
 
 				let fieldset: HTMLFieldSetElement, name: HTMLInputElement
@@ -6053,39 +6334,39 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 					dom.form(
 						async function submit(e: SubmitEvent) {
 							e.preventDefault()
-							await withStatus('Renaming mailbox', client.MailboxRename(mbv.mailbox.ID, name.value), fieldset)
+							await withStatus(ui("Renaming mailbox"), client.MailboxRename(mbv.mailbox.ID, name.value), fieldset)
 							remove2()
 						},
 						fieldset=dom.fieldset(
 							dom.label(
-								'Name ',
+								ui("Name "),
 								name=dom.input(attr.required(''), attr.value(mbv.mailbox.Name), prop({selectionStart: 0, selectionEnd: mbv.mailbox.Name.length})),
 							),
 							' ',
-							dom.submitbutton('Rename'),
+							dom.submitbutton(ui("Rename")),
 						),
 					),
 				)
 				name.focus()
 			}),
-			dom.clickbutton('Set role for mailbox...', attr.title('Set a special-use role on the mailbox, making it the designated mailbox for either Archived, Sent, Draft, Trashed or Junk messages.'), async function click() {
+			dom.clickbutton(ui("Set role for mailbox..."), attr.title(ui("Set a special-use role on the mailbox, making it the designated mailbox for either Archived, Sent, Draft, Trashed or Junk messages.")), async function click() {
 				remove()
 
 				const setUse = async (set: (mb: api.Mailbox) => void) => {
 					const mb = {...mbv.mailbox}
 					mb.Archive = mb.Draft = mb.Junk = mb.Sent = mb.Trash = false
 					set(mb)
-					await withStatus('Marking mailbox as special use', client.MailboxSetSpecialUse(mb))
+					await withStatus(ui("Marking mailbox as special use"), client.MailboxSetSpecialUse(mb))
 				}
 				menuPopover(actionBtn, [
-					dom.clickbutton('Archive', async function click() { await setUse((mb: api.Mailbox) => { mb.Archive = true }) }),
-					dom.clickbutton('Draft', async function click() { await setUse((mb: api.Mailbox) => { mb.Draft = true }) }),
-					dom.clickbutton('Junk', async function click() { await setUse((mb: api.Mailbox) => { mb.Junk = true }) }),
-					dom.clickbutton('Sent', async function click() { await setUse((mb: api.Mailbox) => { mb.Sent = true }) }),
-					dom.clickbutton('Trash', async function click() { await setUse((mb: api.Mailbox) => { mb.Trash = true }) }),
+					dom.clickbutton(ui("Archive"), async function click() { await setUse((mb: api.Mailbox) => { mb.Archive = true }) }),
+					dom.clickbutton(ui("Draft"), async function click() { await setUse((mb: api.Mailbox) => { mb.Draft = true }) }),
+					dom.clickbutton(ui("Junk"), async function click() { await setUse((mb: api.Mailbox) => { mb.Junk = true }) }),
+					dom.clickbutton(ui("Sent"), async function click() { await setUse((mb: api.Mailbox) => { mb.Sent = true }) }),
+					dom.clickbutton(ui("Trash"), async function click() { await setUse((mb: api.Mailbox) => { mb.Trash = true }) }),
 				])
 			}),
-			dom.clickbutton('Export as...', function click() {
+			dom.clickbutton(ui("Export as..."), function click() {
 				popoverExport(actionBtn, mbv.mailbox.Name, null)
 				remove()
 			}),
@@ -6110,7 +6391,7 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 		async function keydown(e: KeyboardEvent) {
 			if (e.key === 'Enter') {
 				e.stopPropagation()
-				await withStatus('Opening mailbox', mbv.open(true))
+				await withStatus(ui("Opening mailbox"), mbv.open(true))
 			} else if (e.key === 'ArrowLeft') {
 				e.stopPropagation()
 				if (!mailboxlistView.mailboxLeaf(mbv)) {
@@ -6137,7 +6418,7 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 		},
 		async function click() {
 			mbv.root.focus()
-			await withStatus('Opening mailbox', mbv.open(true))
+			await withStatus(ui("Opening mailbox"), mbv.open(true))
 		},
 		function dragover(e: DragEvent) {
 			e.preventDefault()
@@ -6160,11 +6441,12 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 			mbv.root.classList.toggle('dropping', false)
 			const sentMailboxID = mailboxlistView.mailboxes().find(mb => mb.Sent)?.ID
 			const mailboxMsgIDs = JSON.parse(e.dataTransfer!.getData('application/vnd.mox.messages')) as number[][]
-			const msgIDs = mailboxMsgIDs
+			const moved = mailboxMsgIDs
 				.filter(mbMsgID => mbMsgID[0] !== xmb.ID)
 				.filter(mbMsgID => mailboxMsgIDs.length === 1 || !sentMailboxID || mbMsgID[0] !== sentMailboxID || !otherMailbox(sentMailboxID))
-				.map(mbMsgID => mbMsgID[1])
-			await withStatus('Moving to '+xmb.Name, client.MessageMove(msgIDs, xmb.ID, false))
+			const msgIDs = moved.map(mbMsgID => mbMsgID[1])
+			await withStatus(ui("Moving to ")+mailboxLabel(xmb, xmb.Name), client.MessageMove(msgIDs, xmb.ID, false))
+			offerMoveUndo(moved.map(mbMsgID => ({ id: mbMsgID[1], mailboxID: mbMsgID[0] })))
 			if (msgIDs.length === 1) {
 				const msgID = msgIDs[0]
 				const mbSrcID = mailboxMsgIDs.find(mbMsgID => mbMsgID[1] === msgID)![0]
@@ -6180,8 +6462,8 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 				actionBtn=dom.clickbutton(dom._class('mailboxHoverOnly'), dom._class('mailboxActionBtn'),
 					'…',
 					attr.tabindex('-1'), // Without, tab breaks because this disappears when mailbox loses focus.
-					attr.arialabel('Mailbox actions'),
-					attr.title('Actions on mailbox, like deleting, emptying, renaming.'),
+					attr.arialabel(ui("Mailbox actions")),
+					attr.title(ui("Actions on mailbox, like deleting, emptying, renaming.")),
 					function click(e: MouseEvent) {
 						e.stopPropagation()
 						cmdOpenActions()
@@ -6212,7 +6494,7 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 		}
 		dom._kids(mailboxIcon, mailboxStrokeIcon(mbv.mailbox))
 		mailboxIcon.style.marginLeft = mbv.parents > 0 ? (mbv.parents * 2 / 3) + 'em' : ''
-		dom._kids(name, dom.span(mbv.shortname, attr.title('Total messages: ' + ntotal), moreElems))
+		dom._kids(name, dom.span(mailboxLabel(mbv.mailbox, mbv.shortname), attr.title(ui("Total messages: ") + ntotal), moreElems))
 		if (nunread === 0) {
 			unread.classList.add('isEmpty')
 			unread.removeAttribute('title')
@@ -6221,8 +6503,8 @@ const newMailboxView = (xmb: api.Mailbox, mailboxlistView: MailboxlistView, othe
 		} else {
 			unread.classList.remove('isEmpty')
 			const label = nunread > 99 ? '99+' : ''+nunread
-			unread.setAttribute('title', nunread+' unread')
-			unread.setAttribute('aria-label', nunread+' unread')
+			unread.setAttribute('title', unreadTitle(nunread))
+			unread.setAttribute('aria-label', unreadTitle(nunread))
 			dom._kids(unread, label)
 		}
 	}
@@ -6394,19 +6676,19 @@ const newMailboxlistView = (msglistView: MsglistView, requestNewView: requestNew
 	const mailboxesElem = dom.div(dom._class('mailboxesList'))
 
 	dom._kids(root,
-		dom.div(dom._class('mailboxesRegion'), attr.role('region'), attr.arialabel('Mailboxes'),
+		dom.div(dom._class('mailboxesRegion'), attr.role('region'), attr.arialabel(ui('Mailboxes')),
 			dom.div(
 				dom._class('mailboxesHeader'),
-				dom.h1('Mailboxes', css('mailboxesTitle', {fontSize: '.8rem', textTransform: 'uppercase', letterSpacing: '.06em', color: styles.colorMilder, fontWeight: '600', padding: '0 .25em'})),
+				dom.h1(ui('Mailboxes'), css('mailboxesTitle', {fontSize: '.8rem', textTransform: 'uppercase', letterSpacing: '.06em', color: styles.colorMilder, fontWeight: '600', padding: '0 .25em'})),
 				dom.clickbutton(dom._class('btnCompact'), dom._class('mailboxActionBtn'),
 					'…',
-					attr.arialabel('Mailboxes actions'),
-					attr.title('Actions on mailboxes like creating a new mailbox or exporting all email.'),
+					attr.arialabel(ui("Mailboxes actions")),
+					attr.title(ui("Actions on mailboxes like creating a new mailbox or exporting all email.")),
 					function click(e: MouseEvent) {
 						e.stopPropagation()
 
 						const remove = menuPopover(e.target! as HTMLElement, [
-							dom.clickbutton('Create mailbox', attr.arialabel('Create new mailbox.'), attr.title('Create new mailbox.'), function click(e: MouseEvent) {
+							dom.clickbutton(ui("Create mailbox"), attr.arialabel(ui("Create new mailbox.")), attr.title(ui("Create new mailbox.")), function click(e: MouseEvent) {
 								let fieldset: HTMLFieldSetElement
 								let name: HTMLInputElement
 								const ref = e.target! as HTMLElement
@@ -6414,23 +6696,23 @@ const newMailboxlistView = (msglistView: MsglistView, requestNewView: requestNew
 									dom.form(
 										async function submit(e: SubmitEvent) {
 											e.preventDefault()
-											await withStatus('Creating mailbox', client.MailboxCreate(name.value), fieldset)
+											await withStatus(ui("Creating mailbox"), client.MailboxCreate(name.value), fieldset)
 											removeCreate()
 										},
 										fieldset=dom.fieldset(
 											dom.label(
-												'Name ',
+												ui("Name "),
 												name=dom.input(attr.required('yes'), focusPlaceholder('Lists/Go/Nuts')),
 											),
 											' ',
-											dom.submitbutton('Create'),
+											dom.submitbutton(ui("Create")),
 										),
 									),
 								)
 								remove()
 								name.focus()
 							}),
-							dom.clickbutton('Export as...', function click(e: MouseEvent) {
+							dom.clickbutton(ui("Export as..."), function click(e: MouseEvent) {
 								const ref = e.target! as HTMLElement
 								popoverExport(ref, '', null)
 								remove()
@@ -6482,7 +6764,7 @@ const newMailboxlistView = (msglistView: MsglistView, requestNewView: requestNew
 			setLocationHash()
 			const f = newFilter()
 			f.MailboxID = mbv.mailbox.ID
-			await withStatus('Requesting messages', requestNewView(true, f, newNotFilter()))
+			await withStatus(ui("Requesting messages"), requestNewView(true, f, newNotFilter()))
 		} else {
 			msglistView.clear()
 			setLocationHash()
@@ -6512,7 +6794,7 @@ const newMailboxlistView = (msglistView: MsglistView, requestNewView: requestNew
 			if (mbv) {
 				await openMailboxView(mbv, false, focus)
 			} else {
-				throw new Error('unknown mailbox')
+				throw new Error(ui("unknown mailbox"))
 			}
 		},
 
@@ -6821,13 +7103,13 @@ const newSearchView = (searchbarElem: HTMLInputElement, mailboxlistView: Mailbox
 		let key: HTMLInputElement, value: HTMLInputElement
 		const root = dom.div(
 			dom._class('searchHeaderRow'),
-			key=dom.input(focusPlaceholder('Header name'), changeHandlers),
-			value=dom.input(focusPlaceholder('Header value'), changeHandlers),
+			key=dom.input(focusPlaceholder(ui("Header name")), changeHandlers),
+			value=dom.input(focusPlaceholder(ui("Header value")), changeHandlers),
 			dom.div(dom._class('searchHeaderActions'),
-				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.plus), attr.arialabel('Add row for another header filter.'), attr.title('Add row for another header filter.'), function click() {
+				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.plus), attr.arialabel(ui("Add row for another header filter.")), attr.title(ui("Add row for another header filter.")), function click() {
 					addHeaderView()
 				}),
-				first ? [] : dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.minus), attr.arialabel('Remove row.'), attr.title('Remove row.'), function click() {
+				first ? [] : dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.minus), attr.arialabel(ui("Remove row.")), attr.title(ui("Remove row.")), function click() {
 					root.remove()
 					const index = headerViews.findIndex(v => v === hv)
 					headerViews.splice(index, 1)
@@ -6878,8 +7160,8 @@ const newSearchView = (searchbarElem: HTMLInputElement, mailboxlistView: Mailbox
 				e.stopPropagation()
 			},
 			dom.div(dom._class('dialogHeader'),
-				dom.h1('Search'),
-				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Close'), attr.title('Close search.'), function click() {
+				dom.h1(ui("Search")),
+				dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close search.")), function click() {
 					searchViewClose()
 				}),
 			),
@@ -6888,94 +7170,94 @@ const newSearchView = (searchbarElem: HTMLInputElement, mailboxlistView: Mailbox
 			dom.div(dom._class('dialogBody'),
 				dom.table(searchTableStyle,
 					dom.tr(
-						dom.td(dom.label('Mailbox', attr.for('searchMailbox')), attr.title('Filter by mailbox, including children of the mailbox.')),
+						dom.td(dom.label(ui("Mailbox"), attr.for('searchMailbox')), attr.title(ui("Filter by mailbox, including children of the mailbox."))),
 						dom.td(
 							mailbox=dom.select(attr.id('searchMailbox'), style({width: '100%'}),
-								dom.option('All mailboxes except Trash/Junk/Rejects', attr.value('-1')),
-								dom.option('All mailboxes', attr.value('0')),
+								dom.option(ui("All mailboxes except Trash/Junk/Rejects"), attr.value('-1')),
+								dom.option(ui("All mailboxes"), attr.value('0')),
 								changeHandlers,
 							),
 							dom.div(dom._class('searchMailboxKids'), dom.label(mailboxkids=dom.input(attr.type('checkbox'), changeHandlers), 'Also search in mailboxes below the selected mailbox.')),
 						),
 					),
 					dom.tr(
-						dom.td(dom.label('Text', attr.for('searchWords'))),
+						dom.td(dom.label(ui("Text"), attr.for('searchWords'))),
 						dom.td(
-							words=dom.input(attr.id('searchWords'), attr.title('Filter by text, case-insensitive, substring match, not necessarily whole words.'), focusPlaceholder('word "exact match" -notword'), style({width: '100%'}), changeHandlers),
+							words=dom.input(attr.id('searchWords'), attr.title(ui("Filter by text, case-insensitive, substring match, not necessarily whole words.")), focusPlaceholder('word "exact match" -notword'), style({width: '100%'}), changeHandlers),
 						),
 					),
 					dom.tr(
-						dom.td(dom.label('From', attr.for('searchFrom'))),
+						dom.td(dom.label(ui('From'), attr.for('searchFrom'))),
 						dom.td(
-							from=dom.input(attr.id('searchFrom'), style({width: '100%'}), focusPlaceholder('Address or name'), newAddressComplete(), changeHandlers)
+							from=dom.input(attr.id('searchFrom'), style({width: '100%'}), focusPlaceholder(ui("Address or name")), newAddressComplete(), changeHandlers)
 						),
 					),
 					dom.tr(
-						dom.td(dom.label('To', attr.for('searchTo')), attr.title('Search on addressee, including Cc and Bcc headers.')),
+						dom.td(dom.label(ui("To"), attr.for('searchTo')), attr.title(ui("Search on addressee, including Cc and Bcc headers."))),
 						dom.td(
-							to=dom.input(attr.id('searchTo'), focusPlaceholder('Address or name, also matches Cc and Bcc addresses'), style({width: '100%'}), newAddressComplete(), changeHandlers),
+							to=dom.input(attr.id('searchTo'), focusPlaceholder(ui("Address or name, also matches Cc and Bcc addresses")), style({width: '100%'}), newAddressComplete(), changeHandlers),
 						),
 					),
 					dom.tr(
-						dom.td(dom.label('Subject', attr.for('searchSubject'))),
+						dom.td(dom.label(ui('Subject'), attr.for('searchSubject'))),
 						dom.td(
-							subject=dom.input(attr.id('searchSubject'), style({width: '100%'}), focusPlaceholder('"exact match"'), changeHandlers)
+							subject=dom.input(attr.id('searchSubject'), style({width: '100%'}), focusPlaceholder(ui("\"exact match\"")), changeHandlers)
 						),
 					),
 					dom.tr(
-						dom.td('Received between', style({whiteSpace: 'nowrap'})),
+						dom.td(ui("Received between"), style({whiteSpace: 'nowrap'})),
 						dom.td(
 							dom.div(
 								dom._class('searchDateRow'),
 								oldestDate=dom.input(attr.type('date'), focusPlaceholder('2023-07-20'), changeHandlers),
 								oldestTime=dom.input(attr.type('time'), focusPlaceholder('23:10'), changeHandlers),
-								dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Clear start date.'), attr.title('Clear start date.'), function click() {
+								dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui("Clear start date.")), attr.title(ui("Clear start date.")), function click() {
 									oldestDate.value = ''
 									oldestTime.value = ''
 									updateSearchbar()
 								}),
-								dom.span('and'),
+								dom.span(ui('and')),
 								newestDate=dom.input(attr.type('date'), focusPlaceholder('2023-07-20'), changeHandlers),
 								newestTime=dom.input(attr.type('time'), focusPlaceholder('23:10'), changeHandlers),
-								dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Clear end date.'), attr.title('Clear end date.'), function click() {
+								dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui("Clear end date.")), attr.title(ui("Clear end date.")), function click() {
 									newestDate.value = ''
 									newestTime.value = ''
 									updateSearchbar()
 								}),
 							),
 							dom.div(dom._class('searchDatePresets'),
-								dom.clickbutton('1 day', function click() {
+								dom.clickbutton(ui('1 day'), function click() {
 									setPeriod(new Date(new Date().getTime() - 24*3600*1000))
 								}),
-								dom.clickbutton('1 week', function click() {
+								dom.clickbutton(ui('1 week'), function click() {
 									setPeriod(new Date(new Date().getTime() - 7*24*3600*1000))
 								}),
-								dom.clickbutton('1 month', function click() {
+								dom.clickbutton(ui('1 month'), function click() {
 									setPeriod(new Date(new Date().getTime() - 31*24*3600*1000))
 								}),
-								dom.clickbutton('1 year', function click() {
+								dom.clickbutton(ui('1 year'), function click() {
 									setPeriod(new Date(new Date().getTime() - 365*24*3600*1000))
 								}),
 							),
 						),
 					),
 					dom.tr(
-						dom.td('Attachments'),
+						dom.td(ui("Attachments")),
 						dom.td(
 							dom.div(dom._class('searchRadios'),
-								dom.label(attachmentNone=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('none'), attachmentHandlers), ' None'),
-								dom.label(attachmentAny=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('any'), attachmentHandlers), ' Any'),
-								dom.label(attachmentImage=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('image'), attachmentHandlers), ' Images'),
-								dom.label(attachmentPDF=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('pdf'), attachmentHandlers), ' PDFs'),
-								dom.label(attachmentArchive=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('archive'), attachmentHandlers), ' Archives'),
-								dom.label(attachmentSpreadsheet=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('spreadsheet'), attachmentHandlers), ' Spreadsheets'),
-								dom.label(attachmentDocument=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('document'), attachmentHandlers), ' Documents'),
-								dom.label(attachmentPresentation=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('presentation'), attachmentHandlers), ' Presentations'),
+								dom.label(attachmentNone=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('none'), attachmentHandlers), ui(" None")),
+								dom.label(attachmentAny=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('any'), attachmentHandlers), ui(" Any")),
+								dom.label(attachmentImage=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('image'), attachmentHandlers), ui(" Images")),
+								dom.label(attachmentPDF=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('pdf'), attachmentHandlers), ui(" PDFs")),
+								dom.label(attachmentArchive=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('archive'), attachmentHandlers), ui(" Archives")),
+								dom.label(attachmentSpreadsheet=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('spreadsheet'), attachmentHandlers), ui(" Spreadsheets")),
+								dom.label(attachmentDocument=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('document'), attachmentHandlers), ui(" Documents")),
+								dom.label(attachmentPresentation=dom.input(attr.type('radio'), attr.name('attachments'), attr.value('presentation'), attachmentHandlers), ui(" Presentations")),
 							),
 						),
 					),
 					dom.tr(
-						dom.td('Labels'),
+						dom.td(ui('Labels')),
 						dom.td(
 							dom.div(dom._class('searchKeywordButtons'),
 							join(flagViews=Object.entries({Read: '\\Seen', Replied: '\\Answered', Flagged: '\\Flagged', Deleted: '\\Deleted', Draft: '\\Draft', Forwarded: '$Forwarded', Junk: '$Junk', NotJunk: '$NotJunk', Phishing: '$Phishing', MDNSent: '$MDNSent'}).map(t => {
@@ -6983,7 +7265,7 @@ const newSearchView = (searchbarElem: HTMLInputElement, mailboxlistView: Mailbox
 								const v: FlagView = {
 									active: null,
 									flag: flag,
-									root: dom.clickbutton(name, function click() {
+									root: dom.clickbutton(ui(name), function click() {
 										if (v.active === null) {
 											v.active = true
 										} else if (v.active === true) {
@@ -7004,19 +7286,19 @@ const newSearchView = (searchbarElem: HTMLInputElement, mailboxlistView: Mailbox
 								return v
 							}), () => ' '),
 							),
-							labels=dom.input(focusPlaceholder('todo -done "-dashingname"'), attr.title('User-defined labels.'), changeHandlers),
+							labels=dom.input(focusPlaceholder('todo -done "-dashingname"'), attr.title(ui("User-defined labels.")), changeHandlers),
 						),
 					),
 					dom.tr(
-						dom.td('Headers'),
+						dom.td(ui('Headers')),
 						headersCell=dom.td(headerViews=[newHeaderView(true)]),
 					),
 					dom.tr(
-						dom.td('Size between'),
+						dom.td(ui("Size between")),
 						dom.td(
 							dom.div(dom._class('searchSizeRow'),
 								minsize=dom.input(focusPlaceholder('10kb'), changeHandlers),
-								dom.span('and'),
+								dom.span(ui('and')),
 								maxsize=dom.input(focusPlaceholder('1mb'), changeHandlers),
 							),
 						),
@@ -7024,11 +7306,11 @@ const newSearchView = (searchbarElem: HTMLInputElement, mailboxlistView: Mailbox
 				),
 			),
 			dom.div(dom._class('dialogFooter'),
-				dom.clickbutton('Cancel', function click(e: MouseEvent) {
+				dom.clickbutton(ui("Cancel"), function click(e: MouseEvent) {
 					e.preventDefault()
 					searchViewClose()
 				}),
-				dom.submitbutton(dom._class('btnPrimary'), 'Search'),
+				dom.submitbutton(dom._class('btnPrimary'), ui("Search")),
 			),
 			async function submit(e: SubmitEvent) {
 				e.preventDefault()
@@ -7053,9 +7335,9 @@ const newSearchView = (searchbarElem: HTMLInputElement, mailboxlistView: Mailbox
 			}
 			loaded = true
 			dom._kids(mailbox,
-				dom.option('All mailboxes except Trash/Junk/Rejects', attr.value('-1')),
-				dom.option('All mailboxes', attr.value('0')),
-				mailboxlistView.mailboxes().map(mb => dom.option(mb.Name, attr.value(''+mb.ID))),
+				dom.option(ui("All mailboxes except Trash/Junk/Rejects"), attr.value('-1')),
+				dom.option(ui("All mailboxes"), attr.value('0')),
+				mailboxlistView.mailboxes().map(mb => dom.option(mailboxLabel(mb, mb.Name), attr.value(''+mb.ID))),
 			)
 			searchView.updateForm()
 		},
@@ -7102,9 +7384,11 @@ type listMailboxes = () => api.Mailbox[]
 
 const init = async () => {
 	let connectionElem: HTMLElement // SSE connection status/error. Empty when connected.
-	let layoutElem: HTMLSelectElement // Select dropdown for layout.
-	let accountElem: HTMLElement
+	let accountElem: HTMLAnchorElement
 	let loginAddressElem: HTMLElement
+	let accountRoot: HTMLElement
+	let accountMenu: HTMLElement
+	let accountToggle: HTMLButtonElement
 	let splitElem: HTMLElement
 	let mailboxesElem: HTMLElement
 	let currentLayout = ''
@@ -7114,7 +7398,7 @@ const init = async () => {
 
 	// Shown at the bottom of msglistscrollElem, immediately below the msglistView, when appropriate.
 	const listendElem = dom.div(css('msgListEnd', {borderTop: '1px solid', borderColor: styles.borderColor, color: styles.colorMilder, margin: '1ex'}))
-	const listloadingElem = dom.div(css('msgListLoading', {textAlign: 'center', padding: '.15em 0', color: styles.colorMild, border: '1px solid', borderColor: styles.borderColor, margin: '1ex', backgroundColor: styles.backgroundColorMild}), 'loading...')
+	const listloadingElem = dom.div(css('msgListLoading', {textAlign: 'center', padding: '.15em 0', color: styles.colorMild, border: '1px solid', borderColor: styles.borderColor, margin: '1ex', backgroundColor: styles.backgroundColorMild}), ui("loading..."))
 	const listerrElem = dom.div(css('msgListErr', {textAlign: 'center', padding: '.15em 0', color: styles.colorMild, border: '1px solid', borderColor: styles.borderColor, margin: '1ex', backgroundColor: styles.backgroundColorMild}))
 
 	let sseID = 0 // Sent by server in initial SSE response. We use it in API calls to make the SSE endpoint return new data we need.
@@ -7140,7 +7424,7 @@ const init = async () => {
 		if (!mb) {
 			document.title = [addr, 'Mox Webmail'].join(' - ')
 		} else {
-			document.title = ['('+mb.Unread+') '+mb.Name, addr, 'Mox Webmail'].join(' - ')
+			document.title = ['('+mb.Unread+') '+mailboxLabel(mb, mb.Name), addr, 'Mox Webmail'].join(' - ')
 		}
 	}
 
@@ -7236,7 +7520,7 @@ const init = async () => {
 			Query: query,
 			Page: page,
 		}
-		dom._kids(queryactivityElem, 'loading...')
+		dom._kids(queryactivityElem, ui("loading..."))
 		msglistscrollElem.appendChild(listloadingElem)
 		await client.Request(request)
 	}
@@ -7282,11 +7566,8 @@ const init = async () => {
 				grabLR.style.display = 'none'
 			}
 		} else {
-			splitElem.style.left = 'calc('+settings.mailboxesWidth+'px + 1px)'
+			applyMailboxColumnWidth(fitMailboxWidth(settings.mailboxesWidth))
 			splitElem.style.right = '0'
-			if (mailboxesElem) {
-				mailboxesElem.style.width = settings.mailboxesWidth + 'px'
-			}
 			if (currentLayout === 'topbottom') {
 				if (layoutTop) {
 					layoutTop.style.top = '0'
@@ -7355,7 +7636,7 @@ const init = async () => {
 		if (open) {
 			const mb = mailboxlistView.activeMailbox()
 			const subj = msglistView.activeMessageID() ? (msglistView.selected()[0]?.messageitem.Envelope.Subject || '(no subject)') : ''
-			const title = subj || (mb ? mb.Name : 'Message')
+			const title = subj || (mb ? mailboxLabel(mb, mb.Name) : ui('Message'))
 			mobileMsgTitle.textContent = title
 		}
 	}
@@ -7386,8 +7667,8 @@ const init = async () => {
 	const refineKeyword = async (kw: string) => {
 		settingsPut({...settings, refine: 'label:'+kw})
 		refineToggleActive(refineLabelBtn as HTMLButtonElement)
-		dom._kids(refineLabelBtn, 'Label: '+kw)
-		await withStatus('Requesting messages', requestNewView(false))
+		dom._kids(refineLabelBtn, ui('Label: ')+kw)
+		await withStatus(ui("Requesting messages"), requestNewView(false))
 	}
 
 	const viewportEnsureMessages = async () => {
@@ -7414,7 +7695,7 @@ const init = async () => {
 			e.classList.toggle('active', e === btn)
 		}
 		if (btn !== null && btn !== refineLabelBtn) {
-			dom._kids(refineLabelBtn, 'Label')
+			dom._kids(refineLabelBtn, ui("Label"))
 		}
 	}
 
@@ -7426,8 +7707,8 @@ const init = async () => {
 			settingsPut({...settings, refine: refine})
 			refineToggleActive(btn)
 		}
-		dom._kids(refineLabelBtn, settings.refine.startsWith('label:') ? 'Label: '+settings.refine.substring('label:'.length) : 'Label')
-		await withStatus('Requesting messages', requestNewView(false))
+		dom._kids(refineLabelBtn, settings.refine.startsWith('label:') ? ui('Label: ')+settings.refine.substring('label:'.length) : ui('Label'))
+		await withStatus(ui("Requesting messages"), requestNewView(false))
 	}
 
 	let threadMode: HTMLSelectElement
@@ -7436,42 +7717,42 @@ const init = async () => {
 
 	let msglistElem = dom.div(css('msgList', {backgroundColor: styles.msglistBackgroundColor, position: 'absolute', left: '0', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column'}),
 		dom.div(
-			attr.role('region'), attr.arialabel('Filter and sorting buttons for message list'),
-			css('msgListFilterSorting', {display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: styles.backgroundColorMild, borderBottom: '1px solid', borderBottomColor: styles.borderColor, padding: '.35em .5em'}),
+			attr.role('region'), attr.arialabel(ui('Filter and sorting buttons for message list')),
+			css('msgListFilterSorting', {display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap', gap: '6px', minWidth: 0, backgroundColor: styles.backgroundColorMild, borderBottom: '1px solid', borderBottomColor: styles.borderColor, padding: '.35em .5em'}),
 			dom.div(
 				dom._class('refineBar'),
-				dom.span(css('refineTitle', {fontWeight: 'normal', fontSize: 'inherit'}), 'Refine:', attr.title('Refine message listing with quick filters. These refinement filters are in addition to any search criteria, but the refine attachment filter overrides a search attachment criteria.')),
+				dom.span(css('refineTitle', {fontWeight: 'normal', fontSize: 'inherit'}), ui("Refine:"), attr.title(ui("Refine message listing with quick filters. These refinement filters are in addition to any search criteria, but the refine attachment filter overrides a search attachment criteria."))),
 				dom.span(dom._class('btngroup'),
 					refineUnreadBtn=dom.clickbutton(settings.refine === 'unread' ? dom._class('active') : [],
-						'Unread',
-						attr.title('Only show messages marked as unread.'),
+						ui('Unread'),
+						attr.title(ui("Only show messages marked as unread.")),
 						async function click(e: MouseEvent) {
 							await refineToggle('unread', e.target! as HTMLButtonElement)
 						},
 					),
 					refineReadBtn=dom.clickbutton(settings.refine === 'read' ? dom._class('active') : [],
-						'Read',
-						attr.title('Only show messages marked as read.'),
+						ui('Read'),
+						attr.title(ui("Only show messages marked as read.")),
 						async function click(e: MouseEvent) {
 							await refineToggle('read', e.target! as HTMLButtonElement)
 						},
 					),
 					refineAttachmentsBtn=dom.clickbutton(settings.refine === 'attachments' ? dom._class('active') : [],
-						'Attachments',
-						attr.title('Only show messages with attachments.'),
+						ui("Attachments"),
+						attr.title(ui("Only show messages with attachments.")),
 						async function click(e: MouseEvent) {
 							await refineToggle('attachments', e.target! as HTMLButtonElement)
 						},
 					),
 					refineFlaggedBtn=dom.clickbutton(settings.refine === 'flagged' ? dom._class('active') : [],
-						'Flagged',
-						attr.title('Only show flagged/starred messages.'),
+						ui("Flagged"),
+						attr.title(ui("Only show flagged/starred messages.")),
 						async function click(e: MouseEvent) {
 							await refineToggle('flagged', e.target! as HTMLButtonElement)
 						},
 					),
-					refineLabelBtn=dom.clickbutton(settings.refine.startsWith('label:') ? [dom._class('active'), 'Label: '+settings.refine.substring('label:'.length)] : 'Label',
-						attr.title('Only show messages with the selected label.'),
+					refineLabelBtn=dom.clickbutton(settings.refine.startsWith('label:') ? [dom._class('active'), ui('Label: ')+settings.refine.substring('label:'.length)] : ui('Label'),
+						attr.title(ui('Only show messages with the selected label.')),
 						async function click(e: MouseEvent) {
 							const labels = possibleLabels()
 							const remove = menuPopover(e.target! as HTMLElement, [
@@ -7484,53 +7765,55 @@ const init = async () => {
 										await selectLabel()
 									})
 								}),
-								labels.length === 0 ? dom.clickbutton('No labels yet', attr.disabled('')) : [],
+								labels.length === 0 ? dom.clickbutton(ui("No labels yet"), attr.disabled('')) : [],
 							])
 						},
 					),
 					dom.clickbutton(
 						'×',
-						attr.arialabel('Clear refinement filters.'),
-						attr.title('Clear refinement filters.'),
+						attr.arialabel(ui("Clear refinement filters.")),
+						attr.title(ui("Clear refinement filters.")),
 						async function click(e: MouseEvent) {
 							settingsPut({...settings, refine: ''})
 							refineToggleActive(e.target! as HTMLButtonElement)
-							await withStatus('Requesting messages', requestNewView(false))
+							await withStatus(ui("Requesting messages"), requestNewView(false))
 						},
 					),
 				),
 				dom.div(
 					dom._class('msgListFilterSortingControls'),
 					queryactivityElem=dom.span(),
+					dom.span(dom._class('threadModeLabel'), ui('Threads')),
 					threadMode=dom.select(
 						dom._class('threadModeSelect'),
-						attr.arialabel('Thread modes.'),
-						attr.title('Off: Threading disabled, messages are shown individually.\nOn: Group messages in threads, expanded by default except when (previously) manually collapsed.\nUnread: Only expand thread with unread messages, ignoring and not saving whether they were manually collapsed.'),
-						dom.option('Threads: Off', attr.value(api.ThreadMode.ThreadOff), settings.threading === api.ThreadMode.ThreadOff ? attr.selected('') : []),
-						dom.option('Threads: On', attr.value(api.ThreadMode.ThreadOn), settings.threading === api.ThreadMode.ThreadOn ? attr.selected('') : []),
-						dom.option('Threads: Unread', attr.value(api.ThreadMode.ThreadUnread), settings.threading === api.ThreadMode.ThreadUnread ? attr.selected('') : []),
+						attr.arialabel(ui("Thread modes.")),
+						attr.title(ui("Off: Threading disabled, messages are shown individually.\nOn: Group messages in threads, expanded by default except when (previously) manually collapsed.\nUnread: Only expand thread with unread messages, ignoring and not saving whether they were manually collapsed.")),
+						dom.option(ui("Threads: Off"), attr.value(api.ThreadMode.ThreadOff), settings.threading === api.ThreadMode.ThreadOff ? attr.selected('') : []),
+						dom.option(ui("Threads: On"), attr.value(api.ThreadMode.ThreadOn), settings.threading === api.ThreadMode.ThreadOn ? attr.selected('') : []),
+						dom.option(ui("Threads: Unread"), attr.value(api.ThreadMode.ThreadUnread), settings.threading === api.ThreadMode.ThreadUnread ? attr.selected('') : []),
 						async function change() {
 							let reset = settings.threading === api.ThreadMode.ThreadOff
 							settingsPut({...settings, threading: threadMode.value as api.ThreadMode})
 							reset = reset || settings.threading === api.ThreadMode.ThreadOff
 							if (reset) {
-								await withStatus('Requesting messages', requestNewView(false))
+								await withStatus(ui("Requesting messages"), requestNewView(false))
 							} else {
 								msglistView.threadToggle()
 							}
 						},
 					),
-					dom.clickbutton(dom._class('threadSortBtn'), '↑↓', attr.title('Toggle sorting by date received.'), settings.orderAsc ? dom._class('invert') : [], async function click(e: MouseEvent) {
+					dom.clickbutton(dom._class('threadSortBtn'), '↑↓', attr.title(ui("Toggle sorting by date received.")), settings.orderAsc ? dom._class('invert') : [], async function click(e: MouseEvent) {
 						settingsPut({...settings, orderAsc: !settings.orderAsc})
 						;(e.target! as HTMLButtonElement).classList.toggle('invert', settings.orderAsc)
 						// We don't want to include the currently selected message because it could cause a
 						// huge amount of messages to be fetched. e.g. when first message in large mailbox
 						// was selected, it would now be the last message.
-						await withStatus('Requesting messages', requestNewView(true))
+						await withStatus(ui("Requesting messages"), requestNewView(true))
 					}),
 				),
 			),
 		),
+		msglistView.actionBar,
 		dom.div(
 			style({height: '1ex', position: 'relative'}),
 			dom.div(dom._class('msgItemFlags')),
@@ -7562,7 +7845,7 @@ const init = async () => {
 		dom.div(
 			style({flexGrow: '1', position: 'relative'}),
 			msglistscrollElem=dom.div(yscrollStyle,
-				attr.role('region'), attr.arialabel('Message list'),
+				attr.role('region'), attr.arialabel(ui("Message list")),
 				async function scroll() {
 					if (!sseID || requestViewEnd || requestID) {
 						return
@@ -7577,6 +7860,7 @@ const init = async () => {
 			),
 		),
 	)
+	moveUndoHost = msglistElem
 
 	let searchbarElem: HTMLInputElement // Input field for search
 
@@ -7600,7 +7884,7 @@ const init = async () => {
 		searchView.root.remove()
 		searchbarElem.blur()
 		document.body.focus()
-		await withStatus('Requesting messages', requestNewView(true, f, notf))
+		await withStatus(ui("Requesting messages"), requestNewView(true, f, notf))
 	}
 
 	// Called by searchView when it is closed, due to escape key or click on background.
@@ -7643,6 +7927,7 @@ const init = async () => {
 			positionSearchView()
 			return
 		}
+		clearMoveUndo()
 		searchView.ensureLoaded()
 		page.appendChild(searchView.root)
 		positionSearchView()
@@ -7676,7 +7961,7 @@ const init = async () => {
 			await mailboxlistView.openMailboxID(mb.ID, true)
 			const f = newFilter()
 			f.MailboxID = mb.ID
-			await withStatus('Requesting messages', requestNewView(true, f, newNotFilter()))
+			await withStatus(ui("Requesting messages"), requestNewView(true, f, newNotFilter()))
 		}
 	}
 	const cmdFocusMsg = async() => {
@@ -7696,6 +7981,50 @@ const init = async () => {
 		'ctrl !': cmdSettings,
 	}
 
+	// One closer owns both document listeners. A leftover listener would close the next open.
+	let closeAccountMenu = () => {}
+	const openAccountMenu = () => {
+		if (accountRoot.classList.contains('open')) {
+			return
+		}
+		accountRoot.classList.add('open')
+		accountToggle.setAttribute('aria-expanded', 'true')
+		const onDocClick = (ev: MouseEvent) => {
+			const t = ev.target
+			if (t instanceof Node && accountRoot.contains(t)) {
+				return
+			}
+			closeAccountMenu()
+		}
+		const onDocKey = (ev: KeyboardEvent) => {
+			if (ev.key === 'Escape') {
+				closeAccountMenu()
+			}
+		}
+		document.addEventListener('click', onDocClick)
+		document.addEventListener('keydown', onDocKey)
+		closeAccountMenu = () => {
+			accountRoot.classList.remove('open')
+			accountToggle.setAttribute('aria-expanded', 'false')
+			document.removeEventListener('click', onDocClick)
+			document.removeEventListener('keydown', onDocKey)
+			closeAccountMenu = () => {}
+		}
+	}
+	const accountCmdItem = (icon: SVGSVGElement, label: string, title: string, cmd: command) => {
+		return dom.clickbutton(
+			dom._class('nav-account-item'),
+			attr.role('menuitem'),
+			icon,
+			label,
+			attr.title(title),
+			async function click() {
+				closeAccountMenu()
+				await shortcutCmd(cmd, shortcuts)
+			},
+		)
+	}
+
 	const topBarStyle = css('topBar', {backgroundColor: styles.mailboxesTopBackgroundColor})
 	const mailboxesSidebarStyle = css('mailboxesSidebar', {backgroundColor: styles.mailboxesSidebarBackground, borderRight: '1px solid', borderRightColor: styles.borderColor})
 	// class searchbarActive toggled on searchbarElem; colors via .topBarSearchInput.searchbarActive.
@@ -7704,11 +8033,11 @@ const init = async () => {
 
 	const showMobileOverflow = (ref: HTMLElement) => {
 		menuPopover(ref, [
-			dom.clickbutton('Tooltip', clickCmd(cmdTooltip, shortcuts)),
-			dom.clickbutton('Help', clickCmd(cmdHelp, shortcuts)),
-			dom.clickbutton('Settings', clickCmd(cmdSettings, shortcuts)),
-			dom.clickbutton('Logout', async function click(ev: MouseEvent) {
-				await withStatus('Logging out', client.Logout(), ev.target! as HTMLButtonElement)
+			dom.clickbutton(ui("Tooltip"), clickCmd(cmdTooltip, shortcuts)),
+			dom.clickbutton(ui("Help"), clickCmd(cmdHelp, shortcuts)),
+			dom.clickbutton(ui("Settings"), clickCmd(cmdSettings, shortcuts)),
+			dom.clickbutton(ui("Logout"), async function click(ev: MouseEvent) {
+				await withStatus(ui("Logging out"), client.Logout(), ev.target! as HTMLButtonElement)
 				localStorageRemove('webmailcsrftoken')
 				if (eventSource) {
 					eventSource.close()
@@ -7719,19 +8048,56 @@ const init = async () => {
 		])
 	}
 
+	let fitMailboxWidth: (want: number) => number = (want) => want
+	let applyMailboxColumnWidth: (px: number) => void = () => {}
+
+	const layoutModes = [
+		{id: 'leftright', label: () => ui('Left/right'), icon: () => layoutGlyph('leftright')},
+		{id: 'topbottom', label: () => ui('Top/bottom'), icon: () => layoutGlyph('topbottom')},
+		{id: 'auto', label: () => ui('Auto layout'), icon: () => layoutGlyph('auto')},
+	] as const
+	const layoutButtons: HTMLButtonElement[] = []
+	const syncLayoutButtons = () => {
+		for (let i = 0; i < layoutModes.length; i++) {
+			const on = settings.layout === layoutModes[i].id
+			layoutButtons[i].classList.toggle('isOn', on)
+			layoutButtons[i].setAttribute('aria-pressed', on ? 'true' : 'false')
+		}
+	}
+	let applyLayoutMode: (id: typeof layoutModes[number]['id']) => void = () => {}
+	const layoutRow = dom.div(
+		dom._class('nav-account-layouts'),
+		attr.arialabel(ui('Layout')),
+		...layoutModes.map(mode => {
+			const on = settings.layout === mode.id
+			const btn = dom.clickbutton(
+				on ? dom._class('nav-layout', 'isOn') : dom._class('nav-layout'),
+				mode.icon(),
+				attr.title(mode.label()),
+				attr.arialabel(mode.label()),
+				dom._attrs({'aria-pressed': on ? 'true' : 'false'}),
+				function click() {
+					applyLayoutMode(mode.id)
+				},
+			)
+			layoutButtons.push(btn)
+			return btn
+		}),
+	)
+
 	const webmailroot = dom.div(
-		css('webmailRoot', {display: 'flex', flexDirection: 'column', alignContent: 'stretch', height: '100dvh'}),
+		css('webmailRoot', {display: 'flex', flexDirection: 'column', alignContent: 'stretch', height: '100dvh', position: 'relative', zIndex: 0}),
 		dom.div(topBarStyle,
-			attr.role('region'), attr.arialabel('Top bar'),
+			attr.role('region'), attr.arialabel(ui("Top bar")),
 			topcomposeboxElem=dom.div(dom._class('pad'), dom._class('topBarComposeDesktop'),
 				style({width: settings.mailboxesWidth + 'px', textAlign: 'center'}),
-				dom.clickbutton(dom._class('btnPrimary'), strokeIcon(strokePaths.compose), 'Compose', attr.title('Compose new email message.'), function click() {
+				dom.clickbutton(dom._class('btnPrimary'), strokeIcon(strokePaths.compose), ui("Compose"), attr.title(ui("Compose new email message.")), function click() {
 					shortcutCmd(cmdCompose, shortcuts)
 				}),
 			),
 			dom.div(dom._class('pad'), dom._class('topBarSearchRow'),
 				dom.div(dom._class('topBarMobileOnly'),
-					dom.clickbutton(dom._class('topBarMenuBtn'), attr.title('Open mailboxes.'), attr.arialabel('Open mailboxes.'), function click() {
+					dom.clickbutton(dom._class('topBarMenuBtn'), attr.title(ui("Open mailboxes.")), attr.arialabel(ui("Open mailboxes.")), function click() {
 						openMailboxesDrawer()
 					},
 						dom.span(dom._class('topBarMenuIcon'),
@@ -7746,9 +8112,9 @@ const init = async () => {
 						dom._class('topBarSearchForm'),
 						searchbarElem=dom.input(
 							dom._class('topBarSearchInput'),
-							attr.placeholder('Search...'),
+							attr.placeholder(ui("Search...")),
 							style({position: 'relative'}),
-							attr.title('Search messages based on criteria like matching free-form text, in a mailbox, labels, addressees.'),
+							attr.title(ui("Search messages based on criteria like matching free-form text, in a mailbox, labels, addressees.")),
 							focusPlaceholder('word "with space" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"subject" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb'),
 							function click() {
 								cmdSearch()
@@ -7786,8 +8152,8 @@ const init = async () => {
 						),
 						dom.clickbutton(dom._class('topBarSearchClear'),
 							strokeIcon(strokePaths.x),
-							attr.arialabel('Cancel and clear search and open Inbox.'),
-							attr.title('Cancel and clear search and open Inbox.'),
+							attr.arialabel(ui("Cancel and clear search and open Inbox.")),
+							attr.title(ui("Cancel and clear search and open Inbox.")),
 							async function click() {
 								searchbarElem.value = ''
 								if (!search.active) {
@@ -7796,13 +8162,13 @@ const init = async () => {
 
 								const mb = mailboxlistView.findMailboxByName('Inbox')
 								if (!mb) {
-									window.alert('Cannot find inbox.')
+									window.alert(ui("Cannot find inbox."))
 									return
 								}
 								await mailboxlistView.openMailboxID(mb.ID, true)
 								const f = newFilter()
 								f.MailboxID = mb.ID
-								await withStatus('Requesting messages', requestNewView(true, f, newNotFilter()))
+								await withStatus(ui("Requesting messages"), requestNewView(true, f, newNotFilter()))
 							},
 						),
 						async function submit(e: SubmitEvent) {
@@ -7813,22 +8179,22 @@ const init = async () => {
 					),
 				),
 				dom.div(dom._class('topBarMobileOnly'),
-					dom.clickbutton(dom._class('btnPrimary'), dom._class('topBarMobileCompose'), strokeIcon(strokePaths.compose), attr.title('Compose new email message.'), attr.arialabel('Compose'), function click() {
+					dom.clickbutton(dom._class('btnPrimary'), dom._class('topBarMobileCompose'), strokeIcon(strokePaths.compose), attr.title(ui("Compose new email message.")), attr.arialabel(ui("Compose")), function click() {
 						shortcutCmd(cmdCompose, shortcuts)
 					}),
 				),
 				dom.div(dom._class('topBarMobileOnly'),
-					dom.clickbutton(dom._class('topBarMobileOverflow'), strokeIcon(strokePaths.more), attr.title('More actions.'), attr.arialabel('More actions'), function click(e: MouseEvent) {
+					dom.clickbutton(dom._class('topBarMobileOverflow'), strokeIcon(strokePaths.more), attr.title(ui("More actions.")), attr.arialabel(ui("More actions")), function click(e: MouseEvent) {
 						showMobileOverflow(e.target! as HTMLElement)
 					}),
 				),
 			),
 			dom.div(dom._class('pad'), dom._class('topBarMessageRow'),
-				dom.clickbutton(dom._class('topBarMessageBack'), strokeIcon(strokePaths.back), attr.title('Back to message list.'), attr.arialabel('Back to message list.'), function click() {
+				dom.clickbutton(dom._class('topBarMessageBack'), strokeIcon(strokePaths.back), attr.title(ui("Back to message list.")), attr.arialabel(ui("Back to message list.")), function click() {
 					mobileBackToList()
 				}),
 				topBarMessageTitle=dom.span(dom._class('topBarMessageTitle')),
-				dom.clickbutton(dom._class('topBarMobileOverflow'), strokeIcon(strokePaths.more), attr.title('More actions.'), attr.arialabel('More actions'), function click(e: MouseEvent) {
+				dom.clickbutton(dom._class('topBarMobileOverflow'), strokeIcon(strokePaths.more), attr.title(ui("More actions.")), attr.arialabel(ui("More actions")), function click(e: MouseEvent) {
 					showMobileOverflow(e.target! as HTMLElement)
 				}),
 			),
@@ -7838,48 +8204,98 @@ const init = async () => {
 				dom.div(
 					dom._class('topBarNav'),
 					dom._class('topBarNavDesktop'),
-					layoutElem=dom.select(
-						dom._class('layoutSelect'),
-						attr.title('Layout of message list and message panes. Top/bottom has message list above message view. Left/Right has message list left, message view right. Auto selects based on window width and automatically switches on resize. Wide screens get left/right, smaller screens get top/bottom.'),
-						dom.option('Auto layout', attr.value('auto'), settings.layout === 'auto' ? attr.selected('') : []),
-						dom.option('Top/bottom', attr.value('topbottom'), settings.layout === 'topbottom' ? attr.selected('') : []),
-						dom.option('Left/right', attr.value('leftright'), settings.layout === 'leftright' ? attr.selected('') : []),
-						function change() {
-							settingsPut({...settings, layout: layoutElem.value})
-							if (layoutElem.value === 'auto') {
-								autoselectLayout()
-							} else {
-								selectLayout(layoutElem.value)
-							}
-						},
+					accountRoot=dom.div(dom._class('nav-account'),
+						accountToggle=dom.clickbutton(
+							dom._class('nav-account-toggle'),
+							navIcon(strokePaths.circleUser, [['12', '12', '10'], ['12', '10', '3']]),
+							loginAddressElem=dom.span(dom._class('nav-account-label')),
+							navIcon(strokePaths.chevronDown, undefined, 'nav-account-caret'),
+							attr.arialabel(ui('Account')),
+							dom._attrs({'aria-haspopup': 'menu', 'aria-expanded': 'false'}),
+							function click(e: MouseEvent) {
+								e.stopPropagation()
+								if (accountRoot.classList.contains('open')) {
+									closeAccountMenu()
+								} else {
+									openAccountMenu()
+								}
+							},
+						),
+						accountMenu=dom.div(dom._class('nav-account-menu'),
+							accountElem=dom.a(
+								dom._class('nav-account-item'),
+								attr.role('menuitem'),
+								navIcon(strokePaths.user, [['12', '7', '4']]),
+								ui('Account'),
+							),
+							accountCmdItem(navIcon(strokePaths.info, [['12', '12', '10']]), ui('Tooltip'), ui("Show tooltips, based on the title attributes (underdotted text) for the focused element and all user interface elements below it. Use the keyboard shortcut \"ctrl ?\" instead of clicking on the tooltip button, which changes focus to the tooltip button."), cmdTooltip),
+							accountCmdItem(navIcon(strokePaths.bookOpen), ui('Help'), ui("Show popup with basic usage information and a keyboard shortcuts."), cmdHelp),
+							accountCmdItem(navIcon(strokePaths.settings, [['12', '12', '3']]), ui('Settings'), ui("Change settings for composing messages."), cmdSettings),
+							dom.div(dom._class('nav-account-divider')),
+							dom.clickbutton(
+								dom._class('nav-account-item'),
+								attr.role('menuitem'),
+								navIcon(strokePaths.logOut),
+								ui('Logout'),
+								attr.title(ui("Logout, invalidating this session.")),
+								async function click(e: MouseEvent) {
+									closeAccountMenu()
+									await withStatus(ui("Logging out"), client.Logout(), e.currentTarget as HTMLButtonElement)
+									localStorageRemove('webmailcsrftoken')
+									if (eventSource) {
+										eventSource.close()
+										eventSource = null
+									}
+									// Reload so all state is cleared from memory.
+									window.location.reload()
+								},
+							),
+							dom.div(dom._class('nav-account-divider')),
+							layoutRow,
+						),
 					),
-					dom.clickbutton('Tooltip', attr.title('Show tooltips, based on the title attributes (underdotted text) for the focused element and all user interface elements below it. Use the keyboard shortcut "ctrl ?" instead of clicking on the tooltip button, which changes focus to the tooltip button.'), clickCmd(cmdTooltip, shortcuts)),
-					dom.clickbutton('Help', attr.title('Show popup with basic usage information and a keyboard shortcuts.'), clickCmd(cmdHelp, shortcuts)),
-					dom.clickbutton('Settings', attr.title('Change settings for composing messages.'), clickCmd(cmdSettings, shortcuts)),
-					dom.span(dom._class('topBarUser'),
-						accountElem=dom.span(),
-						loginAddressElem=dom.span(),
-					),
-					dom.clickbutton('Logout', attr.title('Logout, invalidating this session.'), async function click(e: MouseEvent) {
-						await withStatus('Logging out', client.Logout(), e.target! as HTMLButtonElement)
-						localStorageRemove('webmailcsrftoken')
-						if (eventSource) {
-							eventSource.close()
-							eventSource = null
-						}
-						// Reload so all state is cleared from memory.
-						window.location.reload()
-					}),
 				),
 			),
 			dom.div(dom._class('theme-toggle-container'),
+				dom.clickbutton(
+					dom._class('lang-choice'),
+					attr.title(ui('Language')),
+					attr.arialabel(ui('Language')),
+					langGlyph(),
+					function click(e: MouseEvent) {
+						const current = langPreference()
+						const item = (id: 'auto' | 'en' | 'ru', label: string, title?: string) => {
+							const on = current === id
+							const mark = navIcon(strokePaths.check)
+							if (!on) {
+								mark.style.visibility = 'hidden'
+							}
+							return dom.clickbutton(
+								dom._class('langItem', ...(on ? ['active'] : [])),
+								mark,
+								label,
+								title ? attr.title(title) : [],
+								on ? dom._attrs({'aria-current': 'true'}) : [],
+								function click() {
+									chooseLang(id)
+								},
+							)
+						}
+						menuPopover(e.currentTarget as HTMLElement, [
+							item('auto', ui('Auto'), ui('Follow the browser language')),
+							item('en', ui('English')),
+							item('ru', ui('Russian')),
+						], true)
+					},
+				),
+				dom.div(dom._class('theme-switch-group'),
 				dom.label(
 					dom._class('theme-toggle'),
-					attr.title('Светлая или тёмная тема'),
+					attr.title(ui('Light or dark theme')),
 					dom.input(
 						attr.type('checkbox'),
 						attr.id('theme-toggle-switch'),
-						attr.arialabel('Тёмная тема'),
+						attr.arialabel(ui('Dark theme')),
 						function change(e: Event) {
 							applyTheme((e.target as HTMLInputElement).checked ? 'dark' : 'light')
 						},
@@ -7892,12 +8308,13 @@ const init = async () => {
 				dom.clickbutton(
 					dom._class('theme-auto'),
 					attr.id('theme-auto'),
-					attr.title('Авто'),
-					attr.arialabel('Авто'),
+					attr.title(ui('Auto')),
+					attr.arialabel(ui('Auto')),
 					themeGlyph('auto'),
 					function click() {
 						applyTheme('auto')
 					},
+				),
 				),
 			),
 		),
@@ -7922,11 +8339,9 @@ const init = async () => {
 				),
 				function mousedown(e: MouseEvent) {
 					startDrag(e, (e) => {
-						mailboxesElem.style.width = Math.round(e.clientX)+'px'
-						topcomposeboxElem.style.width = Math.round(e.clientX)+'px'
-						mailboxessplitElem.style.left = 'calc('+e.clientX+'px - 2px)'
-						splitElem.style.left = 'calc('+e.clientX+'px + 1px)'
-						settingsPut({...settings, mailboxesWidth: Math.round(e.clientX)})
+						const px = fitMailboxWidth(e.clientX)
+						applyMailboxColumnWidth(px)
+						settingsPut({...settings, mailboxesWidth: px})
 					})
 				}
 			),
@@ -7934,6 +8349,20 @@ const init = async () => {
 			),
 		),
 	)
+
+	fitMailboxWidth = (want) => {
+		const theme = document.querySelector('.theme-toggle-container')?.getBoundingClientRect().width ?? 0
+		const nav = document.querySelector('.topBarNav')?.getBoundingClientRect().width ?? 0
+		const connection = connectionElem.getBoundingClientRect().width
+		const max = Math.max(160, Math.floor(window.innerWidth - theme - nav - connection - 160 - 48))
+		return Math.min(max, Math.max(160, want))
+	}
+	applyMailboxColumnWidth = (px) => {
+		topcomposeboxElem.style.width = px+'px'
+		mailboxesElem.style.width = px+'px'
+		mailboxessplitElem.style.left = 'calc('+px+'px - 2px)'
+		splitElem.style.left = 'calc('+px+'px + 1px)'
+	}
 
 	msgPaneWrap=dom.div(dom._class('mobileMsgPane'),
 		msgElem,
@@ -8078,6 +8507,16 @@ const init = async () => {
 		selectLayout(want)
 	}
 
+	applyLayoutMode = (id) => {
+		settingsPut({...settings, layout: id})
+		if (id === 'auto') {
+			autoselectLayout()
+		} else {
+			selectLayout(id)
+		}
+		syncLayoutButtons()
+	}
+
 	// When the window size or layout changes, we recalculate the desired widths for
 	// the msglist "table". It is a list of divs, each with flex layout with 4 elements
 	// of fixed size.
@@ -8098,12 +8537,33 @@ const init = async () => {
 		updateMsglistWidths()
 	}
 	let rulesInserted = false
+	const measureColumn = (selector: string): number => {
+		let max = 0
+		msglistscrollElem.querySelectorAll(selector).forEach(node => {
+			if (!(node instanceof HTMLElement)) {
+				return
+			}
+			node.style.width = 'max-content'
+			node.style.flexBasis = 'auto'
+			node.style.overflow = 'visible'
+			const w = Math.ceil(node.getBoundingClientRect().width)
+			node.style.width = ''
+			node.style.flexBasis = ''
+			node.style.overflow = ''
+			if (w > max) {
+				max = w
+			}
+		})
+		return max
+	}
 	const updateMsglistWidths = () => {
 		const width = msglistscrollElem.clientWidth - 2 // Borders.
 		lastmsglistwidth = width
 
-		let flagswidth = isMobile() ? 28 : settings.msglistflagsWidth
-		let agewidth = isMobile() ? 58 : settings.msglistageWidth
+		const flagsContent = measureColumn('.msgItemFlags')
+		const ageContent = measureColumn('.msgItemAge')
+		let flagswidth = isMobile() ? 28 : Math.max(settings.msglistflagsWidth, flagsContent)
+		let agewidth = isMobile() ? 58 : Math.max(settings.msglistageWidth, ageContent)
 		if (flagswidth + agewidth > width) {
 			flagswidth = Math.floor(width/2)
 			agewidth = width-flagswidth
@@ -8135,11 +8595,20 @@ const init = async () => {
 	// Select initial layout.
 	if (isMobile()) {
 		selectLayout('topbottom')
-	} else if (layoutElem.value === 'auto') {
+	} else if (settings.layout === 'auto') {
 		autoselectLayout()
 	} else {
-		selectLayout(layoutElem.value)
+		selectLayout(settings.layout)
 	}
+	accountElem.hidden = true
+	accountToggle.setAttribute('aria-haspopup', 'menu')
+	accountToggle.setAttribute('aria-expanded', 'false')
+	accountToggle.setAttribute('aria-label', ui('Account'))
+	accountMenu.setAttribute('role', 'menu')
+	// Rects stay 0 until the bar is in the document. Display reads the widths this clamp writes.
+	document.body.appendChild(webmailroot)
+	applyMailboxColumnWidth(fitMailboxWidth(settings.mailboxesWidth))
+	webmailroot.remove()
 	if ((window as any).moxBeforeDisplay) {
 		moxBeforeDisplay(webmailroot)
 	}
@@ -8151,6 +8620,18 @@ const init = async () => {
 		setMobilePane('list')
 	}
 	checkMsglistWidth()
+	let columnSync = 0
+	const scheduleColumnSync = () => {
+		if (columnSync) {
+			return
+		}
+		columnSync = requestAnimationFrame(() => {
+			columnSync = 0
+			lastmsglistwidth = -1
+			checkMsglistWidth()
+		})
+	}
+	new MutationObserver(scheduleColumnSync).observe(msglistscrollElem, {childList: true, subtree: true})
 
 	let lastViewportWidth = -1
 	const syncViewportMode = () => {
@@ -8163,18 +8644,26 @@ const init = async () => {
 		updateMobileMode()
 		const nowMobile = isMobile()
 		if (nowMobile) {
+			if (currentLayout !== 'topbottom') {
+				selectLayout('topbottom')
+			}
 			applyMobileLayoutStyles()
 			if (!wasMobile) {
 				setMobilePane(msglistView.activeMessageID() ? 'message' : 'list')
 			}
-		} else {
+		} else if (wasMobile) {
 			document.documentElement.classList.remove('mobile-pane-list', 'mobile-pane-message', 'mailboxes-drawer-open')
+			if (settings.layout === 'auto') {
+				autoselectLayout()
+			} else {
+				selectLayout(settings.layout)
+			}
 			applyMobileLayoutStyles()
-		}
-		if (layoutElem.value === 'auto' && !nowMobile) {
-			autoselectLayout()
-		} else if (nowMobile && currentLayout !== 'topbottom') {
-			selectLayout('topbottom')
+		} else {
+			applyMobileLayoutStyles()
+			if (settings.layout === 'auto') {
+				autoselectLayout()
+			}
 		}
 		checkMsglistWidth()
 		if (searchView.root.parentElement) {
@@ -8201,12 +8690,12 @@ const init = async () => {
 				(async () => {
 					// Resolve Q/B-word mime encoding for subject. ../rfc/6068:267 ../rfc/2047:180
 					if (opts.subject && opts.subject.includes('=?')) {
-						opts.subject = await withStatus('Decoding MIME words for subject', client.DecodeMIMEWords(opts.subject))
+						opts.subject = await withStatus(ui("Decoding MIME words for subject"), client.DecodeMIMEWords(opts.subject))
 					}
 					compose(opts, listMailboxes, setLocationHash)
 				})()
 			} catch (err) {
-				window.alert('Error parsing compose mailto URL: '+errmsg(err))
+				window.alert(ui("Error parsing compose mailto URL: ")+errmsg(err))
 				window.location.hash = ''
 			}
 			return
@@ -8226,14 +8715,14 @@ const init = async () => {
 			// Open compose window for draft message in parallel, not failing on error.
 			(async () => {
 				try {
-					const [mi, pm] = await withStatus('Loading compose message', Promise.all([client.MessageItem(editMsgid), client.ParsedMessage(editMsgid)]))
+					const [mi, pm] = await withStatus(ui("Loading compose message"), Promise.all([client.MessageItem(editMsgid), client.ParsedMessage(editMsgid)]))
 					await composeDraft(mi, pm, listMailboxes, setLocationHash)
 				} catch (err) {
-					window.alert('Error opening draft message: '+errmsg(err))
+					window.alert(ui("Error opening draft message: ")+errmsg(err))
 				}
 			})()
 		}
-		await withStatus('Requesting messages', requestNewView(false, f, notf))
+		await withStatus(ui("Requesting messages"), requestNewView(false, f, notf))
 	})
 
 
@@ -8280,7 +8769,7 @@ const init = async () => {
 	const showNotConnected = () => {
 		dom._kids(connectionElem,
 			attr.role('status'),
-			dom.span(css('connectionStatus', {backgroundColor: styles.warningBackgroundColor, padding: '2px 8px', borderRadius: styles.radius, fontSize: '12px'}), 'Not connected', attr.title('Not receiving real-time updates, including of new deliveries.')),
+			dom.span(css('connectionStatus', {backgroundColor: styles.warningBackgroundColor, padding: '2px 8px', borderRadius: styles.radius, fontSize: '12px'}), ui("Not connected"), attr.title(ui("Not receiving real-time updates, including of new deliveries."))),
 			' ',
 			dom.clickbutton('Reconnect', function click() {
 				if (!eventSource && !connecting) {
@@ -8314,7 +8803,7 @@ const init = async () => {
 
 		let token: string
 		try {
-			token = await withStatus('Fetching token for connection with real-time updates', client.Token(), undefined, true)
+			token = await withStatus(ui("Fetching token for connection with real-time updates"), client.Token(), undefined, true)
 		} catch (err) {
 			connecting = false
 			noreconnect = true
@@ -8330,7 +8819,7 @@ const init = async () => {
 				// configuration.
 				openComposeOptions = parseComposeMailto(h.substring('#compose '.length))
 			} catch (err) {
-				window.alert('Error parsing mailto URL: '+errmsg(err))
+				window.alert(ui("Error parsing mailto URL: ")+errmsg(err))
 			}
 			window.location.hash = ''
 		}
@@ -8386,7 +8875,7 @@ const init = async () => {
 		} catch (err) {}
 
 		eventSource = new window.EventSource('events?singleUseToken=' + encodeURIComponent(token)+'&request='+encodeURIComponent(JSON.stringify(request))+slow)
-		let eventID = window.setTimeout(() => dom._kids(statusElem, 'Connecting... '), 1000)
+		let eventID = window.setTimeout(() => dom._kids(statusElem, ui("Connecting... ")), 1000)
 		eventSource.addEventListener('open', (e: Event) => {
 			log('eventsource open', {e})
 			if (eventID) {
@@ -8431,17 +8920,17 @@ const init = async () => {
 		// EventSource-connection error. No details.
 		eventSource.addEventListener('error', (e: Event) => {
 			log('eventsource error', {e}, JSON.stringify(e))
-			sseError('Connection failed', true)
+			sseError(ui("Connection failed"), true)
 		})
 		// Fatal error on the server side, error message propagated, but connection needs to be closed.
 		eventSource.addEventListener('fatalErr', (e: MessageEvent) => {
 			const errmsg = JSON.parse(e.data) as string || '(no error message)'
-			sseError('Server error: "' + errmsg + '"', true)
+			sseError(ui("Server error: \"") + errmsg + '"', true)
 		})
 		// Server is stopping, we'll assume for a restart, and will try to reconnect with some jitter.
 		eventSource.addEventListener('serverShutdown', (_: MessageEvent) => {
 			noreconnect = true
-			sseError('Server shutting down, will try to reconnect in a few seconds', false)
+			sseError(ui("Server shutting down, will try to reconnect in a few seconds"), false)
 
 			shutdownReconnectTimer = window.setTimeout(() => {
 				connect(true)
@@ -8452,7 +8941,7 @@ const init = async () => {
 			try {
 				return fn()
 			} catch (err) {
-				window.alert('invalid event from server: ' + ((err as any).message || '(no message)'))
+				window.alert(ui("invalid event from server: ") + ((err as any).message || '(no message)'))
 				throw err
 			}
 		}
@@ -8464,9 +8953,9 @@ const init = async () => {
 				// Save changes to draft before reload.
 				if (composeView && composeView.unsavedChanges()) {
 					try {
-						withStatus('Saving before reloading due to server update', composeView.save())
+						withStatus(ui("Saving before reloading due to server update"), composeView.save())
 					} catch (err) {
-						window.alert('Server was updated, and webmail wants to reload to get the latest changes, but encountered an error while saving changes your open draft message. Please reload at your earliest convenience.')
+						window.alert(ui("Server was updated, and webmail wants to reload to get the latest changes, but encountered an error while saving changes your open draft message. Please reload at your earliest convenience."))
 						reload = false
 					}
 				}
@@ -8489,9 +8978,18 @@ const init = async () => {
 			connecting = false
 			sseID = start.SSEID
 			loginAddress = start.LoginAddress
-			dom._kids(accountElem, start.AccountPath ? dom.a(attr.href(start.AccountPath), 'Account') : [])
+			if (start.AccountPath) {
+				accountElem.setAttribute('href', start.AccountPath)
+				accountElem.hidden = false
+			} else {
+				accountElem.hidden = true
+			}
 			const loginAddr = formatEmail(loginAddress)
 			dom._kids(loginAddressElem, loginAddr)
+			accountToggle.title = loginAddr
+			if (!isMobile()) {
+				applyMailboxColumnWidth(fitMailboxWidth(settings.mailboxesWidth))
+			}
 			accountAddresses = start.Addresses || []
 			accountAddresses.sort((a, b) => {
 				if (formatEmail(a) === loginAddr) {
@@ -8515,7 +9013,7 @@ const init = async () => {
 				(async () => {
 					// Resolve Q/B-word mime encoding for subject. ../rfc/6068:267 ../rfc/2047:180
 					if (openComposeOptions.subject && openComposeOptions.subject.includes('=?')) {
-						openComposeOptions.subject = await withStatus('Decoding MIME words for subject', client.DecodeMIMEWords(openComposeOptions.subject))
+						openComposeOptions.subject = await withStatus(ui("Decoding MIME words for subject"), client.DecodeMIMEWords(openComposeOptions.subject))
 					}
 					compose(openComposeOptions, listMailboxes, setLocationHash)
 					openComposeOptions = undefined
@@ -8527,10 +9025,10 @@ const init = async () => {
 					const editMsgid = connectOpenComposeMessageID
 					connectOpenComposeMessageID = 0
 					try {
-						const [mi, pm] = await withStatus('Loading compose message', Promise.all([client.MessageItem(editMsgid), client.ParsedMessage(editMsgid)]))
+						const [mi, pm] = await withStatus(ui("Loading compose message"), Promise.all([client.MessageItem(editMsgid), client.ParsedMessage(editMsgid)]))
 						await composeDraft(mi, pm, listMailboxes, setLocationHash)
 					} catch (err) {
-						window.alert('Error opening draft message: '+errmsg(err))
+						window.alert(ui("Error opening draft message: ")+errmsg(err))
 					}
 				})()
 			}
@@ -8551,7 +9049,7 @@ const init = async () => {
 			if (!mb) {
 				updatePageTitle()
 			}
-			dom._kids(queryactivityElem, 'loading...')
+			dom._kids(queryactivityElem, ui("loading..."))
 			msglistscrollElem.appendChild(listloadingElem)
 
 			// We'll clear noreconnect when we've held a connection for 5 seconds. Firefox
@@ -8576,9 +9074,9 @@ const init = async () => {
 			dom._kids(queryactivityElem)
 			listloadingElem.remove()
 			listerrElem.remove()
-			dom._kids(listerrElem, 'Error from server during request for messages: '+viewErr.Err)
+			dom._kids(listerrElem, ui("Error from server during request for messages: ")+viewErr.Err)
 			msglistscrollElem.appendChild(listerrElem)
-			window.alert('Error from server during request for messages: '+viewErr.Err)
+			window.alert(ui("Error from server during request for messages: ")+viewErr.Err)
 		})
 		eventSource.addEventListener('viewReset', async (e: MessageEvent) => {
 			const viewReset = checkParse(() => api.parser.EventViewReset(JSON.parse(e.data)))
@@ -8589,9 +9087,9 @@ const init = async () => {
 			}
 
 			clearList()
-			dom._kids(queryactivityElem, 'loading...')
+			dom._kids(queryactivityElem, ui("loading..."))
 			msglistscrollElem.appendChild(listloadingElem)
-			window.alert('Could not find message to continue scrolling, resetting the view.')
+			window.alert(ui("Could not find message to continue scrolling, resetting the view."))
 		})
 		eventSource.addEventListener('viewMsgs', async (e: MessageEvent) => {
 			const viewMsgs = checkParse(() => api.parser.EventViewMsgs(JSON.parse(e.data)))
@@ -8687,7 +9185,7 @@ const init = async () => {
 					}
 				})
 			} catch (err) {
-				window.alert('Error processing changes (reloading advised): ' + errmsg(err))
+				window.alert(ui("Error processing changes (reloading advised): ") + errmsg(err))
 			}
 		})
 	}
@@ -8698,7 +9196,7 @@ window.addEventListener('load', async () => {
 	try {
 		await init()
 	} catch (err) {
-		window.alert('Error: ' + errmsg(err))
+		window.alert(ui("Error: ") + errmsg(err))
 	}
 })
 
@@ -8733,7 +9231,7 @@ const showUnhandledError = (err: Error, lineno: number, colno: number) => {
 	const box = dom.div(
 		css('unhandledErrorBox', {position: 'absolute', bottom: '1ex', left: '1ex', backgroundColor: 'rgba(255, 110, 110, .9)', maxWidth: '14em', padding: '.25em .5em', borderRadius: '.25em', fontSize: '.8em', wordBreak: 'break-all', zIndex: zindexes.shortcut}),
 		dom.div(style({marginBottom: '.5ex'}), ''+xerrmsg),
-		dom.clickbutton('Details', function click() {
+		dom.clickbutton(ui('Details'), function click() {
 			box.remove()
 			let msg = `Mox version: ${moxversion} (${moxgoos}/${moxgoarch})
 Browser: ${window.navigator.userAgent}
@@ -8756,23 +9254,23 @@ Details of the error and browser:
 					dom._class('dialogPanel'),
 					dom._class('errorPanel'),
 					dom.div(dom._class('dialogHeader'),
-						dom.h1('A JavaScript error occurred'),
-						dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel('Close'), attr.title('Close error details.'), function click() {
+						dom.h1(ui("A JavaScript error occurred")),
+						dom.clickbutton(dom._class('btnIcon'), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close error details.")), function click() {
 							remove()
 						}),
 					),
 					dom.div(dom._class('dialogBody'),
 						dom.pre(dom._class('errorPre'), msg),
-						dom.p('There is a good chance this is a bug in Mox Webmail.'),
-						dom.p('Consider filing a bug report ("issue") at ', link('https://github.com/mjl-/mox/issues/new?title='+encodeURIComponent('mox webmail js error: "'+xerrmsg+'"')+'&body='+encodeURIComponent(body), 'https://github.com/mjl-/mox/issues/new'), '. The link includes the error details.'),
-						dom.p('Before reporting you could check previous ', link('https://github.com/mjl-/mox/issues?q=is%3Aissue+"mox+webmail+js+error%3A"', 'webmail bug reports'), '.'),
-						dom.p('Your feedback will help improve mox, thanks!'),
+						dom.p(ui("There is a good chance this is a bug in Mox Webmail.")),
+						dom.p(ui("Consider filing a bug report (\"issue\") at "), link('https://github.com/mjl-/mox/issues/new?title='+encodeURIComponent(ui("mox webmail js error: \"")+xerrmsg+'"')+'&body='+encodeURIComponent(body), 'https://github.com/mjl-/mox/issues/new'), ui(". The link includes the error details.")),
+						dom.p(ui("Before reporting you could check previous "), link('https://github.com/mjl-/mox/issues?q=is%3Aissue+"mox+webmail+js+error%3A"', ui("webmail bug reports")), '.'),
+						dom.p(ui("Your feedback will help improve mox, thanks!")),
 					),
 					dom.div(dom._class('dialogFooter'),
-						dom.clickbutton('Close', function click() {
+						dom.clickbutton(ui("Close"), function click() {
 							remove()
 						}),
-						dom.clickbutton(dom._class('btnPrimary'), 'Silence for 1 week', function click() {
+						dom.clickbutton(dom._class('btnPrimary'), ui("Silence for 1 week"), function click() {
 							remove()
 							settingsPut({...settings, ignoreErrorsUntil: Math.round(new Date().getTime()/1000 + 7*24*3600)})
 						}),

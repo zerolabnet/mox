@@ -1,14 +1,20 @@
 package webmail
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"mime"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/mail"
 	"os"
 	"path/filepath"
 	"runtime/debug"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/mjl-/bstore"
@@ -440,6 +446,37 @@ func TestAPI(t *testing.T) {
 		TextBody: fmt.Sprintf("%80s", "tést"),
 	})
 
+	// Plain text stays the author's text, and the message also carries HTML of that text.
+	const altBody = "line1\n<script>alert(1)</script>\nпривет"
+	altDraftID := api.MessageCompose(ctx, ComposeMessage{
+		From:     "mjl@mox.example",
+		To:       []string{"mjl+to@mox.example"},
+		Subject:  "alternative draft",
+		TextBody: altBody,
+	}, drafts.ID)
+	assertTextAlternative(t, storedMessage(t, acc, altDraftID))
+	altDraft := api.ParsedMessage(ctx, altDraftID)
+	if len(altDraft.Texts) == 0 || !strings.Contains(altDraft.Texts[0], "line1") || !strings.Contains(altDraft.Texts[0], "<script>") || !strings.Contains(altDraft.Texts[0], "привет") {
+		t.Fatalf("draft text is not the author's text: %#v", altDraft.Texts)
+	}
+	if !altDraft.HasHTML {
+		t.Fatalf("draft has no html part")
+	}
+
+	api.MessageSubmit(ctx, SubmitMessage{
+		From:     "mjl@mox.example",
+		To:       []string{"mjl+to@mox.example"},
+		Subject:  "alternative-with-one-attachment",
+		TextBody: altBody,
+		Attachments: []File{
+			{
+				Filename: "tiny.txt",
+				DataURI:  "data:text/plain;base64,aGVsbG8=",
+			},
+		},
+	})
+	assertMixedAlternative(t, sentMessageBySubject(t, acc, sent.ID, "alternative-with-one-attachment"))
+
 	// Send without special-use Sent mailbox.
 	api.MailboxSetSpecialUse(ctx, store.Mailbox{ID: sent.ID, SpecialUse: store.SpecialUse{}})
 	api.MessageSubmit(ctx, SubmitMessage{
@@ -595,4 +632,113 @@ func TestAPI(t *testing.T) {
 	// For List-Id.
 	tdeliver(t, acc, inboxHTML)
 	testSuggest(inboxHTML.ID, "list.mox.example", "")
+}
+
+func storedMessage(t *testing.T, acc *store.Account, id int64) []byte {
+	t.Helper()
+	m, err := bstore.QueryDB[store.Message](ctxbg, acc.DB).FilterEqual("ID", id).Get()
+	tcheck(t, err, "get stored message")
+	buf, err := os.ReadFile(acc.MessagePath(id))
+	tcheck(t, err, "read stored message")
+	return append(append([]byte{}, m.MsgPrefix...), buf...)
+}
+
+func sentMessageBySubject(t *testing.T, acc *store.Account, mailboxID int64, subject string) []byte {
+	t.Helper()
+	var found []byte
+	err := bstore.QueryDB[store.Message](ctxbg, acc.DB).FilterEqual("MailboxID", mailboxID).FilterEqual("Expunged", false).ForEach(func(m store.Message) error {
+		buf, err := os.ReadFile(acc.MessagePath(m.ID))
+		if err != nil {
+			return err
+		}
+		raw := append(append([]byte{}, m.MsgPrefix...), buf...)
+		if bytes.Contains(raw, []byte(subject)) {
+			found = raw
+		}
+		return nil
+	})
+	tcheck(t, err, "list sent messages")
+	if found == nil {
+		t.Fatalf("sent message %q not found", subject)
+	}
+	return found
+}
+
+type mimeNode struct {
+	mediaType string
+	body      string
+	parts     []mimeNode
+}
+
+func readMIME(t *testing.T, raw []byte) (string, []mimeNode) {
+	t.Helper()
+	msg, err := mail.ReadMessage(bytes.NewReader(raw))
+	tcheck(t, err, "read stored message")
+	mt, params, err := mime.ParseMediaType(msg.Header.Get("Content-Type"))
+	tcheck(t, err, "parse content type")
+	if !strings.HasPrefix(mt, "multipart/") {
+		buf, err := io.ReadAll(msg.Body)
+		tcheck(t, err, "read body")
+		return mt, []mimeNode{{mediaType: mt, body: string(buf)}}
+	}
+	return mt, readMIMEParts(t, params["boundary"], msg.Body)
+}
+
+func readMIMEParts(t *testing.T, boundary string, r io.Reader) []mimeNode {
+	t.Helper()
+	mr := multipart.NewReader(r, boundary)
+	var nodes []mimeNode
+	for {
+		p, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		}
+		tcheck(t, err, "next mime part")
+		mt, params, err := mime.ParseMediaType(p.Header.Get("Content-Type"))
+		tcheck(t, err, "parse part content type")
+		if strings.HasPrefix(mt, "multipart/") {
+			nodes = append(nodes, mimeNode{mediaType: mt, parts: readMIMEParts(t, params["boundary"], p)})
+			continue
+		}
+		buf, err := io.ReadAll(p)
+		tcheck(t, err, "read mime part")
+		nodes = append(nodes, mimeNode{mediaType: mt, body: string(buf)})
+	}
+	return nodes
+}
+
+func assertTextAlternative(t *testing.T, raw []byte) {
+	t.Helper()
+	mt, parts := readMIME(t, raw)
+	tcompare(t, mt, "multipart/alternative")
+	if len(parts) != 2 || parts[0].mediaType != "text/plain" || parts[1].mediaType != "text/html" {
+		t.Fatalf("alternative parts: %#v", partTypes(parts))
+	}
+	plain, htmlBody := parts[0].body, parts[1].body
+	if !strings.Contains(plain, "line1") || !strings.Contains(plain, "<script>") {
+		t.Fatalf("plain part is missing the author's text: %q", plain)
+	}
+	if !strings.Contains(htmlBody, "&lt;script&gt;") || strings.Contains(htmlBody, "<script") {
+		t.Fatalf("html part did not escape the script tag: %q", htmlBody)
+	}
+	if !strings.Contains(htmlBody, "привет") && !strings.Contains(htmlBody, "=D0=BF=D1=80=D0=B8=D0=B2=D0=B5=D1=82") {
+		t.Fatalf("html part is missing the cyrillic text: %q", htmlBody)
+	}
+}
+
+func assertMixedAlternative(t *testing.T, raw []byte) {
+	t.Helper()
+	mt, parts := readMIME(t, raw)
+	tcompare(t, mt, "multipart/mixed")
+	if len(parts) < 2 || parts[0].mediaType != "multipart/alternative" {
+		t.Fatalf("mixed parts: %#v", partTypes(parts))
+	}
+}
+
+func partTypes(parts []mimeNode) []string {
+	out := make([]string, len(parts))
+	for i, p := range parts {
+		out[i] = p.mediaType
+	}
+	return out
 }

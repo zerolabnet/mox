@@ -279,6 +279,9 @@ func handle(apiHandler http.Handler, isForwarded bool, accountPath string, w htt
 			h := w.Header()
 			h.Set("X-Frame-Options", "deny")
 			h.Set("Referrer-Policy", "same-origin")
+			// The page policy from SafeHeaders blocks images outside this host.
+			// The From avatar loads a Gravatar photo when one exists.
+			h.Set("Content-Security-Policy", "default-src 'self' 'unsafe-inline' data:; img-src 'self' data: https://www.gravatar.com")
 			webmailFile.Serve(ctx, log, w, r)
 		default:
 			http.Error(w, "405 - method not allowed - use get", http.StatusMethodNotAllowed)

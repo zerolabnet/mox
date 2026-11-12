@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"log/slog"
 	"maps"
@@ -293,6 +294,51 @@ type ComposeMessage struct {
 	DraftMessageID    int64 // If set, previous draft message that will be removed after composing new message.
 }
 
+// textAsHTML is the HTML rendering of the author's plain text.
+// The result is a pure function of text. Line breaks match the textarea, and
+// characters such as "<" stay text.
+func textAsHTML(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	var b strings.Builder
+	b.WriteString("<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"></head>\n<body>\n<div style=\"white-space:pre-wrap\">")
+	b.WriteString(html.EscapeString(text))
+	b.WriteString("</div>\n</body>\n</html>\n")
+	return b.String()
+}
+
+// writeTextAlternative returns its boundary before writing so the caller can
+// name that boundary in Content-Type before any body byte. Composer emits
+// headers and body in call order.
+func writeTextAlternative(xc *message.Composer, text string) (boundary string, write func(w io.Writer)) {
+	boundary = multipart.NewWriter(io.Discard).Boundary()
+	write = func(w io.Writer) {
+		mp := multipart.NewWriter(w)
+		xc.Checkf(mp.SetBoundary(boundary), "setting multipart/alternative boundary")
+
+		plain, ct, cte := xc.TextPart("plain", text)
+		hdr := textproto.MIMEHeader{}
+		hdr.Set("Content-Type", ct)
+		hdr.Set("Content-Transfer-Encoding", cte)
+		p, err := mp.CreatePart(hdr)
+		xc.Checkf(err, "adding text/plain part")
+		_, err = p.Write(plain)
+		xc.Checkf(err, "writing text/plain part")
+
+		htmlBody, ct, cte := xc.TextPart("html", textAsHTML(text))
+		hdr = textproto.MIMEHeader{}
+		hdr.Set("Content-Type", ct)
+		hdr.Set("Content-Transfer-Encoding", cte)
+		p, err = mp.CreatePart(hdr)
+		xc.Checkf(err, "adding text/html part")
+		_, err = p.Write(htmlBody)
+		xc.Checkf(err, "writing text/html part")
+
+		xc.Checkf(mp.Close(), "closing multipart/alternative")
+	}
+	return boundary, write
+}
+
 // MessageCompose composes a message and saves it to the mailbox. Used for
 // saving draft messages.
 func (w Webmail) MessageCompose(ctx context.Context, m ComposeMessage, mailboxID int64) (id int64) {
@@ -432,11 +478,10 @@ func (w Webmail) MessageCompose(ctx context.Context, m ComposeMessage, mailboxID
 		})
 	}
 	xc.Header("MIME-Version", "1.0")
-	textBody, ct, cte := xc.TextPart("plain", m.TextBody)
-	xc.Header("Content-Type", ct)
-	xc.Header("Content-Transfer-Encoding", cte)
+	boundary, writeAlt := writeTextAlternative(xc, m.TextBody)
+	xc.Header("Content-Type", fmt.Sprintf(`multipart/alternative; boundary="%s"`, boundary))
 	xc.Line()
-	xc.Write([]byte(textBody))
+	writeAlt(xc)
 	xc.Flush()
 
 	var nm store.Message
@@ -817,15 +862,12 @@ func (w Webmail) MessageSubmit(ctx context.Context, m SubmitMessage) {
 		xc.Header("Content-Type", fmt.Sprintf(`multipart/mixed; boundary="%s"`, mp.Boundary()))
 		xc.Line()
 
-		textBody, ct, cte := xc.TextPart("plain", m.TextBody)
-		textHdr := textproto.MIMEHeader{}
-		textHdr.Set("Content-Type", ct)
-		textHdr.Set("Content-Transfer-Encoding", cte)
-
-		textp, err := mp.CreatePart(textHdr)
+		boundary, writeAlt := writeTextAlternative(xc, m.TextBody)
+		altHdr := textproto.MIMEHeader{}
+		altHdr.Set("Content-Type", fmt.Sprintf(`multipart/alternative; boundary="%s"`, boundary))
+		altp, err := mp.CreatePart(altHdr)
 		xcheckf(ctx, err, "adding text part to message")
-		_, err = textp.Write(textBody)
-		xcheckf(ctx, err, "writing text part")
+		writeAlt(altp)
 
 		xaddPart := func(ct, filename string) io.Writer {
 			ahdr := textproto.MIMEHeader{}
@@ -940,11 +982,10 @@ func (w Webmail) MessageSubmit(ctx context.Context, m SubmitMessage) {
 		err = mp.Close()
 		xcheckf(ctx, err, "writing mime multipart")
 	} else {
-		textBody, ct, cte := xc.TextPart("plain", m.TextBody)
-		xc.Header("Content-Type", ct)
-		xc.Header("Content-Transfer-Encoding", cte)
+		boundary, writeAlt := writeTextAlternative(xc, m.TextBody)
+		xc.Header("Content-Type", fmt.Sprintf(`multipart/alternative; boundary="%s"`, boundary))
 		xc.Line()
-		xc.Write([]byte(textBody))
+		writeAlt(xc)
 	}
 
 	xc.Flush()

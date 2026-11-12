@@ -17,6 +17,19 @@
 		}
 		return s;
 	}, "findBlock");
+	var letterScript = /* @__PURE__ */ __name((code) => {
+		if (code <= 591 || code >= 7680 && code <= 7935 || code >= 11360 && code <= 11391 || code >= 42784 && code <= 43007 || code >= 43824 && code <= 43887) {
+			return 0;
+		}
+		if (code >= 880 && code <= 1023 || code >= 7936 && code <= 8191) {
+			return 1;
+		}
+		if (code >= 1024 && code <= 1327 || code >= 7296 && code <= 7311 || code >= 11744 && code <= 11775 || code >= 42560 && code <= 42655) {
+			return 2;
+		}
+		return 1e3 + findBlock(code);
+	}, "letterScript");
+	var isLetter = /* @__PURE__ */ __name((code) => /\p{L}/u.test(String.fromCodePoint(code)), "isLetter");
 	var formatText = /* @__PURE__ */ __name((e, s) => {
 		if (!s) {
 			return;
@@ -33,41 +46,58 @@
 			e.appendChild(document.createTextNode(s));
 			return;
 		}
-		let n = 0;
-		let str = "";
-		let block = -1;
-		let mod = 1;
-		const put = /* @__PURE__ */ __name((nextblock) => {
-			if (n === 0 && nextblock === 0) {
-				mod = 0;
-			}
-			if (n % 2 === mod) {
-				const x = document.createElement("span");
-				x.classList.add("scriptswitch");
-				x.appendChild(document.createTextNode(str));
-				e.appendChild(x);
-			} else {
-				e.appendChild(document.createTextNode(str));
-			}
-			n++;
-			str = "";
-		}, "put");
-		for (const c of s) {
-			if (c === " " || c === "	" || c === "\r" || c === "\n") {
-				str += c;
+		for (const part of s.split(/([ \t\r\n]+)/)) {
+			if (!part) {
 				continue;
 			}
-			const code = c.codePointAt(0);
-			if (block < 0 || !(code >= scriptblocks[block] && (code < scriptblocks[block + 1] || block === scriptblocks.length - 1))) {
-				const nextblock = code < 128 ? 0 : findBlock(code);
-				if (block >= 0) {
-					put(nextblock);
-				}
-				block = nextblock;
+			if (/^[ \t\r\n]+$/.test(part)) {
+				e.appendChild(document.createTextNode(part));
+				continue;
 			}
-			str += c;
+			const runs = [];
+			const scripts = /* @__PURE__ */ new Set();
+			let buf = "";
+			let bufScript = -2;
+			const flush = /* @__PURE__ */ __name(() => {
+				if (!buf) {
+					return;
+				}
+				runs.push({ script: bufScript, text: buf });
+				if (bufScript >= 0) {
+					scripts.add(bufScript);
+				}
+				buf = "";
+			}, "flush");
+			for (const c of part) {
+				const code = c.codePointAt(0);
+				const script = isLetter(code) ? letterScript(code) : -1;
+				if (script !== bufScript) {
+					flush();
+					bufScript = script;
+				}
+				buf += c;
+			}
+			flush();
+			const mixed = scripts.size >= 2;
+			let first = -1;
+			for (const run of runs) {
+				if (run.script >= 0) {
+					first = run.script;
+					break;
+				}
+			}
+			for (const run of runs) {
+				if (mixed && run.script >= 0 && run.script !== first) {
+					const x = document.createElement("span");
+					x.classList.add("scriptswitch");
+					x.title = "This word mixes scripts. That can imitate another word.";
+					x.appendChild(document.createTextNode(run.text));
+					e.appendChild(x);
+				} else {
+					e.appendChild(document.createTextNode(run.text));
+				}
+			}
 		}
-		put(-1);
 	}, "formatText");
 	var _domKids = /* @__PURE__ */ __name((e, l) => {
 		l.forEach((c) => {
@@ -543,6 +573,34 @@
 		}
 	};
 
+	// .js/webmail/i18n.js
+	var langKey = "lang-preference";
+	var langPreference = /* @__PURE__ */ __name(() => {
+		try {
+			const v = localStorage.getItem(langKey);
+			if (v === "auto" || v === "en" || v === "ru") {
+				return v;
+			}
+		} catch (err) {
+		}
+		return "auto";
+	}, "langPreference");
+	var browserIsRussian = /* @__PURE__ */ __name(() => {
+		const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+		return list.some((l) => l.toLowerCase().startsWith("ru"));
+	}, "browserIsRussian");
+	var resolvedLang = /* @__PURE__ */ __name(() => {
+		const pref = langPreference();
+		if (pref === "ru") {
+			return "ru";
+		}
+		if (pref === "en") {
+			return "en";
+		}
+		return browserIsRussian() ? "ru" : "en";
+	}, "resolvedLang");
+	document.documentElement.lang = resolvedLang();
+
 	// .js/webmail/lib.js
 	var cssStyleDark = dom.style(attr.type("text/css"));
 	document.head.prepend(cssStyleDark);
@@ -679,6 +737,8 @@
 		"--popupColor": ["#2c3035", "#e3e6e9"],
 		"--popupBackgroundColor": ["#ffffff", "#1e2125"],
 		"--popupBorderColor": ["#e1e4e8", "#2e333a"],
+		"--floatBorderColor": ["#b4bdc7", "rgba(255, 255, 255, 0.16)"],
+		"--floatShadow": ["0 1px 2px rgba(44, 48, 53, 0.06), 0 16px 40px rgba(44, 48, 53, 0.16)", "0 1px 2px rgba(0, 0, 0, 0.45), 0 18px 44px rgba(0, 0, 0, 0.58)"],
 		"--highlightBackground": ["#eef1f4", "#262b31"],
 		"--highlightBorderColor": ["#5b7083", "#7e95a8"],
 		"--highlightBackgroundHover": ["#e1e4e8", "#3a4048"],
@@ -736,6 +796,8 @@
 		popupColor: "var(--popupColor)",
 		popupBackgroundColor: "var(--popupBackgroundColor)",
 		popupBorderColor: "var(--popupBorderColor)",
+		floatBorderColor: "var(--floatBorderColor)",
+		floatShadow: "var(--floatShadow)",
 		highlightBackground: "var(--highlightBackground)",
 		highlightBorderColor: "var(--highlightBorderColor)",
 		highlightBackgroundHover: "var(--highlightBackgroundHover)",
@@ -850,6 +912,11 @@
 			return dom.div(styleClasses.quoted[q % styleClasses.quoted.length], addLinks(line));
 		}));
 	}, "renderText");
+	ensureCSS(".msgFromPerson", { display: "inline-flex", alignItems: "center", gap: "10px", maxWidth: "100%", verticalAlign: "middle" });
+	ensureCSS(".msgFromAvatar", { width: "32px", height: "32px", borderRadius: "50%", flexShrink: "0", display: "inline-flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "#fff", fontSize: "14px", fontWeight: "600", lineHeight: "1", userSelect: "none" });
+	ensureCSS(".msgFromAvatar.hasPhoto", { backgroundColor: "transparent" });
+	ensureCSS(".msgFromAvatarImg", { width: "100%", height: "100%", objectFit: "cover", display: "block" });
+	ensureCSS(".msgFromIdentity", { minWidth: "0", display: "flex", flexDirection: "column" });
 
 	// .js/webmail/text.js
 	var init = /* @__PURE__ */ __name(async () => {
