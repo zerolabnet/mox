@@ -85,7 +85,7 @@ Enable consistency checking in UI updates:
 
 import {dom, style, attr, prop, ElemArg} from '../lib'
 import {css, ensureCSS, styles, styleClasses, equalAddress, formatAddress, formatAddressShort, formatEmail, loadMsgheaderView, isImage, renderText, formatDomain, join, applyTheme, themePreference} from './lib'
-import {ui, chooseLang, langPreference, uiLocale, wroteLine, mailboxLabel, unreadTitle} from './i18n'
+import {ui, chooseLang, langPreference, uiLocale, wroteLine, mailboxLabel, unreadTitle, selectedTitle} from './i18n'
 import * as api from './api'
 
 // If we had to reload with a cache buster after a server update, the URL will
@@ -746,7 +746,7 @@ const login = async (reason: string) => {
 									username=dom.input(
 										attr.required(''),
 										attr.autocomplete('email'),
-										attr.placeholder('jane@example.org'),
+										attr.placeholder(ui('jane@example.org')),
 										function change() { autosize.dataset.value = username.value },
 										function input() { autosize.dataset.value = username.value },
 									),
@@ -1192,20 +1192,20 @@ const flagList = (miv: MsgitemView): HTMLElement[] => {
 	}
 	const addFlags = (mi: api.MessageItem, ownRow: boolean) => {
 		const m = mi.Message
-		flag(m.Answered, 'r', 'Replied/answered')
+		flag(m.Answered, 'r', ui('Replied/answered'))
 		// The row button shows this message's flagged state. A collapsed child still uses the mark.
 		if (!ownRow) {
-			flag(m.Flagged, '!', 'Flagged')
+			flag(m.Flagged, '!', ui('Flagged'))
 		}
-		flag(m.Forwarded, 'f', 'Forwarded')
-		flag(m.Junk, 'j', 'Junk')
-		flag(m.Deleted, 'D', 'Deleted, used in IMAP, message will likely be removed soon.')
-		flag(m.Draft, 'd', 'Draft')
-		flag(m.Phishing, 'p', 'Phishing')
-		flag(!m.Junk && !m.Notjunk, '?', 'Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages')
-		flag(mi.Attachments && mi.Attachments.length > 0 ? true : false, 'a', 'Has at least one attachment')
+		flag(m.Forwarded, 'f', ui('Forwarded'))
+		flag(m.Junk, 'j', ui('Junk'))
+		flag(m.Deleted, 'D', ui('Deleted, used in IMAP, message will likely be removed soon.'))
+		flag(m.Draft, 'd', ui('Draft'))
+		flag(m.Phishing, 'p', ui('Phishing'))
+		flag(!m.Junk && !m.Notjunk, '?', ui('Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages'))
+		flag(mi.Attachments && mi.Attachments.length > 0 ? true : false, 'a', ui('Has at least one attachment'))
 		if (m.ThreadMuted) {
-			flag(true, 'm', 'Muted, new messages are automatically marked as read.')
+			flag(true, 'm', ui('Muted, new messages are automatically marked as read.'))
 		}
 	}
 	addFlags(miv.messageitem, true)
@@ -1384,7 +1384,7 @@ const withStatus = async <T>(action: string, promise: Promise<T>, disablable?: D
 			throw err
 		}
 		if (!noAlert) {
-			window.alert('Error: ' + action + ': ' + errmsg(err))
+			window.alert(ui('Error: ') + action + ': ' + errmsg(err))
 		}
 		// We throw the error again. The ensures callers that await their withStatus call
 		// won't continue executing. We have a global handler for uncaught promises, but it
@@ -1489,7 +1489,7 @@ const withDisabled = async <T>(elem: {disabled: boolean}, p: Promise<T>): Promis
 		return await p
 	} catch (err) {
 		log({err})
-		window.alert('Error: ' + errmsg(err))
+		window.alert(ui('Error: ') + errmsg(err))
 		throw err
 	} finally {
 		elem.disabled = false
@@ -2307,7 +2307,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 				check(rs.DNSSEC === api.SecurityResult.SecurityResultYes, 'DNSSEC')
 				check(rs.DANE === api.SecurityResult.SecurityResultYes, 'DANE')
 				check(rs.RequireTLS === api.SecurityResult.SecurityResultYes, 'RequireTLS')
-				const status = 'Security mechanisms known to be implemented by the recipient domain: '+ (implemented.length === 0 ? '(none)' : implemented.join(', ')) + '.'
+				const status = ui('Security mechanisms known to be implemented by the recipient domain: ')+ (implemented.length === 0 ? ui('(none)') : implemented.join(', ')) + '.'
 				inputElem.setAttribute('title', status+'\n\n'+recipientSecurityTitle)
 
 				aborter.abort = undefined
@@ -2341,7 +2341,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 			})
 		}
 
-		const recipientSecurityTitle = 'Description of security mechanisms recipient domains may implement:\n1. STARTTLS: Opportunistic (unverified) TLS with STARTTLS, successfully negotiated during the most recent delivery attempt.\n2. MTA-STS: For PKIX/WebPKI-verified TLS.\n3. DNSSEC: MX DNS records are DNSSEC-signed.\n4. DANE: First delivery destination host implements DANE for verified TLS.\n5. RequireTLS: SMTP extension for verified TLS delivery into recipient mailbox, support detected during the most recent delivery attempt.\n\nChecks STARTTLS, DANE and RequireTLS cover the most recently used delivery path, not necessarily all possible delivery paths.\n\nThe bars below the input field indicate implementation status by the recipient domain:\n- Red, not implemented/unsupported\n- Green, implemented/supported\n- Gray, error while determining\n- Absent/white, unknown or skipped (e.g. no previous delivery attempt, or DANE check skipped due to DNSSEC-lookup error)'
+		const recipientSecurityTitle = ui('Description of security mechanisms recipient domains may implement:\n1. STARTTLS: Opportunistic (unverified) TLS with STARTTLS, successfully negotiated during the most recent delivery attempt.\n2. MTA-STS: For PKIX/WebPKI-verified TLS.\n3. DNSSEC: MX DNS records are DNSSEC-signed.\n4. DANE: First delivery destination host implements DANE for verified TLS.\n5. RequireTLS: SMTP extension for verified TLS delivery into recipient mailbox, support detected during the most recent delivery attempt.\n\nChecks STARTTLS, DANE and RequireTLS cover the most recently used delivery path, not necessarily all possible delivery paths.\n\nThe bars below the input field indicate implementation status by the recipient domain:\n- Red, not implemented/unsupported\n- Green, implemented/supported\n- Gray, error while determining\n- Absent/white, unknown or skipped (e.g. no previous delivery attempt, or DANE check skipped due to DNSSEC-lookup error)')
 		const root = dom.span(
 			autosizeElem=dom.span(
 				dom._class('autosize'),
@@ -2662,7 +2662,7 @@ const compose = (opts: ComposeOptions, listMailboxes: listMailboxes, setLocation
 					!(opts.attachmentsMessageItem && opts.attachmentsMessageItem.Attachments && opts.attachmentsMessageItem.Attachments.length > 0) ? [] : dom.div(
 						ui("Forward attachments: "),
 						forwardAttachmentViews=(opts.attachmentsMessageItem?.Attachments || []).map(a => {
-							const filename = a.Filename || '(unnamed)'
+							const filename = a.Filename || ui('(unnamed)')
 							const size = formatSize(a.Part.DecodedSize)
 							const checkbox = dom.input(attr.type('checkbox'), function change() { checkAttachments() })
 							const root = dom.label(checkbox, ' '+filename+' ', dom.span('('+size+') ', styleClasses.textMild))
@@ -2874,7 +2874,7 @@ const labelsPopover = (e: MouseEvent, msgs: api.Message[], possibleLabels: possi
 					},
 					fieldsetnew=dom.fieldset(
 						dom.div(style({display: 'flex', gap: '6px', flexWrap: 'wrap'}),
-							newlabel=dom.input(focusPlaceholder(ui("new-label")), attr.required(''), style({flex: '1 1 8em', minWidth: 0}), attr.title('New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"\].')),
+							newlabel=dom.input(focusPlaceholder(ui("new-label")), attr.required(''), style({flex: '1 1 8em', minWidth: 0}), attr.title(ui('New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"\\].'))),
 							dom.submitbutton(ui("Add new label"), attr.title(ui("Add this label to the message(s), leaving other labels unchanged."))),
 						),
 					),
@@ -3178,12 +3178,12 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 				// Approximately equal, for duplicate message-id, typically in Sent and incoming
 				// from mailing list or when sending to self.
 				threadChar = '≈'
-				threadCharTitle = 'Same Message-ID.'
+				threadCharTitle = ui('Same Message-ID.')
 			} else if (mi.Message.ThreadMissingLink || (mi.Message.ThreadParentIDs || []).length > 0 && (mi.Message.ThreadParentIDs || [])[0] !== msgitemView.parent.messageitem.Message.ID) {
 				// Zigzag arrow, e.g. if immediate parent is missing, or when matching was done
 				// based on subject.
 				threadChar = '↯'
-				threadCharTitle = 'Immediate parent message is missing.'
+				threadCharTitle = ui('Immediate parent message is missing.')
 			}
 		}
 
@@ -3312,7 +3312,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 				if (title) {
 					title += ',\n'
 				}
-				title += 'addressed: '+ta.map(a => formatAddress(a)).join(', ')
+				title += ui('addressed: ')+ta.map(a => formatAddress(a)).join(', ')
 			}
 			return [
 				attr.title(title),
@@ -3342,7 +3342,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 			function dragstart(e: DragEvent) {
 				if (!msglistView.selected().includes(msgitemView)) {
 					e.preventDefault()
-					window.alert('Can only drag items in selection.')
+					window.alert(ui('Can only drag items in selection.'))
 					return
 				}
 				// We send the Message.ID and MailboxID, so we can decide based on the destination
@@ -3398,8 +3398,8 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 						dom._class('msgItemFlagBtn'),
 						mi.Message.Flagged ? dom._class('isOn') : [],
 						flagMarkIcon(mi.Message.Flagged),
-						attr.arialabel(mi.Message.Flagged ? 'Remove flag' : 'Flag message'),
-						attr.title(mi.Message.Flagged ? 'Remove flag.' : 'Flag message.'),
+						attr.arialabel(mi.Message.Flagged ? ui('Remove flag') : ui('Flag message')),
+						attr.title(mi.Message.Flagged ? ui('Remove flag.') : ui('Flag message.')),
 						async function click(e: MouseEvent) {
 							e.preventDefault()
 							e.stopPropagation()
@@ -3407,7 +3407,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 							if (mi.Message.Flagged) {
 								await withStatus(ui("Removing flag"), client.FlagsClear([id], ['\\Flagged']))
 							} else {
-								await withStatus('Flagging', client.FlagsAdd([id], ['\\Flagged']))
+								await withStatus(ui('Flagging'), client.FlagsAdd([id], ['\\Flagged']))
 							}
 						},
 					),
@@ -3422,7 +3422,7 @@ const newMsgitemView = (mi: api.MessageItem, msglistView: MsglistView, otherMail
 					dom.div(
 						dom._class('msgItemSubjectText'),
 						threadIndent > 0 ? dom.span(threadChar, style({paddingLeft: (threadIndent/2)+'em'}), css('msgItemThreadChar', {opacity: '.75', fontWeight: 'normal'}), threadCharTitle ? attr.title(threadCharTitle) : []) : [],
-						msgitemView.parent ? [] : new String(mi.Envelope.Subject || '(no subject)'),
+						msgitemView.parent ? [] : new String(mi.Envelope.Subject || ui('(no subject)')),
 					),
 					dom.div(
 						keywords,
@@ -4087,7 +4087,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 				dom.clickbutton(
 					dom._class('msgMobileDetailsToggle'),
 					msgheaderDetailsExpanded ? ui('Less') : ui('Details'),
-					attr.title(msgheaderDetailsExpanded ? 'Hide full headers.' : 'Show full headers.'),
+					attr.title(msgheaderDetailsExpanded ? ui('Hide full headers.') : ui('Show full headers.')),
 					function click() {
 						msgheaderDetailsExpanded = !msgheaderDetailsExpanded
 						msgheaderDetailsElem.classList.toggle('expanded', msgheaderDetailsExpanded)
@@ -4203,10 +4203,10 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 						e.stopPropagation()
 					},
 					css('attachmentsDownloadHeader', {display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', backgroundColor: styles.popupBackgroundColor, color: styles.popupColor, boxShadow: styles.boxShadow, border: '1px solid', borderColor: styles.popupBorderColor, borderRadius: styles.radius}),
-					dom.span(a.Filename || '(unnamed)'),
+					dom.span(a.Filename || ui('(unnamed)')),
 					dom.span('·', style({color: styles.colorMilder})),
 					dom.span(formatSize(a.Part.DecodedSize)),
-					dom.a(dom._class('button'), 'Download', attr.download(''), attr.href('msg/'+m.ID+'/download/'+pathStr), function click(e: MouseEvent) { e.stopPropagation() }),
+					dom.a(dom._class('button'), ui('Download'), attr.download(''), attr.href('msg/'+m.ID+'/download/'+pathStr), function click(e: MouseEvent) { e.stopPropagation() }),
 				),
 			),
 			isImage(a) ?
@@ -4273,7 +4273,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 				dom.div(dom._class('pad'), dom._class('inlineAttachmentsLine'),
 					ui("Attachments: "),
 					l.slice(0, filesAll ? l.length : 4).map(a => {
-						const name = a.Filename || '(unnamed)'
+						const name = a.Filename || ui('(unnamed)')
 						const viewable = isViewable(a)
 						const size = formatSize(a.Part.DecodedSize)
 						const eye = '👁'
@@ -4390,7 +4390,7 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 		const msgHeaderSeparatorStyle = css('msgHeaderSeparator', {borderTop: '1px solid', borderTopColor: styles.borderColor})
 		const msgModeWarningStyle = css('msgModeWarning', {backgroundColor: styles.warningBackgroundColor, padding: '0 .15em'})
 
-		const htmlNote = 'In the HTML viewer, the following potentially dangerous functionality is disabled: submitting forms, starting a download from a link, navigating away from this page by clicking a link. If a link does not work, try explicitly opening it in a new tab.'
+		const htmlNote = ui('In the HTML viewer, the following potentially dangerous functionality is disabled: submitting forms, starting a download from a link, navigating away from this page by clicking a link. If a link does not work, try explicitly opening it in a new tab.')
 		const haveText = pm.Texts && pm.Texts.length > 0
 		if (!haveText && !pm.HasHTML) {
 			dom._kids(msgcontentElem)
@@ -4985,7 +4985,7 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 				dom.div(
 					attr.role('region'), attr.arialabel(ui("Selected messages")),
 					css('msgSelectionNote', {padding: '2em', textAlign: 'center', color: styles.colorMild}),
-					''+effselected.length+' messages selected',
+					selectedTitle(effselected.length),
 				),
 			)
 		}
@@ -7177,7 +7177,7 @@ const newSearchView = (searchbarElem: HTMLInputElement, mailboxlistView: Mailbox
 								dom.option(ui("All mailboxes"), attr.value('0')),
 								changeHandlers,
 							),
-							dom.div(dom._class('searchMailboxKids'), dom.label(mailboxkids=dom.input(attr.type('checkbox'), changeHandlers), 'Also search in mailboxes below the selected mailbox.')),
+							dom.div(dom._class('searchMailboxKids'), dom.label(mailboxkids=dom.input(attr.type('checkbox'), changeHandlers), ui('Also search in mailboxes below the selected mailbox.'))),
 						),
 					),
 					dom.tr(
@@ -7635,7 +7635,7 @@ const init = async () => {
 		setMobilePane(open ? 'message' : 'list')
 		if (open) {
 			const mb = mailboxlistView.activeMailbox()
-			const subj = msglistView.activeMessageID() ? (msglistView.selected()[0]?.messageitem.Envelope.Subject || '(no subject)') : ''
+			const subj = msglistView.activeMessageID() ? (msglistView.selected()[0]?.messageitem.Envelope.Subject || ui('(no subject)')) : ''
 			const title = subj || (mb ? mailboxLabel(mb, mb.Name) : ui('Message'))
 			mobileMsgTitle.textContent = title
 		}
@@ -7680,7 +7680,7 @@ const init = async () => {
 		}
 
 		// log('new request for scroll')
-		await withStatus('Requesting more messages', requestMessages(bounds, 0))
+		await withStatus(ui('Requesting more messages'), requestMessages(bounds, 0))
 	}
 
 	const otherMailbox = (mailboxID: number): api.Mailbox | null => requestFilter.MailboxID !== mailboxID ? (mailboxlistView.findMailboxByID(mailboxID) || null) : null
@@ -7867,7 +7867,7 @@ const init = async () => {
 	// Called by searchView when user executes the search.
 	const startSearch = async (f: api.Filter, notf: api.NotFilter): Promise<void> => {
 		if (!sseID) {
-			window.alert('Error: not connect')
+			window.alert(ui('Error: ') + ui('Not connected'))
 			return
 		}
 
@@ -8771,7 +8771,7 @@ const init = async () => {
 			attr.role('status'),
 			dom.span(css('connectionStatus', {backgroundColor: styles.warningBackgroundColor, padding: '2px 8px', borderRadius: styles.radius, fontSize: '12px'}), ui("Not connected"), attr.title(ui("Not receiving real-time updates, including of new deliveries."))),
 			' ',
-			dom.clickbutton('Reconnect', function click() {
+			dom.clickbutton(ui('Reconnect'), function click() {
 				if (!eventSource && !connecting) {
 					noreconnect = false
 					connect(true)
@@ -8807,7 +8807,7 @@ const init = async () => {
 		} catch (err) {
 			connecting = false
 			noreconnect = true
-			dom._kids(statusElem, (capitalizeFirst((err as any).message || 'Error fetching connection token'))+', not automatically retrying. ')
+			dom._kids(statusElem, (capitalizeFirst((err as any).message || ui('Error fetching connection token')))+ui(', not automatically retrying. '))
 			showNotConnected()
 			return
 		}
@@ -8902,12 +8902,12 @@ const init = async () => {
 				window.clearTimeout(eventID)
 				eventID = 0
 			}
-			document.title = ['(not connected)', loginAddress ? (loginAddress.User+'@'+formatDomain(loginAddress.Domain)) : '', 'Mox Webmail'].filter(s => s).join(' - ')
+			document.title = [ui('(not connected)'), loginAddress ? (loginAddress.User+'@'+formatDomain(loginAddress.Domain)) : '', 'Mox Webmail'].filter(s => s).join(' - ')
 			dom._kids(connectionElem)
 			if (noreconnect) {
 				let msg = capitalizeFirst(errmsg)
 				if (addNotRetrying) {
-					msg += ', not automatically retrying. '
+					msg += ui(', not automatically retrying. ')
 				}
 				dom._kids(statusElem, msg)
 				showNotConnected()
@@ -8924,7 +8924,7 @@ const init = async () => {
 		})
 		// Fatal error on the server side, error message propagated, but connection needs to be closed.
 		eventSource.addEventListener('fatalErr', (e: MessageEvent) => {
-			const errmsg = JSON.parse(e.data) as string || '(no error message)'
+			const errmsg = JSON.parse(e.data) as string || ui('(no error message)')
 			sseError(ui("Server error: \"") + errmsg + '"', true)
 		})
 		// Server is stopping, we'll assume for a restart, and will try to reconnect with some jitter.
@@ -8941,7 +8941,7 @@ const init = async () => {
 			try {
 				return fn()
 			} catch (err) {
-				window.alert(ui("invalid event from server: ") + ((err as any).message || '(no message)'))
+				window.alert(ui("invalid event from server: ") + ((err as any).message || ui('(no message)')))
 				throw err
 			}
 		}
@@ -9278,7 +9278,7 @@ Details of the error and browser:
 				),
 			)
 		}), ' ',
-		dom.clickbutton('Ignore', function click() {
+		dom.clickbutton(ui('Ignore'), function click() {
 			box.remove()
 		}),
 	)

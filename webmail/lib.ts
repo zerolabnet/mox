@@ -454,7 +454,7 @@ export const formatAddressValidated = (a: api.MessageAddress, m: api.Message, us
 		if (!use) {
 			return domstr
 		}
-		const extra = domstr === ascii ? '' : '; domain '+ascii
+		const extra = domstr === ascii ? '' : ui('; domain ') + ascii
 		// We want to show how "approved" this message is given the message From's domain.
 		// We have MsgFromValidation available. It's not the greatest, being a mix of
 		// potential strict validations, actual DMARC policy validation, potential relaxed
@@ -469,33 +469,33 @@ export const formatAddressValidated = (a: api.MessageAddress, m: api.Message, us
 		case api.Validation.ValidationStrict:
 			name = 'Strict'
 			color = styles.underlineGreen
-			title = 'Message would have matched a strict DMARC policy.'
+			title = ui('Message would have matched a strict DMARC policy.')
 			break
 		case api.Validation.ValidationDMARC:
 			name = 'DMARC'
 			color = styles.underlineGreen
-			title = 'Message matched DMARC policy of domain.'
+			title = ui('Message matched DMARC policy of domain.')
 			break
 		case api.Validation.ValidationRelaxed:
 			name = 'Relaxed'
 			color = styles.underlineGreen
-			title = 'Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.'
+			title = ui('Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.')
 			break;
 		case api.Validation.ValidationNone:
 			if (m.IsForward || m.IsMailingList) {
 				name = 'Forwardlist'
 				color = styles.underlineBlue
-				title = 'Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.'
+				title = ui('Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.')
 			} else {
 				name = 'Bad'
 				color = styles.underlineRed
-				title = 'Either domain did not have a DMARC policy, or message did not adhere to it.'
+				title = ui('Either domain did not have a DMARC policy, or message did not adhere to it.')
 			}
 			break;
 		default:
 			// Also for zero value, when unknown. E.g. for sent messages added with IMAP.
 			name = 'Unknown'
-			title = 'Unknown DMARC verification result.'
+			title = ui('Unknown DMARC verification result.')
 			return dom.span(attr.title(title+extra), domstr)
 		}
 		return dom.span(attr.title(title+extra), css('addressValidation'+name, {borderBottom: '1.5px solid', borderBottomColor: color, textDecoration: 'none'}), domstr)

@@ -529,7 +529,24 @@ const ru: { [en: string]: string } =
 	"Language": "Язык",
 	"Threads": "Цепочки",
 	"Register \"mailto:\" links with the browser or operating system to compose a message in webmail.": "Зарегистрируйте ссылки mailto в браузере или в системе, чтобы писать письмо отсюда.",
-	"word \"with space\" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:\"subject\" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb": "слово \"с пробелом\" -минусслово mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:\"тема\" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb"
+	"word \"with space\" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:\"subject\" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb": "слово \"с пробелом\" -минусслово mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:\"тема\" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb",
+	"Also search in mailboxes below the selected mailbox.": "Искать также во вложенных папках.",
+	"Flagging": "Пометка флажком",
+	"Can only drag items in selection.": "Перетаскивать можно только выбранные письма.",
+	"Reconnect": "Переподключить",
+	"Ignore": "Скрыть",
+	"Download": "Скачать",
+	"Requesting more messages": "Запрос следующих писем",
+	"(unnamed)": "(без имени)",
+	"(none)": "(нет)",
+	"; domain ": "; домен ",
+	"jane@example.org": "ivan@example.org",
+	"Message would have matched a strict DMARC policy.": "Письмо прошло бы строгую проверку DMARC.",
+	"Message matched DMARC policy of domain.": "Письмо соответствует политике DMARC домена.",
+	"Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.": "У домена нет политики DMARC, но при мягкой политике письмо прошло бы.",
+	"Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.": "Письмо не прошло бы DMARC, но пришло через настроенный список рассылки или пересылку.",
+	"Either domain did not have a DMARC policy, or message did not adhere to it.": "У домена нет политики DMARC, либо письмо ей не соответствует.",
+	"Unknown DMARC verification result.": "Результат проверки DMARC неизвестен.",
 }
 
 export const langPreference = (): LangPreference => {
@@ -577,6 +594,18 @@ export const unreadTitle = (n: number): string => {
 	const mod100 = n % 100
 	const singular = mod10 === 1 && mod100 !== 11
 	return n + (singular ? ' непрочитанное' : ' непрочитанных')
+}
+
+export const selectedTitle = (n: number): string => {
+	if (resolvedLang() !== 'ru') {
+		return n === 1 ? '1 message selected' : n + ' messages selected'
+	}
+	const mod10 = n % 10
+	const mod100 = n % 100
+	const one = mod10 === 1 && mod100 !== 11
+	const few = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+	const word = one ? 'письмо' : few ? 'письма' : 'писем'
+	return 'Выбрано ' + n + ' ' + word
 }
 
 export const chooseLang = (pref: LangPreference) => {

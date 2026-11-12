@@ -21,7 +21,7 @@ const init = () => {
 				css('msgAttachments', {borderTop: '1px solid', borderTopColor: styles.borderColor}),
 				dom.div(dom._class('pad'),
 					ui("Attachments: "),
-					join(mi.Attachments.map(a => a.Filename || '(unnamed)'), () => ', '),
+					join(mi.Attachments.map(a => a.Filename || ui('(unnamed)')), () => ', '),
 				),
 			)
 		)

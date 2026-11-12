@@ -1100,7 +1100,24 @@
 		"Language": "\u042F\u0437\u044B\u043A",
 		"Threads": "\u0426\u0435\u043F\u043E\u0447\u043A\u0438",
 		'Register "mailto:" links with the browser or operating system to compose a message in webmail.': "\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u0443\u0439\u0442\u0435 \u0441\u0441\u044B\u043B\u043A\u0438 mailto \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435 \u0438\u043B\u0438 \u0432 \u0441\u0438\u0441\u0442\u0435\u043C\u0435, \u0447\u0442\u043E\u0431\u044B \u043F\u0438\u0441\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E \u043E\u0442\u0441\u044E\u0434\u0430.",
-		'word "with space" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"subject" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb': '\u0441\u043B\u043E\u0432\u043E "\u0441 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u043C" -\u043C\u0438\u043D\u0443\u0441\u0441\u043B\u043E\u0432\u043E mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"\u0442\u0435\u043C\u0430" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb'
+		'word "with space" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"subject" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb': '\u0441\u043B\u043E\u0432\u043E "\u0441 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u043C" -\u043C\u0438\u043D\u0443\u0441\u0441\u043B\u043E\u0432\u043E mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"\u0442\u0435\u043C\u0430" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb',
+		"Also search in mailboxes below the selected mailbox.": "\u0418\u0441\u043A\u0430\u0442\u044C \u0442\u0430\u043A\u0436\u0435 \u0432\u043E \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0445 \u043F\u0430\u043F\u043A\u0430\u0445.",
+		"Flagging": "\u041F\u043E\u043C\u0435\u0442\u043A\u0430 \u0444\u043B\u0430\u0436\u043A\u043E\u043C",
+		"Can only drag items in selection.": "\u041F\u0435\u0440\u0435\u0442\u0430\u0441\u043A\u0438\u0432\u0430\u0442\u044C \u043C\u043E\u0436\u043D\u043E \u0442\u043E\u043B\u044C\u043A\u043E \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u043F\u0438\u0441\u044C\u043C\u0430.",
+		"Reconnect": "\u041F\u0435\u0440\u0435\u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C",
+		"Ignore": "\u0421\u043A\u0440\u044B\u0442\u044C",
+		"Download": "\u0421\u043A\u0430\u0447\u0430\u0442\u044C",
+		"Requesting more messages": "\u0417\u0430\u043F\u0440\u043E\u0441 \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0445 \u043F\u0438\u0441\u0435\u043C",
+		"(unnamed)": "(\u0431\u0435\u0437 \u0438\u043C\u0435\u043D\u0438)",
+		"(none)": "(\u043D\u0435\u0442)",
+		"; domain ": "; \u0434\u043E\u043C\u0435\u043D ",
+		"jane@example.org": "ivan@example.org",
+		"Message would have matched a strict DMARC policy.": "\u041F\u0438\u0441\u044C\u043C\u043E \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B \u0441\u0442\u0440\u043E\u0433\u0443\u044E \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0443 DMARC.",
+		"Message matched DMARC policy of domain.": "\u041F\u0438\u0441\u044C\u043C\u043E \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0435 DMARC \u0434\u043E\u043C\u0435\u043D\u0430.",
+		"Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.": "\u0423 \u0434\u043E\u043C\u0435\u043D\u0430 \u043D\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0438 DMARC, \u043D\u043E \u043F\u0440\u0438 \u043C\u044F\u0433\u043A\u043E\u0439 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0435 \u043F\u0438\u0441\u044C\u043C\u043E \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B.",
+		"Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.": "\u041F\u0438\u0441\u044C\u043C\u043E \u043D\u0435 \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B DMARC, \u043D\u043E \u043F\u0440\u0438\u0448\u043B\u043E \u0447\u0435\u0440\u0435\u0437 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u0440\u0430\u0441\u0441\u044B\u043B\u043A\u0438 \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u0441\u044B\u043B\u043A\u0443.",
+		"Either domain did not have a DMARC policy, or message did not adhere to it.": "\u0423 \u0434\u043E\u043C\u0435\u043D\u0430 \u043D\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0438 DMARC, \u043B\u0438\u0431\u043E \u043F\u0438\u0441\u044C\u043C\u043E \u0435\u0439 \u043D\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442.",
+		"Unknown DMARC verification result.": "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 DMARC \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u0435\u043D."
 	};
 	var langPreference = /* @__PURE__ */ __name(() => {
 		try {
@@ -1432,7 +1449,7 @@
 			if (!use) {
 				return domstr;
 			}
-			const extra = domstr === ascii ? "" : "; domain " + ascii;
+			const extra = domstr === ascii ? "" : ui("; domain ") + ascii;
 			let name = "";
 			let color = "";
 			let title = "";
@@ -1440,32 +1457,32 @@
 				case Validation.ValidationStrict:
 					name = "Strict";
 					color = styles.underlineGreen;
-					title = "Message would have matched a strict DMARC policy.";
+					title = ui("Message would have matched a strict DMARC policy.");
 					break;
 				case Validation.ValidationDMARC:
 					name = "DMARC";
 					color = styles.underlineGreen;
-					title = "Message matched DMARC policy of domain.";
+					title = ui("Message matched DMARC policy of domain.");
 					break;
 				case Validation.ValidationRelaxed:
 					name = "Relaxed";
 					color = styles.underlineGreen;
-					title = "Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.";
+					title = ui("Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.");
 					break;
 				case Validation.ValidationNone:
 					if (m.IsForward || m.IsMailingList) {
 						name = "Forwardlist";
 						color = styles.underlineBlue;
-						title = "Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.";
+						title = ui("Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.");
 					} else {
 						name = "Bad";
 						color = styles.underlineRed;
-						title = "Either domain did not have a DMARC policy, or message did not adhere to it.";
+						title = ui("Either domain did not have a DMARC policy, or message did not adhere to it.");
 					}
 					break;
 				default:
 					name = "Unknown";
-					title = "Unknown DMARC verification result.";
+					title = ui("Unknown DMARC verification result.");
 					return dom.span(attr.title(title + extra), domstr);
 			}
 			return dom.span(attr.title(title + extra), css("addressValidation" + name, { borderBottom: "1.5px solid", borderBottomColor: color, textDecoration: "none" }), domstr);
@@ -1573,7 +1590,7 @@
 		document.title = '"' + mi.Envelope.Subject + '"- from ' + ((mi.Envelope.From || []).map((a) => formatAddress(a)).join(", ") || "-") + " (id " + mi.Message.ID + ")";
 		let msgattachmentview = dom.div();
 		if (mi.Attachments && mi.Attachments.length > 0) {
-			dom._kids(msgattachmentview, dom.div(css("msgAttachments", { borderTop: "1px solid", borderTopColor: styles.borderColor }), dom.div(dom._class("pad"), ui("Attachments: "), join(mi.Attachments.map((a) => a.Filename || "(unnamed)"), () => ", "))));
+			dom._kids(msgattachmentview, dom.div(css("msgAttachments", { borderTop: "1px solid", borderTopColor: styles.borderColor }), dom.div(dom._class("pad"), ui("Attachments: "), join(mi.Attachments.map((a) => a.Filename || ui("(unnamed)")), () => ", "))));
 		}
 		const msgheaderview = dom.tbody();
 		loadMsgheaderView(msgheaderview, mi, [], null, true);

@@ -1584,7 +1584,24 @@
 		"Language": "\u042F\u0437\u044B\u043A",
 		"Threads": "\u0426\u0435\u043F\u043E\u0447\u043A\u0438",
 		'Register "mailto:" links with the browser or operating system to compose a message in webmail.': "\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u0443\u0439\u0442\u0435 \u0441\u0441\u044B\u043B\u043A\u0438 mailto \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435 \u0438\u043B\u0438 \u0432 \u0441\u0438\u0441\u0442\u0435\u043C\u0435, \u0447\u0442\u043E\u0431\u044B \u043F\u0438\u0441\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E \u043E\u0442\u0441\u044E\u0434\u0430.",
-		'word "with space" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"subject" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb': '\u0441\u043B\u043E\u0432\u043E "\u0441 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u043C" -\u043C\u0438\u043D\u0443\u0441\u0441\u043B\u043E\u0432\u043E mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"\u0442\u0435\u043C\u0430" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb'
+		'word "with space" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"subject" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb': '\u0441\u043B\u043E\u0432\u043E "\u0441 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u043C" -\u043C\u0438\u043D\u0443\u0441\u0441\u043B\u043E\u0432\u043E mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"\u0442\u0435\u043C\u0430" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb',
+		"Also search in mailboxes below the selected mailbox.": "\u0418\u0441\u043A\u0430\u0442\u044C \u0442\u0430\u043A\u0436\u0435 \u0432\u043E \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0445 \u043F\u0430\u043F\u043A\u0430\u0445.",
+		"Flagging": "\u041F\u043E\u043C\u0435\u0442\u043A\u0430 \u0444\u043B\u0430\u0436\u043A\u043E\u043C",
+		"Can only drag items in selection.": "\u041F\u0435\u0440\u0435\u0442\u0430\u0441\u043A\u0438\u0432\u0430\u0442\u044C \u043C\u043E\u0436\u043D\u043E \u0442\u043E\u043B\u044C\u043A\u043E \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u043F\u0438\u0441\u044C\u043C\u0430.",
+		"Reconnect": "\u041F\u0435\u0440\u0435\u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C",
+		"Ignore": "\u0421\u043A\u0440\u044B\u0442\u044C",
+		"Download": "\u0421\u043A\u0430\u0447\u0430\u0442\u044C",
+		"Requesting more messages": "\u0417\u0430\u043F\u0440\u043E\u0441 \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0445 \u043F\u0438\u0441\u0435\u043C",
+		"(unnamed)": "(\u0431\u0435\u0437 \u0438\u043C\u0435\u043D\u0438)",
+		"(none)": "(\u043D\u0435\u0442)",
+		"; domain ": "; \u0434\u043E\u043C\u0435\u043D ",
+		"jane@example.org": "ivan@example.org",
+		"Message would have matched a strict DMARC policy.": "\u041F\u0438\u0441\u044C\u043C\u043E \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B \u0441\u0442\u0440\u043E\u0433\u0443\u044E \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0443 DMARC.",
+		"Message matched DMARC policy of domain.": "\u041F\u0438\u0441\u044C\u043C\u043E \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0435 DMARC \u0434\u043E\u043C\u0435\u043D\u0430.",
+		"Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.": "\u0423 \u0434\u043E\u043C\u0435\u043D\u0430 \u043D\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0438 DMARC, \u043D\u043E \u043F\u0440\u0438 \u043C\u044F\u0433\u043A\u043E\u0439 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0435 \u043F\u0438\u0441\u044C\u043C\u043E \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B.",
+		"Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.": "\u041F\u0438\u0441\u044C\u043C\u043E \u043D\u0435 \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B DMARC, \u043D\u043E \u043F\u0440\u0438\u0448\u043B\u043E \u0447\u0435\u0440\u0435\u0437 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u0440\u0430\u0441\u0441\u044B\u043B\u043A\u0438 \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u0441\u044B\u043B\u043A\u0443.",
+		"Either domain did not have a DMARC policy, or message did not adhere to it.": "\u0423 \u0434\u043E\u043C\u0435\u043D\u0430 \u043D\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0438 DMARC, \u043B\u0438\u0431\u043E \u043F\u0438\u0441\u044C\u043C\u043E \u0435\u0439 \u043D\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442.",
+		"Unknown DMARC verification result.": "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 DMARC \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u0435\u043D."
 	};
 	var langPreference = /* @__PURE__ */ __name(() => {
 		try {
@@ -1627,6 +1644,17 @@
 		const singular = mod10 === 1 && mod100 !== 11;
 		return n + (singular ? " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u043E\u0435" : " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0445");
 	}, "unreadTitle");
+	var selectedTitle = /* @__PURE__ */ __name((n) => {
+		if (resolvedLang() !== "ru") {
+			return n === 1 ? "1 message selected" : n + " messages selected";
+		}
+		const mod10 = n % 10;
+		const mod100 = n % 100;
+		const one = mod10 === 1 && mod100 !== 11;
+		const few = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14);
+		const word = one ? "\u043F\u0438\u0441\u044C\u043C\u043E" : few ? "\u043F\u0438\u0441\u044C\u043C\u0430" : "\u043F\u0438\u0441\u0435\u043C";
+		return "\u0412\u044B\u0431\u0440\u0430\u043D\u043E " + n + " " + word;
+	}, "selectedTitle");
 	var chooseLang = /* @__PURE__ */ __name((pref) => {
 		if (pref === langPreference()) {
 			return;
@@ -2023,7 +2051,7 @@
 			if (!use) {
 				return domstr;
 			}
-			const extra = domstr === ascii ? "" : "; domain " + ascii;
+			const extra = domstr === ascii ? "" : ui("; domain ") + ascii;
 			let name = "";
 			let color = "";
 			let title = "";
@@ -2031,32 +2059,32 @@
 				case Validation.ValidationStrict:
 					name = "Strict";
 					color = styles.underlineGreen;
-					title = "Message would have matched a strict DMARC policy.";
+					title = ui("Message would have matched a strict DMARC policy.");
 					break;
 				case Validation.ValidationDMARC:
 					name = "DMARC";
 					color = styles.underlineGreen;
-					title = "Message matched DMARC policy of domain.";
+					title = ui("Message matched DMARC policy of domain.");
 					break;
 				case Validation.ValidationRelaxed:
 					name = "Relaxed";
 					color = styles.underlineGreen;
-					title = "Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.";
+					title = ui("Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.");
 					break;
 				case Validation.ValidationNone:
 					if (m.IsForward || m.IsMailingList) {
 						name = "Forwardlist";
 						color = styles.underlineBlue;
-						title = "Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.";
+						title = ui("Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.");
 					} else {
 						name = "Bad";
 						color = styles.underlineRed;
-						title = "Either domain did not have a DMARC policy, or message did not adhere to it.";
+						title = ui("Either domain did not have a DMARC policy, or message did not adhere to it.");
 					}
 					break;
 				default:
 					name = "Unknown";
-					title = "Unknown DMARC verification result.";
+					title = ui("Unknown DMARC verification result.");
 					return dom.span(attr.title(title + extra), domstr);
 			}
 			return dom.span(attr.title(title + extra), css("addressValidation" + name, { borderBottom: "1.5px solid", borderBottomColor: color, textDecoration: "none" }), domstr);
@@ -2758,7 +2786,7 @@
 				} finally {
 					fieldset.disabled = false;
 				}
-			}, "submit"), fieldset = dom.fieldset(dom.h1(ui("Mail")), dom.label(style({ display: "block", marginBottom: "2ex" }), dom.div(ui("Email address"), style({ marginBottom: ".5ex" })), autosize = dom.span(dom._class("autosize"), username = dom.input(attr.required(""), attr.autocomplete("email"), attr.placeholder("jane@example.org"), /* @__PURE__ */ __name(function change() {
+			}, "submit"), fieldset = dom.fieldset(dom.h1(ui("Mail")), dom.label(style({ display: "block", marginBottom: "2ex" }), dom.div(ui("Email address"), style({ marginBottom: ".5ex" })), autosize = dom.span(dom._class("autosize"), username = dom.input(attr.required(""), attr.autocomplete("email"), attr.placeholder(ui("jane@example.org")), /* @__PURE__ */ __name(function change() {
 				autosize.dataset.value = username.value;
 			}, "change"), /* @__PURE__ */ __name(function input() {
 				autosize.dataset.value = username.value;
@@ -3119,19 +3147,19 @@
 		}, "flag");
 		const addFlags = /* @__PURE__ */ __name((mi, ownRow) => {
 			const m = mi.Message;
-			flag(m.Answered, "r", "Replied/answered");
+			flag(m.Answered, "r", ui("Replied/answered"));
 			if (!ownRow) {
-				flag(m.Flagged, "!", "Flagged");
+				flag(m.Flagged, "!", ui("Flagged"));
 			}
-			flag(m.Forwarded, "f", "Forwarded");
-			flag(m.Junk, "j", "Junk");
-			flag(m.Deleted, "D", "Deleted, used in IMAP, message will likely be removed soon.");
-			flag(m.Draft, "d", "Draft");
-			flag(m.Phishing, "p", "Phishing");
-			flag(!m.Junk && !m.Notjunk, "?", "Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages");
-			flag(mi.Attachments && mi.Attachments.length > 0 ? true : false, "a", "Has at least one attachment");
+			flag(m.Forwarded, "f", ui("Forwarded"));
+			flag(m.Junk, "j", ui("Junk"));
+			flag(m.Deleted, "D", ui("Deleted, used in IMAP, message will likely be removed soon."));
+			flag(m.Draft, "d", ui("Draft"));
+			flag(m.Phishing, "p", ui("Phishing"));
+			flag(!m.Junk && !m.Notjunk, "?", ui("Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages"));
+			flag(mi.Attachments && mi.Attachments.length > 0 ? true : false, "a", ui("Has at least one attachment"));
 			if (m.ThreadMuted) {
-				flag(true, "m", "Muted, new messages are automatically marked as read.");
+				flag(true, "m", ui("Muted, new messages are automatically marked as read."));
 			}
 		}, "addFlags");
 		addFlags(miv.messageitem, true);
@@ -3261,7 +3289,7 @@
 				throw err;
 			}
 			if (!noAlert) {
-				window.alert("Error: " + action + ": " + errmsg(err));
+				window.alert(ui("Error: ") + action + ": " + errmsg(err));
 			}
 			throw err;
 		} finally {
@@ -3348,7 +3376,7 @@
 			return await p;
 		} catch (err) {
 			log({ err });
-			window.alert("Error: " + errmsg(err));
+			window.alert(ui("Error: ") + errmsg(err));
 			throw err;
 		} finally {
 			elem.disabled = false;
@@ -3878,7 +3906,7 @@
 					check(rs.DNSSEC === SecurityResult.SecurityResultYes, "DNSSEC");
 					check(rs.DANE === SecurityResult.SecurityResultYes, "DANE");
 					check(rs.RequireTLS === SecurityResult.SecurityResultYes, "RequireTLS");
-					const status = "Security mechanisms known to be implemented by the recipient domain: " + (implemented.length === 0 ? "(none)" : implemented.join(", ")) + ".";
+					const status = ui("Security mechanisms known to be implemented by the recipient domain: ") + (implemented.length === 0 ? ui("(none)") : implemented.join(", ")) + ".";
 					inputElem.setAttribute("title", status + "\n\n" + recipientSecurityTitle);
 					aborter.abort = void 0;
 					v.recipientSecurity = rs;
@@ -3908,7 +3936,7 @@
 					}
 				});
 			}, "fetchRecipientSecurity");
-			const recipientSecurityTitle = "Description of security mechanisms recipient domains may implement:\n1. STARTTLS: Opportunistic (unverified) TLS with STARTTLS, successfully negotiated during the most recent delivery attempt.\n2. MTA-STS: For PKIX/WebPKI-verified TLS.\n3. DNSSEC: MX DNS records are DNSSEC-signed.\n4. DANE: First delivery destination host implements DANE for verified TLS.\n5. RequireTLS: SMTP extension for verified TLS delivery into recipient mailbox, support detected during the most recent delivery attempt.\n\nChecks STARTTLS, DANE and RequireTLS cover the most recently used delivery path, not necessarily all possible delivery paths.\n\nThe bars below the input field indicate implementation status by the recipient domain:\n- Red, not implemented/unsupported\n- Green, implemented/supported\n- Gray, error while determining\n- Absent/white, unknown or skipped (e.g. no previous delivery attempt, or DANE check skipped due to DNSSEC-lookup error)";
+			const recipientSecurityTitle = ui("Description of security mechanisms recipient domains may implement:\n1. STARTTLS: Opportunistic (unverified) TLS with STARTTLS, successfully negotiated during the most recent delivery attempt.\n2. MTA-STS: For PKIX/WebPKI-verified TLS.\n3. DNSSEC: MX DNS records are DNSSEC-signed.\n4. DANE: First delivery destination host implements DANE for verified TLS.\n5. RequireTLS: SMTP extension for verified TLS delivery into recipient mailbox, support detected during the most recent delivery attempt.\n\nChecks STARTTLS, DANE and RequireTLS cover the most recently used delivery path, not necessarily all possible delivery paths.\n\nThe bars below the input field indicate implementation status by the recipient domain:\n- Red, not implemented/unsupported\n- Green, implemented/supported\n- Gray, error while determining\n- Absent/white, unknown or skipped (e.g. no previous delivery attempt, or DANE check skipped due to DNSSEC-lookup error)");
 			const root = dom.span(autosizeElem = dom.span(dom._class("autosize"), inputElem = dom.input(focusPlaceholder(ui("Jane <jane@example.org>")), style({ width: "100%" }), attr.value(addr), newAddressComplete(), accountSettings?.ShowAddressSecurity ? attr.title(recipientSecurityTitle) : [], /* @__PURE__ */ __name(function keydown(e) {
 				if (e.key === "Backspace" && e.ctrlKey && inputElem.value === "" && !(isTo && views.length === 1)) {
 					remove();
@@ -4118,7 +4146,7 @@
 				draftScheduleSave();
 			}, "input")
 		), dom.div(dom._class("composeMeta"), !(opts.attachmentsMessageItem && opts.attachmentsMessageItem.Attachments && opts.attachmentsMessageItem.Attachments.length > 0) ? [] : dom.div(ui("Forward attachments: "), forwardAttachmentViews = (opts.attachmentsMessageItem?.Attachments || []).map((a) => {
-			const filename = a.Filename || "(unnamed)";
+			const filename = a.Filename || ui("(unnamed)");
 			const size = formatSize(a.Part.DecodedSize);
 			const checkbox = dom.input(attr.type("checkbox"), /* @__PURE__ */ __name(function change() {
 				checkAttachments();
@@ -4259,7 +4287,7 @@
 			e2.preventDefault();
 			await withStatus(ui("Adding new label"), client.FlagsAdd(msgIDs, [newlabel.value]), fieldsetnew);
 			remove();
-		}, "submit"), fieldsetnew = dom.fieldset(dom.div(style({ display: "flex", gap: "6px", flexWrap: "wrap" }), newlabel = dom.input(focusPlaceholder(ui("new-label")), attr.required(""), style({ flex: "1 1 8em", minWidth: 0 }), attr.title('New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"].')), dom.submitbutton(ui("Add new label"), attr.title(ui("Add this label to the message(s), leaving other labels unchanged.")))))))));
+		}, "submit"), fieldsetnew = dom.fieldset(dom.div(style({ display: "flex", gap: "6px", flexWrap: "wrap" }), newlabel = dom.input(focusPlaceholder(ui("new-label")), attr.required(""), style({ flex: "1 1 8em", minWidth: 0 }), attr.title(ui('New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"\\].'))), dom.submitbutton(ui("Add new label"), attr.title(ui("Add this label to the message(s), leaving other labels unchanged.")))))))));
 	}, "labelsPopover");
 	var movePopover = /* @__PURE__ */ __name((e, mailboxes, msgs) => {
 		if (msgs.length === 0) {
@@ -4418,10 +4446,10 @@
 				threadChar = "\u21B3";
 				if (msgitemView.parent.messageitem.Message.MessageID === mi2.Message.MessageID) {
 					threadChar = "\u2248";
-					threadCharTitle = "Same Message-ID.";
+					threadCharTitle = ui("Same Message-ID.");
 				} else if (mi2.Message.ThreadMissingLink || (mi2.Message.ThreadParentIDs || []).length > 0 && (mi2.Message.ThreadParentIDs || [])[0] !== msgitemView.parent.messageitem.Message.ID) {
 					threadChar = "\u21AF";
-					threadCharTitle = "Immediate parent message is missing.";
+					threadCharTitle = ui("Immediate parent message is missing.");
 				}
 			}
 			const isUnread = /* @__PURE__ */ __name(() => !mi2.Message.Seen || msgitemView.isCollapsedThreadRoot() && !!msgitemView.findDescendant((miv) => !miv.messageitem.Message.Seen), "isUnread");
@@ -4527,7 +4555,7 @@
 					if (title) {
 						title += ",\n";
 					}
-					title += "addressed: " + ta.map((a) => formatAddress(a)).join(", ");
+					title += ui("addressed: ") + ta.map((a) => formatAddress(a)).join(", ");
 				}
 				return [
 					attr.title(title),
@@ -4550,7 +4578,7 @@
 				/* @__PURE__ */ __name(function dragstart(e) {
 					if (!msglistView.selected().includes(msgitemView)) {
 						e.preventDefault();
-						window.alert("Can only drag items in selection.");
+						window.alert(ui("Can only drag items in selection."));
 						return;
 					}
 					e.dataTransfer.setData("application/vnd.mox.messages", JSON.stringify(msglistView.selected().map((miv) => [miv.messageitem.Message.MailboxID, miv.messageitem.Message.ID])));
@@ -4588,17 +4616,17 @@
 				dom.div(
 					dom._class("msgItemCell"),
 					dom._class("msgItemMain"),
-					dom.div(dom._class("msgItemFromRow"), dom.clickbutton(dom._class("msgItemFlagBtn"), mi2.Message.Flagged ? dom._class("isOn") : [], flagMarkIcon(mi2.Message.Flagged), attr.arialabel(mi2.Message.Flagged ? "Remove flag" : "Flag message"), attr.title(mi2.Message.Flagged ? "Remove flag." : "Flag message."), /* @__PURE__ */ __name(async function click(e) {
+					dom.div(dom._class("msgItemFromRow"), dom.clickbutton(dom._class("msgItemFlagBtn"), mi2.Message.Flagged ? dom._class("isOn") : [], flagMarkIcon(mi2.Message.Flagged), attr.arialabel(mi2.Message.Flagged ? ui("Remove flag") : ui("Flag message")), attr.title(mi2.Message.Flagged ? ui("Remove flag.") : ui("Flag message.")), /* @__PURE__ */ __name(async function click(e) {
 						e.preventDefault();
 						e.stopPropagation();
 						const id = mi2.Message.ID;
 						if (mi2.Message.Flagged) {
 							await withStatus(ui("Removing flag"), client.FlagsClear([id], ["\\Flagged"]));
 						} else {
-							await withStatus("Flagging", client.FlagsAdd([id], ["\\Flagged"]));
+							await withStatus(ui("Flagging"), client.FlagsAdd([id], ["\\Flagged"]));
 						}
 					}, "click")), dom.div(dom._class("silenttitle"), dom._class("msgItemFromText"), correspondents()), identityHeader),
-					dom.div(dom._class("msgItemSubjectRow"), dom.div(dom._class("msgItemSubjectText"), threadIndent > 0 ? dom.span(threadChar, style({ paddingLeft: threadIndent / 2 + "em" }), css("msgItemThreadChar", { opacity: ".75", fontWeight: "normal" }), threadCharTitle ? attr.title(threadCharTitle) : []) : [], msgitemView.parent ? [] : new String(mi2.Envelope.Subject || "(no subject)")), dom.div(keywords, mailboxtags)),
+					dom.div(dom._class("msgItemSubjectRow"), dom.div(dom._class("msgItemSubjectText"), threadIndent > 0 ? dom.span(threadChar, style({ paddingLeft: threadIndent / 2 + "em" }), css("msgItemThreadChar", { opacity: ".75", fontWeight: "normal" }), threadCharTitle ? attr.title(threadCharTitle) : []) : [], msgitemView.parent ? [] : new String(mi2.Envelope.Subject || ui("(no subject)"))), dom.div(keywords, mailboxtags)),
 					mi2.Message.Preview ? dom.div(dom._class("msgItemPreviewRow"), dom.div(dom._class("msgItemPreviewText"), new String(mi2.Message.Preview))) : [],
 					// Thread messages are connected by a vertical bar. The first and last message are
 					// only half the height of the item, to indicate start/end, and so it stands out
@@ -5126,7 +5154,7 @@
 					}, "click")));
 				}
 			}
-			dom._kids(msgmobileSummaryElem, dom.div(dom._class("msgMobileSummaryTop"), dom.div(dom._class("msgMobileSummaryFrom"), fromStr), dom.div(dom._class("msgMobileSummaryDate"), attr.title(ui("Received: ") + received.toString() + ";\n" + ui("Date header in message: ") + (msgenv.Date ? msgenv.Date.toString() : ui("(missing/invalid)"))), dateStr)), dom.div(dom._class("msgMobileSummaryMeta"), dom.span(dom._class("msgMobileSummaryTo"), toLine), dom.clickbutton(dom._class("msgMobileDetailsToggle"), msgheaderDetailsExpanded ? ui("Less") : ui("Details"), attr.title(msgheaderDetailsExpanded ? "Hide full headers." : "Show full headers."), /* @__PURE__ */ __name(function click() {
+			dom._kids(msgmobileSummaryElem, dom.div(dom._class("msgMobileSummaryTop"), dom.div(dom._class("msgMobileSummaryFrom"), fromStr), dom.div(dom._class("msgMobileSummaryDate"), attr.title(ui("Received: ") + received.toString() + ";\n" + ui("Date header in message: ") + (msgenv.Date ? msgenv.Date.toString() : ui("(missing/invalid)"))), dateStr)), dom.div(dom._class("msgMobileSummaryMeta"), dom.span(dom._class("msgMobileSummaryTo"), toLine), dom.clickbutton(dom._class("msgMobileDetailsToggle"), msgheaderDetailsExpanded ? ui("Less") : ui("Details"), attr.title(msgheaderDetailsExpanded ? ui("Hide full headers.") : ui("Show full headers.")), /* @__PURE__ */ __name(function click() {
 				msgheaderDetailsExpanded = !msgheaderDetailsExpanded;
 				msgheaderDetailsElem.classList.toggle("expanded", msgheaderDetailsExpanded);
 				loadMobileHeaderSummary();
@@ -5196,7 +5224,7 @@
 				cmdViewClose();
 			}, "click"), attr.tabindex("0"), !(index > 0) ? [] : dom.div(css("attachmentsPrevious", { position: "absolute", left: "1em", top: 0, bottom: 0, fontSize: "1.5em", width: "2em", display: "flex", alignItems: "center", cursor: "pointer" }), dom.div(dom._class("silenttitle"), attachmentsArrowStyle, attr.title(ui("To previous viewable attachment.")), "\u2190"), attr.tabindex("0"), clickCmd(cmdViewPrev, attachShortcuts), enterCmd(cmdViewPrev, attachShortcuts)), dom.div(css("attachmentsDownloadHeaderBox", { textAlign: "center", paddingBottom: "30px" }), dom.span(dom._class("pad"), /* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
-			}, "click"), css("attachmentsDownloadHeader", { display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 12px", backgroundColor: styles.popupBackgroundColor, color: styles.popupColor, boxShadow: styles.boxShadow, border: "1px solid", borderColor: styles.popupBorderColor, borderRadius: styles.radius }), dom.span(a.Filename || "(unnamed)"), dom.span("\xB7", style({ color: styles.colorMilder })), dom.span(formatSize(a.Part.DecodedSize)), dom.a(dom._class("button"), "Download", attr.download(""), attr.href("msg/" + m.ID + "/download/" + pathStr), /* @__PURE__ */ __name(function click(e) {
+			}, "click"), css("attachmentsDownloadHeader", { display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 12px", backgroundColor: styles.popupBackgroundColor, color: styles.popupColor, boxShadow: styles.boxShadow, border: "1px solid", borderColor: styles.popupBorderColor, borderRadius: styles.radius }), dom.span(a.Filename || ui("(unnamed)")), dom.span("\xB7", style({ color: styles.colorMilder })), dom.span(formatSize(a.Part.DecodedSize)), dom.a(dom._class("button"), ui("Download"), attr.download(""), attr.href("msg/" + m.ID + "/download/" + pathStr), /* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
 			}, "click")))), isImage(a) ? dom.div(css("attachmentsImageBox", { flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center", maxHeight: "calc(100% - 50px)", margin: "0 5em" }), dom.img(css("attachmentsImage", { maxWidth: "100%", maxHeight: "100%", boxShadow: styles.boxShadow, margin: "0 30px" }), attr.src("msg/" + m.ID + "/view/" + pathStr))) : isText(a) ? dom.iframe(attr.title(ui("Attachment shown as text.")), attachmentsIframeStyle, attr.src("msg/" + m.ID + "/viewtext/" + pathStr)) : isPDF(a) ? dom.iframe(attr.title(ui("Attachment as PDF.")), attachmentsIframeStyle, attr.src("msg/" + m.ID + "/view/" + pathStr)) : content = dom.div(/* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
@@ -5211,7 +5239,7 @@
 		const renderAttachments = /* @__PURE__ */ __name(() => {
 			const l = mi.Attachments || [];
 			dom._kids(msgattachmentElem, l && l.length === 0 ? [] : dom.div(css("inlineAttachmentsSeparator", { borderTop: "1px solid", borderTopColor: styles.borderColor }), dom.div(dom._class("pad"), dom._class("inlineAttachmentsLine"), ui("Attachments: "), l.slice(0, filesAll ? l.length : 4).map((a) => {
-				const name = a.Filename || "(unnamed)";
+				const name = a.Filename || ui("(unnamed)");
 				const viewable = isViewable(a);
 				const size = formatSize(a.Part.DecodedSize);
 				const eye = "\u{1F441}";
@@ -5287,7 +5315,7 @@
 			loadHeaderDetails(pm);
 			const msgHeaderSeparatorStyle = css("msgHeaderSeparator", { borderTop: "1px solid", borderTopColor: styles.borderColor });
 			const msgModeWarningStyle = css("msgModeWarning", { backgroundColor: styles.warningBackgroundColor, padding: "0 .15em" });
-			const htmlNote = "In the HTML viewer, the following potentially dangerous functionality is disabled: submitting forms, starting a download from a link, navigating away from this page by clicking a link. If a link does not work, try explicitly opening it in a new tab.";
+			const htmlNote = ui("In the HTML viewer, the following potentially dangerous functionality is disabled: submitting forms, starting a download from a link, navigating away from this page by clicking a link. If a link does not work, try explicitly opening it in a new tab.");
 			const haveText = pm.Texts && pm.Texts.length > 0;
 			if (!haveText && !pm.HasHTML) {
 				dom._kids(msgcontentElem);
@@ -5717,7 +5745,7 @@
 				msgView = newMsgView(effselected[0], mlv, listMailboxes, setLocationHash, possibleLabels, loaded, refineKeyword, parsedMessageOpt);
 				dom._kids(msgElem, msgView);
 			} else {
-				dom._kids(msgElem, dom.div(attr.role("region"), attr.arialabel(ui("Selected messages")), css("msgSelectionNote", { padding: "2em", textAlign: "center", color: styles.colorMild }), "" + effselected.length + " messages selected"));
+				dom._kids(msgElem, dom.div(attr.role("region"), attr.arialabel(ui("Selected messages")), css("msgSelectionNote", { padding: "2em", textAlign: "center", color: styles.colorMild }), selectedTitle(effselected.length)));
 			}
 			setLocationHash();
 			if (activeChanged && onMessagePane && isMobile()) {
@@ -7526,7 +7554,7 @@
 			}, "click"))),
 			// This is a separate form, inside the form with the overall search field because
 			// when updating the form based on the parsed searchbar, we first need to reset it.
-			dom.div(dom._class("dialogBody"), dom.table(searchTableStyle, dom.tr(dom.td(dom.label(ui("Mailbox"), attr.for("searchMailbox")), attr.title(ui("Filter by mailbox, including children of the mailbox."))), dom.td(mailbox = dom.select(attr.id("searchMailbox"), style({ width: "100%" }), dom.option(ui("All mailboxes except Trash/Junk/Rejects"), attr.value("-1")), dom.option(ui("All mailboxes"), attr.value("0")), changeHandlers), dom.div(dom._class("searchMailboxKids"), dom.label(mailboxkids = dom.input(attr.type("checkbox"), changeHandlers), "Also search in mailboxes below the selected mailbox.")))), dom.tr(dom.td(dom.label(ui("Text"), attr.for("searchWords"))), dom.td(words = dom.input(attr.id("searchWords"), attr.title(ui("Filter by text, case-insensitive, substring match, not necessarily whole words.")), focusPlaceholder('word "exact match" -notword'), style({ width: "100%" }), changeHandlers))), dom.tr(dom.td(dom.label(ui("From"), attr.for("searchFrom"))), dom.td(from = dom.input(attr.id("searchFrom"), style({ width: "100%" }), focusPlaceholder(ui("Address or name")), newAddressComplete(), changeHandlers))), dom.tr(dom.td(dom.label(ui("To"), attr.for("searchTo")), attr.title(ui("Search on addressee, including Cc and Bcc headers."))), dom.td(to = dom.input(attr.id("searchTo"), focusPlaceholder(ui("Address or name, also matches Cc and Bcc addresses")), style({ width: "100%" }), newAddressComplete(), changeHandlers))), dom.tr(dom.td(dom.label(ui("Subject"), attr.for("searchSubject"))), dom.td(subject = dom.input(attr.id("searchSubject"), style({ width: "100%" }), focusPlaceholder(ui('"exact match"')), changeHandlers))), dom.tr(dom.td(ui("Received between"), style({ whiteSpace: "nowrap" })), dom.td(dom.div(dom._class("searchDateRow"), oldestDate = dom.input(attr.type("date"), focusPlaceholder("2023-07-20"), changeHandlers), oldestTime = dom.input(attr.type("time"), focusPlaceholder("23:10"), changeHandlers), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Clear start date.")), attr.title(ui("Clear start date.")), /* @__PURE__ */ __name(function click() {
+			dom.div(dom._class("dialogBody"), dom.table(searchTableStyle, dom.tr(dom.td(dom.label(ui("Mailbox"), attr.for("searchMailbox")), attr.title(ui("Filter by mailbox, including children of the mailbox."))), dom.td(mailbox = dom.select(attr.id("searchMailbox"), style({ width: "100%" }), dom.option(ui("All mailboxes except Trash/Junk/Rejects"), attr.value("-1")), dom.option(ui("All mailboxes"), attr.value("0")), changeHandlers), dom.div(dom._class("searchMailboxKids"), dom.label(mailboxkids = dom.input(attr.type("checkbox"), changeHandlers), ui("Also search in mailboxes below the selected mailbox."))))), dom.tr(dom.td(dom.label(ui("Text"), attr.for("searchWords"))), dom.td(words = dom.input(attr.id("searchWords"), attr.title(ui("Filter by text, case-insensitive, substring match, not necessarily whole words.")), focusPlaceholder('word "exact match" -notword'), style({ width: "100%" }), changeHandlers))), dom.tr(dom.td(dom.label(ui("From"), attr.for("searchFrom"))), dom.td(from = dom.input(attr.id("searchFrom"), style({ width: "100%" }), focusPlaceholder(ui("Address or name")), newAddressComplete(), changeHandlers))), dom.tr(dom.td(dom.label(ui("To"), attr.for("searchTo")), attr.title(ui("Search on addressee, including Cc and Bcc headers."))), dom.td(to = dom.input(attr.id("searchTo"), focusPlaceholder(ui("Address or name, also matches Cc and Bcc addresses")), style({ width: "100%" }), newAddressComplete(), changeHandlers))), dom.tr(dom.td(dom.label(ui("Subject"), attr.for("searchSubject"))), dom.td(subject = dom.input(attr.id("searchSubject"), style({ width: "100%" }), focusPlaceholder(ui('"exact match"')), changeHandlers))), dom.tr(dom.td(ui("Received between"), style({ whiteSpace: "nowrap" })), dom.td(dom.div(dom._class("searchDateRow"), oldestDate = dom.input(attr.type("date"), focusPlaceholder("2023-07-20"), changeHandlers), oldestTime = dom.input(attr.type("time"), focusPlaceholder("23:10"), changeHandlers), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Clear start date.")), attr.title(ui("Clear start date.")), /* @__PURE__ */ __name(function click() {
 				oldestDate.value = "";
 				oldestTime.value = "";
 				updateSearchbar();
@@ -7851,7 +7879,7 @@
 			setMobilePane(open ? "message" : "list");
 			if (open) {
 				const mb = mailboxlistView.activeMailbox();
-				const subj = msglistView.activeMessageID() ? msglistView.selected()[0]?.messageitem.Envelope.Subject || "(no subject)" : "";
+				const subj = msglistView.activeMessageID() ? msglistView.selected()[0]?.messageitem.Envelope.Subject || ui("(no subject)") : "";
 				const title = subj || (mb ? mailboxLabel(mb, mb.Name) : ui("Message"));
 				mobileMsgTitle.textContent = title;
 			}
@@ -7888,7 +7916,7 @@
 			if (msglistscrollElem.scrollTop < msglistscrollElem.scrollHeight - 3 * bounds.height) {
 				return;
 			}
-			await withStatus("Requesting more messages", requestMessages(bounds, 0));
+			await withStatus(ui("Requesting more messages"), requestMessages(bounds, 0));
 		}, "viewportEnsureMessages");
 		const otherMailbox = /* @__PURE__ */ __name((mailboxID) => requestFilter.MailboxID !== mailboxID ? mailboxlistView.findMailboxByID(mailboxID) || null : null, "otherMailbox");
 		const listMailboxes = /* @__PURE__ */ __name(() => mailboxlistView.mailboxes(), "listMailboxes");
@@ -7980,7 +8008,7 @@
 		let searchbarElem;
 		const startSearch = /* @__PURE__ */ __name(async (f, notf) => {
 			if (!sseID) {
-				window.alert("Error: not connect");
+				window.alert(ui("Error: ") + ui("Not connected"));
 				return;
 			}
 			if (f.Attachments !== "" && settings.refine === "attachments") {
@@ -8590,7 +8618,7 @@
 			}
 		});
 		const showNotConnected = /* @__PURE__ */ __name(() => {
-			dom._kids(connectionElem, attr.role("status"), dom.span(css("connectionStatus", { backgroundColor: styles.warningBackgroundColor, padding: "2px 8px", borderRadius: styles.radius, fontSize: "12px" }), ui("Not connected"), attr.title(ui("Not receiving real-time updates, including of new deliveries."))), " ", dom.clickbutton("Reconnect", /* @__PURE__ */ __name(function click() {
+			dom._kids(connectionElem, attr.role("status"), dom.span(css("connectionStatus", { backgroundColor: styles.warningBackgroundColor, padding: "2px 8px", borderRadius: styles.radius, fontSize: "12px" }), ui("Not connected"), attr.title(ui("Not receiving real-time updates, including of new deliveries."))), " ", dom.clickbutton(ui("Reconnect"), /* @__PURE__ */ __name(function click() {
 				if (!eventSource && !connecting) {
 					noreconnect = false;
 					connect(true);
@@ -8616,7 +8644,7 @@
 			} catch (err) {
 				connecting = false;
 				noreconnect = true;
-				dom._kids(statusElem, capitalizeFirst(err.message || "Error fetching connection token") + ", not automatically retrying. ");
+				dom._kids(statusElem, capitalizeFirst(err.message || ui("Error fetching connection token")) + ui(", not automatically retrying. "));
 				showNotConnected();
 				return;
 			}
@@ -8701,12 +8729,12 @@
 					window.clearTimeout(eventID);
 					eventID = 0;
 				}
-				document.title = ["(not connected)", loginAddress ? loginAddress.User + "@" + formatDomain(loginAddress.Domain) : "", "Mox Webmail"].filter((s) => s).join(" - ");
+				document.title = [ui("(not connected)"), loginAddress ? loginAddress.User + "@" + formatDomain(loginAddress.Domain) : "", "Mox Webmail"].filter((s) => s).join(" - ");
 				dom._kids(connectionElem);
 				if (noreconnect) {
 					let msg = capitalizeFirst(errmsg2);
 					if (addNotRetrying) {
-						msg += ", not automatically retrying. ";
+						msg += ui(", not automatically retrying. ");
 					}
 					dom._kids(statusElem, msg);
 					showNotConnected();
@@ -8721,7 +8749,7 @@
 				sseError(ui("Connection failed"), true);
 			});
 			eventSource.addEventListener("fatalErr", (e) => {
-				const errmsg2 = JSON.parse(e.data) || "(no error message)";
+				const errmsg2 = JSON.parse(e.data) || ui("(no error message)");
 				sseError(ui('Server error: "') + errmsg2 + '"', true);
 			});
 			eventSource.addEventListener("serverShutdown", (_) => {
@@ -8735,7 +8763,7 @@
 				try {
 					return fn();
 				} catch (err) {
-					window.alert(ui("invalid event from server: ") + (err.message || "(no message)"));
+					window.alert(ui("invalid event from server: ") + (err.message || ui("(no message)")));
 					throw err;
 				}
 			}, "checkParse");
@@ -9009,7 +9037,7 @@ Details of the error and browser:
 				remove();
 				settingsPut({ ...settings, ignoreErrorsUntil: Math.round((/* @__PURE__ */ new Date()).getTime() / 1e3 + 7 * 24 * 3600) });
 			}, "click")))));
-		}, "click")), " ", dom.clickbutton("Ignore", /* @__PURE__ */ __name(function click() {
+		}, "click")), " ", dom.clickbutton(ui("Ignore"), /* @__PURE__ */ __name(function click() {
 			box.remove();
 		}, "click")));
 		document.body.appendChild(box);
