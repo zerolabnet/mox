@@ -1614,19 +1614,32 @@
 		}
 		return "auto";
 	}, "langPreference");
-	var browserIsRussian = /* @__PURE__ */ __name(() => {
-		const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
-		return list.some((l) => l.toLowerCase().startsWith("ru"));
-	}, "browserIsRussian");
-	var resolvedLang = /* @__PURE__ */ __name(() => {
-		const pref = langPreference();
-		if (pref === "ru") {
-			return "ru";
-		}
-		if (pref === "en") {
+	var matchBrowserTag = /* @__PURE__ */ __name((tag) => {
+		const t = tag.toLowerCase().trim();
+		if (t === "en" || t.startsWith("en-")) {
 			return "en";
 		}
-		return browserIsRussian() ? "ru" : "en";
+		if (t === "ru" || t.startsWith("ru-")) {
+			return "ru";
+		}
+		return "";
+	}, "matchBrowserTag");
+	var browserLang = /* @__PURE__ */ __name(() => {
+		const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+		for (let i = 0; i < list.length; i++) {
+			const lang = matchBrowserTag(list[i] || "");
+			if (lang) {
+				return lang;
+			}
+		}
+		return "en";
+	}, "browserLang");
+	var resolvedLang = /* @__PURE__ */ __name(() => {
+		const pref = langPreference();
+		if (pref === "ru" || pref === "en") {
+			return pref;
+		}
+		return browserLang();
 	}, "resolvedLang");
 	var uiLocale = /* @__PURE__ */ __name(() => resolvedLang() === "ru" ? "ru" : "en", "uiLocale");
 	var ui = /* @__PURE__ */ __name((en) => {
@@ -1636,24 +1649,29 @@
 		const line = ru[en];
 		return line === void 0 ? en : line;
 	}, "ui");
+	var pluralCategory = /* @__PURE__ */ __name((n) => {
+		const count = n < 0 ? 0 : Math.trunc(n);
+		try {
+			return new Intl.PluralRules(uiLocale()).select(count);
+		} catch (err) {
+			return count === 1 ? "one" : "other";
+		}
+	}, "pluralCategory");
 	var unreadTitle = /* @__PURE__ */ __name((n) => {
 		if (resolvedLang() !== "ru") {
 			return n + " unread";
 		}
-		const mod10 = n % 10;
-		const mod100 = n % 100;
-		const singular = mod10 === 1 && mod100 !== 11;
-		return n + (singular ? " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u043E\u0435" : " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0445");
+		return n + (pluralCategory(n) === "one" ? " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u043E\u0435" : " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0445");
 	}, "unreadTitle");
 	var selectedTitle = /* @__PURE__ */ __name((n) => {
-		if (resolvedLang() !== "ru") {
-			return n === 1 ? "1 message selected" : n + " messages selected";
+		if (pluralCategory(n) === "one" && resolvedLang() !== "ru") {
+			return "1 message selected";
 		}
-		const mod10 = n % 10;
-		const mod100 = n % 100;
-		const one = mod10 === 1 && mod100 !== 11;
-		const few = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14);
-		const word = one ? "\u043F\u0438\u0441\u044C\u043C\u043E" : few ? "\u043F\u0438\u0441\u044C\u043C\u0430" : "\u043F\u0438\u0441\u0435\u043C";
+		if (resolvedLang() !== "ru") {
+			return n + " messages selected";
+		}
+		const cat = pluralCategory(n);
+		const word = cat === "one" ? "\u043F\u0438\u0441\u044C\u043C\u043E" : cat === "few" ? "\u043F\u0438\u0441\u044C\u043C\u0430" : "\u043F\u0438\u0441\u0435\u043C";
 		return "\u0412\u044B\u0431\u0440\u0430\u043D\u043E " + n + " " + word;
 	}, "selectedTitle");
 	var chooseLang = /* @__PURE__ */ __name((pref) => {
@@ -2504,7 +2522,13 @@
 	ensureCSS(".menuItem:last-child", { borderBottom: "none" });
 	ensureCSS(".menuItem button", { display: "block", width: "100%", boxSizing: "border-box", textAlign: "left", border: "none", borderRadius: 0, backgroundColor: "transparent", padding: "10px 14px", minHeight: "40px", fontSize: "13px", color: styles.color });
 	ensureCSS(".menuItem button:hover:not(:disabled)", { backgroundColor: styles.buttonHoverBackground });
-	ensureCSS(".menuItem button.langItem", { display: "flex", alignItems: "center", gap: "8px" });
+	ensureCSS(".menuList.langMenu", { padding: "4px", minWidth: "168px" });
+	ensureCSS(".menuList.langMenu .menuItem", { borderBottom: "none" });
+	ensureCSS(".menuList.langMenu .menuItem button", { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", width: "100%", minHeight: "36px", margin: 0, padding: "0 10px", border: 0, borderRadius: styles.radius, backgroundColor: "transparent", fontSize: ".875rem", textAlign: "start" });
+	ensureCSS(".menuList.langMenu .menuItem button:hover:not(:disabled), .menuList.langMenu .menuItem button:focus-visible", { backgroundColor: styles.accentSoft, color: styles.color });
+	ensureCSS('.menuList.langMenu .menuItem button[aria-current="true"]', { fontWeight: "600" });
+	ensureCSS('.menuList.langMenu .menuItem button[aria-current="true"]::after', { content: '""', width: "5px", height: "9px", marginTop: "-2px", flex: "none", borderStyle: "solid", borderColor: styles.accent, borderWidth: "0 2px 2px 0", transform: "rotate(45deg)" });
+	ensureCSS(".menuList.langMenu .langRule", { height: "1px", margin: "4px 6px", backgroundColor: styles.borderColor });
 	ensureCSS(".menuItem button.active, .menuItem button.active:hover:not(:disabled)", { display: "flex", alignItems: "center", gap: "8px", backgroundColor: styles.accentSoft, color: styles.accent });
 	ensureCSS(".menuItem button .icon", { width: "1em", height: "1em", flex: "none" });
 	ensureCSS(".menuItem > label", { display: "flex", alignItems: "center", gap: "8px", width: "100%", boxSizing: "border-box", padding: "10px 14px", fontWeight: 400, cursor: "pointer" });
@@ -3471,9 +3495,9 @@
 		}
 		return close;
 	}, "popover");
-	var menuPopover = /* @__PURE__ */ __name((target, items, fit = false) => {
+	var menuPopover = /* @__PURE__ */ __name((target, items, fit = false, listClass) => {
 		const flat = items.flat().filter((b) => b instanceof HTMLElement);
-		return popover(target, { transparent: true }, dom.div(dom._class("menuList", ...fit ? ["menuListFit"] : []), ...flat.map((item) => dom.div(dom._class("menuItem"), item))));
+		return popover(target, { transparent: true }, dom.div(dom._class("menuList", ...fit ? ["menuListFit"] : [], ...listClass ? [listClass] : []), ...flat.map((item) => dom.div(dom._class("menuItem"), item))));
 	}, "menuPopover");
 	var popupOpen = false;
 	var popup = /* @__PURE__ */ __name((...kids) => {
@@ -7738,7 +7762,7 @@
 			}
 		}, "updatePageTitle");
 		const faviconLink = document.head.querySelector('link[rel="icon"]');
-		const faviconImg = dom.img(attr.src("favicon.svg"));
+		const faviconImg = dom.img(attr.src("favicon.png"));
 		const faviconProm = new Promise((resolve, reject) => {
 			faviconImg.addEventListener("load", () => resolve());
 			faviconImg.addEventListener("error", () => reject());
@@ -7760,24 +7784,25 @@
 			if (faviconState === state) {
 				return;
 			}
-			const canvas = dom.canvas(prop({ width: 32, height: 32 }));
+			const canvas = dom.canvas(prop({ width: faviconImg.naturalWidth, height: faviconImg.naturalHeight }));
 			const ctx = canvas.getContext("2d");
 			if (!ctx || !faviconLink) {
 				return;
 			}
-			ctx.drawImage(faviconImg, 0, 0, 32, 32);
+			ctx.drawImage(faviconImg, 0, 0);
 			if (state < 0) {
 				const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 				const px = imageData.data;
 				for (let i = 0; i < px.length; i += 4) {
-					const r = px[i];
-					const g = px[i + 1];
-					const b = px[i + 2];
-					const grey = Math.floor(0.2126 * r + 0.715 * g + 0.0722 * b);
+					const a = px[i + 3];
+					if (a === 0) {
+						continue;
+					}
+					const grey = Math.floor(0.2126 * px[i] + 0.715 * px[i + 1] + 0.0722 * px[i + 2]);
 					px[i] = grey;
 					px[i + 1] = grey;
 					px[i + 2] = grey;
-					px[i + 3] = 127;
+					px[i + 3] = Math.round(a / 2);
 				}
 				ctx.putImageData(imageData, 0, 0);
 			} else if (state > 0) {
@@ -8376,19 +8401,16 @@
 			const current = langPreference();
 			const item = /* @__PURE__ */ __name((id, label, title) => {
 				const on = current === id;
-				const mark = navIcon(strokePaths.check);
-				if (!on) {
-					mark.style.visibility = "hidden";
-				}
-				return dom.clickbutton(dom._class("langItem", ...on ? ["active"] : []), mark, label, title ? attr.title(title) : [], on ? dom._attrs({ "aria-current": "true" }) : [], /* @__PURE__ */ __name(function click2() {
+				return dom.clickbutton(label, title ? attr.title(title) : [], on ? dom._attrs({ "aria-current": "true" }) : [], /* @__PURE__ */ __name(function click2() {
 					chooseLang(id);
 				}, "click"));
 			}, "item");
 			menuPopover(e.currentTarget, [
 				item("auto", ui("Auto"), ui("Follow the browser language")),
-				item("en", ui("English")),
-				item("ru", ui("Russian"))
-			], true);
+				dom.div(dom._class("langRule"), attr.role("separator")),
+				item("en", "English"),
+				item("ru", "\u0420\u0443\u0441\u0441\u043A\u0438\u0439")
+			], true, "langMenu");
 		}, "click")), dom.div(dom._class("theme-switch-group"), dom.label(dom._class("theme-toggle"), attr.title(ui("Light or dark theme")), dom.input(attr.type("checkbox"), attr.id("theme-toggle-switch"), attr.arialabel(ui("Dark theme")), /* @__PURE__ */ __name(function change(e) {
 			applyTheme(e.target.checked ? "dark" : "light");
 		}, "change")), dom.span(dom._class("slider"), dom.span(dom._class("theme-slot", "theme-sun"), themeGlyph("sun")), dom.span(dom._class("theme-slot", "theme-moon"), themeGlyph("moon")))), dom.clickbutton(dom._class("theme-auto"), attr.id("theme-auto"), attr.title(ui("Auto")), attr.arialabel(ui("Auto")), themeGlyph("auto"), /* @__PURE__ */ __name(function click() {

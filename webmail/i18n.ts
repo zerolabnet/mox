@@ -560,20 +560,35 @@ export const langPreference = (): LangPreference => {
 	return 'auto'
 }
 
-const browserIsRussian = (): boolean => {
+// First supported tag in the browser list wins. ru anywhere later does not override en.
+const matchBrowserTag = (tag: string): Lang | '' => {
+	const t = tag.toLowerCase().trim()
+	if (t === 'en' || t.startsWith('en-')) {
+		return 'en'
+	}
+	if (t === 'ru' || t.startsWith('ru-')) {
+		return 'ru'
+	}
+	return ''
+}
+
+const browserLang = (): Lang => {
 	const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']
-	return list.some(l => l.toLowerCase().startsWith('ru'))
+	for (let i = 0; i < list.length; i++) {
+		const lang = matchBrowserTag(list[i] || '')
+		if (lang) {
+			return lang
+		}
+	}
+	return 'en'
 }
 
 export const resolvedLang = (): Lang => {
 	const pref = langPreference()
-	if (pref === 'ru') {
-		return 'ru'
+	if (pref === 'ru' || pref === 'en') {
+		return pref
 	}
-	if (pref === 'en') {
-		return 'en'
-	}
-	return browserIsRussian() ? 'ru' : 'en'
+	return browserLang()
 }
 
 export const uiLocale = (): string => resolvedLang() === 'ru' ? 'ru' : 'en'
@@ -586,25 +601,31 @@ export const ui = (en: string): string => {
 	return line === undefined ? en : line
 }
 
+const pluralCategory = (n: number): Intl.LDMLPluralRule => {
+	const count = n < 0 ? 0 : Math.trunc(n)
+	try {
+		return new Intl.PluralRules(uiLocale()).select(count)
+	} catch (err) {
+		return count === 1 ? 'one' : 'other'
+	}
+}
+
 export const unreadTitle = (n: number): string => {
 	if (resolvedLang() !== 'ru') {
 		return n + ' unread'
 	}
-	const mod10 = n % 10
-	const mod100 = n % 100
-	const singular = mod10 === 1 && mod100 !== 11
-	return n + (singular ? ' непрочитанное' : ' непрочитанных')
+	return n + (pluralCategory(n) === 'one' ? ' непрочитанное' : ' непрочитанных')
 }
 
 export const selectedTitle = (n: number): string => {
-	if (resolvedLang() !== 'ru') {
-		return n === 1 ? '1 message selected' : n + ' messages selected'
+	if (pluralCategory(n) === 'one' && resolvedLang() !== 'ru') {
+		return '1 message selected'
 	}
-	const mod10 = n % 10
-	const mod100 = n % 100
-	const one = mod10 === 1 && mod100 !== 11
-	const few = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
-	const word = one ? 'письмо' : few ? 'письма' : 'писем'
+	if (resolvedLang() !== 'ru') {
+		return n + ' messages selected'
+	}
+	const cat = pluralCategory(n)
+	const word = cat === 'one' ? 'письмо' : cat === 'few' ? 'письма' : 'писем'
 	return 'Выбрано ' + n + ' ' + word
 }
 

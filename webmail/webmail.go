@@ -84,8 +84,8 @@ var webmailtextJS []byte
 //go:embed fonts.css
 var webmailFontsCSS []byte
 
-//go:embed favicon.svg
-var webmailFaviconSVG []byte
+//go:embed favicon.png
+var webmailFaviconPNG []byte
 
 //go:embed fonts
 var webmailFonts embed.FS
@@ -309,11 +309,11 @@ func handle(apiHandler http.Handler, isForwarded bool, accountPath string, w htt
 		}
 		return
 
-	case "/favicon.svg":
+	case "/favicon.png":
 		switch r.Method {
 		case "GET", "HEAD":
-			w.Header().Set("Content-Type", "image/svg+xml")
-			serveContentFallback(log, w, r, filepath.FromSlash("webmail/favicon.svg"), webmailFaviconSVG, false)
+			w.Header().Set("Content-Type", "image/png")
+			serveContentFallback(log, w, r, filepath.FromSlash("webmail/favicon.png"), webmailFaviconPNG, false)
 		default:
 			http.Error(w, "405 - method not allowed - use get", http.StatusMethodNotAllowed)
 		}

@@ -396,7 +396,13 @@ ensureCSS('.menuItem', {borderBottom: '1px solid', borderBottomColor: styles.bor
 ensureCSS('.menuItem:last-child', {borderBottom: 'none'})
 ensureCSS('.menuItem button', {display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'left', border: 'none', borderRadius: 0, backgroundColor: 'transparent', padding: '10px 14px', minHeight: '40px', fontSize: '13px', color: styles.color})
 ensureCSS('.menuItem button:hover:not(:disabled)', {backgroundColor: styles.buttonHoverBackground})
-ensureCSS('.menuItem button.langItem', {display: 'flex', alignItems: 'center', gap: '8px'})
+ensureCSS('.menuList.langMenu', {padding: '4px', minWidth: '168px'})
+ensureCSS('.menuList.langMenu .menuItem', {borderBottom: 'none'})
+ensureCSS('.menuList.langMenu .menuItem button', {display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', width: '100%', minHeight: '36px', margin: 0, padding: '0 10px', border: 0, borderRadius: styles.radius, backgroundColor: 'transparent', fontSize: '.875rem', textAlign: 'start'})
+ensureCSS('.menuList.langMenu .menuItem button:hover:not(:disabled), .menuList.langMenu .menuItem button:focus-visible', {backgroundColor: styles.accentSoft, color: styles.color})
+ensureCSS('.menuList.langMenu .menuItem button[aria-current="true"]', {fontWeight: '600'})
+ensureCSS('.menuList.langMenu .menuItem button[aria-current="true"]::after', {content: '""', width: '5px', height: '9px', marginTop: '-2px', flex: 'none', borderStyle: 'solid', borderColor: styles.accent, borderWidth: '0 2px 2px 0', transform: 'rotate(45deg)'})
+ensureCSS('.menuList.langMenu .langRule', {height: '1px', margin: '4px 6px', backgroundColor: styles.borderColor})
 ensureCSS('.menuItem button.active, .menuItem button.active:hover:not(:disabled)', {display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: styles.accentSoft, color: styles.accent})
 ensureCSS('.menuItem button .icon', {width: '1em', height: '1em', flex: 'none'})
 ensureCSS('.menuItem > label', {display: 'flex', alignItems: 'center', gap: '8px', width: '100%', boxSizing: 'border-box', padding: '10px 14px', fontWeight: 400, cursor: 'pointer'})
@@ -1599,10 +1605,10 @@ const popover = (target: HTMLElement, opts: {transparent?: boolean, fullscreen?:
 	return close
 }
 
-const menuPopover = (target: HTMLElement, items: (HTMLElement | HTMLElement[])[], fit = false): (() => void) => {
+const menuPopover = (target: HTMLElement, items: (HTMLElement | HTMLElement[])[], fit = false, listClass?: string): (() => void) => {
 	const flat = items.flat().filter((b): b is HTMLElement => b instanceof HTMLElement)
 	return popover(target, {transparent: true},
-		dom.div(dom._class('menuList', ...(fit ? ['menuListFit'] : [])),
+		dom.div(dom._class('menuList', ...(fit ? ['menuListFit'] : []), ...(listClass ? [listClass] : [])),
 			...flat.map(item => dom.div(dom._class('menuItem'), item)),
 		),
 	)
@@ -7460,7 +7466,7 @@ const init = async () => {
 	}
 
 	const faviconLink = document.head.querySelector('link[rel="icon"]') as HTMLLinkElement
-	const faviconImg = dom.img(attr.src('favicon.svg'))
+	const faviconImg = dom.img(attr.src('favicon.png'))
 	const faviconProm = new Promise<void>((resolve, reject) => {
 		faviconImg.addEventListener('load', () => resolve())
 		faviconImg.addEventListener('error', () => reject())
@@ -7484,25 +7490,27 @@ const init = async () => {
 			return
 		}
 
-		const canvas = dom.canvas(prop({width: 32, height: 32}))
+		const canvas = dom.canvas(prop({width: faviconImg.naturalWidth, height: faviconImg.naturalHeight}))
 		const ctx = canvas.getContext('2d')
 		if (!ctx || !faviconLink) {
 			return
 		}
-		ctx.drawImage(faviconImg, 0, 0, 32, 32)
+		ctx.drawImage(faviconImg, 0, 0)
 		if (state < 0) {
 			// Draw in grayscale indicating disconnected.
 			const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
 			const px = imageData.data
 			for (let i = 0; i < px.length; i += 4) {
-				const r = px[i]
-				const g = px[i+1]
-				const b = px[i+2]
-				const grey = Math.floor(0.2126 * r + 0.715 * g + 0.0722 * b)
+				const a = px[i+3]
+				// Empty pixels stay empty. Forcing alpha here paints a square behind the envelope.
+				if (a === 0) {
+					continue
+				}
+				const grey = Math.floor(0.2126 * px[i] + 0.715 * px[i+1] + 0.0722 * px[i+2])
 				px[i] = grey
 				px[i+1] = grey
 				px[i+2] = grey
-				px[i+3] = 127
+				px[i+3] = Math.round(a / 2)
 			}
 			ctx.putImageData(imageData, 0, 0)
 		} else if (state > 0) {
@@ -8365,13 +8373,7 @@ const init = async () => {
 						const current = langPreference()
 						const item = (id: 'auto' | 'en' | 'ru', label: string, title?: string) => {
 							const on = current === id
-							const mark = navIcon(strokePaths.check)
-							if (!on) {
-								mark.style.visibility = 'hidden'
-							}
 							return dom.clickbutton(
-								dom._class('langItem', ...(on ? ['active'] : [])),
-								mark,
 								label,
 								title ? attr.title(title) : [],
 								on ? dom._attrs({'aria-current': 'true'}) : [],
@@ -8382,9 +8384,10 @@ const init = async () => {
 						}
 						menuPopover(e.currentTarget as HTMLElement, [
 							item('auto', ui('Auto'), ui('Follow the browser language')),
-							item('en', ui('English')),
-							item('ru', ui('Russian')),
-						], true)
+							dom.div(dom._class('langRule'), attr.role('separator')),
+							item('en', 'English'),
+							item('ru', 'Русский'),
+						], true, 'langMenu')
 					},
 				),
 				dom.div(dom._class('theme-switch-group'),

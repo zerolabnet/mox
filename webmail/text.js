@@ -788,19 +788,32 @@
 		}
 		return "auto";
 	}, "langPreference");
-	var browserIsRussian = /* @__PURE__ */ __name(() => {
-		const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
-		return list.some((l) => l.toLowerCase().startsWith("ru"));
-	}, "browserIsRussian");
-	var resolvedLang = /* @__PURE__ */ __name(() => {
-		const pref = langPreference();
-		if (pref === "ru") {
-			return "ru";
-		}
-		if (pref === "en") {
+	var matchBrowserTag = /* @__PURE__ */ __name((tag) => {
+		const t = tag.toLowerCase().trim();
+		if (t === "en" || t.startsWith("en-")) {
 			return "en";
 		}
-		return browserIsRussian() ? "ru" : "en";
+		if (t === "ru" || t.startsWith("ru-")) {
+			return "ru";
+		}
+		return "";
+	}, "matchBrowserTag");
+	var browserLang = /* @__PURE__ */ __name(() => {
+		const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+		for (let i = 0; i < list.length; i++) {
+			const lang = matchBrowserTag(list[i] || "");
+			if (lang) {
+				return lang;
+			}
+		}
+		return "en";
+	}, "browserLang");
+	var resolvedLang = /* @__PURE__ */ __name(() => {
+		const pref = langPreference();
+		if (pref === "ru" || pref === "en") {
+			return pref;
+		}
+		return browserLang();
 	}, "resolvedLang");
 	var ui = /* @__PURE__ */ __name((en) => {
 		if (resolvedLang() !== "ru") {
