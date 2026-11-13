@@ -10,6 +10,8 @@ permissions:
 jobs:
   linux-amd64:
     runs-on: ubuntu-latest
+    env:
+      MOX_BUILD: "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o mox ."
     steps:
       - uses: actions/checkout@v7
 
@@ -24,12 +26,12 @@ jobs:
 
       - run: make frontend
 
-      - run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o mox-linux-amd64
+      - run: bash -c "$MOX_BUILD"
 
       - uses: actions/upload-artifact@v7
         with:
           name: mox-linux-amd64
-          path: mox-linux-amd64
+          path: mox
           if-no-files-found: error
 
       - name: Publish release
@@ -37,10 +39,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="mox-${GITHUB_SHA}"
-          notes="Linux amd64 build of ${GITHUB_SHA}."
+          short="${GITHUB_SHA::7}"
+          day="$(git log -1 --format=%cs)"
+          subject="$(git log -1 --format=%s)"
+          tag="linux-amd64-${day}-${short}"
+          title="Linux amd64, ${day}, ${short}"
+          notes="$(mktemp)"
+          {
+            printf '%s\n\n' "Сборка Linux amd64 для ветки webmail-custom."
+            printf 'Коммит `%s`.\n' "$GITHUB_SHA"
+            printf 'Дата %s.\n' "$day"
+            printf '%s\n\n' "$subject"
+            printf '%s\n\n' 'Файл называется `mox`. CGO выключен. Пути в бинарнике обрезаны. Таблица символов убрана.'
+            printf '```\n%s\n```\n' "$MOX_BUILD"
+          } >"$notes"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$tag" mox-linux-amd64 --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --title "$title" --notes-file "$notes" --latest
+            gh release upload "$tag" "mox#Linux amd64" --clobber --repo "$GITHUB_REPOSITORY"
           else
-            gh release create "$tag" mox-linux-amd64 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "mox linux amd64" --notes "$notes"
+            gh release create "$tag" "mox#Linux amd64" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "$title" --notes-file "$notes"
           fi

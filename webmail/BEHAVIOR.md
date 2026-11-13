@@ -88,7 +88,7 @@
 
 ## Сборка
 
-`.github/workflows/linux-binary.yml` берёт версию Go из `go.mod`, собирает фронтенд и публикует релиз с файлом `mox-linux-amd64` для ветки `webmail-custom`. Артефакт сборки остаётся. Этот workflow не запускает `go vet ./...`. Старый workflow **Build and test** авторский. Его не подменяйте сборщиком бинарника.
+`.github/workflows/linux-binary.yml` берёт версию Go из `go.mod` и собирает фронтенд. Бинарник собирается так: `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o mox .`. Для ветки `webmail-custom` публикуется релиз. Тег имеет вид `linux-amd64-ГГГГ-ММ-ДД-короткийхеш`. Название содержит дату и короткий хеш. В тексте коммит, сообщение коммита и та же команда сборки. Файл релиза называется `mox`. Артефакт сборки остаётся под именем `mox-linux-amd64`. Этот workflow не запускает `go vet ./...`. Старый workflow **Build and test** авторский. Его не подменяйте сборщиком бинарника.
 
 Репозиторий `zerolabnet/mox` закрытый. Ветка по умолчанию `webmail-custom`. Ветка `main` там повторяет `upstream/main` на момент последней отправки.
 
