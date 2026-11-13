@@ -1,3 +1,5 @@
+Эта ветка `webmail-custom` отличается от [mjl-/mox](https://github.com/mjl-/mox). Список отличий и способ забрать новую версию автора находятся в [FORK.md](FORK.md).
+
 Mox is a modern full-featured open source secure mail server for low-maintenance self-hosted email.
 
 For more details, see the mox website, https://www.xmox.nl.
