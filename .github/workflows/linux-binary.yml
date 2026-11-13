@@ -1,0 +1,66 @@
+name: Linux binary
+
+on:
+  workflow_dispatch:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - run: make frontend
+
+      - run: |
+          for arch in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -trimpath -ldflags='-s -w' -o "mox-linux-${arch}" .
+          done
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mox-linux-amd64
+          path: mox-linux-amd64
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mox-linux-arm64
+          path: mox-linux-arm64
+          if-no-files-found: error
+
+      - name: Publish release
+        if: github.ref == 'refs/heads/webmail-custom'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          short="${GITHUB_SHA::7}"
+          day="$(git log -1 --format=%cs)"
+          subject="$(git log -1 --format=%s)"
+          tag="linux-${day}-${short}"
+          title="Linux, ${day}, ${short}"
+          notes="$(mktemp)"
+          {
+            printf '%s\n\n' "Сборка Linux для ветки webmail-custom."
+            printf 'Коммит `%s`.\n' "$GITHUB_SHA"
+            printf 'Дата %s.\n\n' "$day"
+            printf -- '- %s\n' "$subject"
+          } >"$notes"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --title "$title" --notes-file "$notes" --latest
+            gh release upload "$tag" mox-linux-amd64 mox-linux-arm64 --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" mox-linux-amd64 mox-linux-arm64 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "$title" --notes-file "$notes"
+          fi
