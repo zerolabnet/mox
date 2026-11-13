@@ -55,8 +55,8 @@ jobs:
           {
             printf '%s\n\n' "Сборка Linux для ветки webmail-custom."
             printf 'Коммит `%s`.\n' "$GITHUB_SHA"
-            printf 'Дата %s.\n' "$day"
-            printf '%s\n' "$subject"
+            printf 'Дата %s.\n\n' "$day"
+            printf -- '- %s\n' "$subject"
           } >"$notes"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --title "$title" --notes-file "$notes" --latest

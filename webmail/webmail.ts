@@ -5122,10 +5122,11 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 		}
 		if (focus === miv) {
 			const i = msgitemViews.indexOf(miv)
-			if (i > 0) {
-				focus = msgitemViews[i-1]
-			} else if (i+1 < msgitemViews.length) {
+			// Visible rows are already in the active sort. Continue with the next row down.
+			if (i+1 < msgitemViews.length) {
 				focus = msgitemViews[i+1]
+			} else if (i > 0) {
+				focus = msgitemViews[i-1]
 			} else {
 				focus = null
 			}
