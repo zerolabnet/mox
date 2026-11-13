@@ -88,7 +88,7 @@
 
 ## Сборка
 
-`.github/workflows/linux-binary.yml` собирает фронтенд и кладёт артефакт `mox-linux-amd64`. Этот workflow не запускает `go vet ./...`. Старый workflow **Build and test** авторский. Его не подменяйте сборщиком бинарника.
+`.github/workflows/linux-binary.yml` берёт версию Go из `go.mod`, собирает фронтенд и публикует релиз с файлом `mox-linux-amd64` для ветки `webmail-custom`. Артефакт сборки остаётся. Этот workflow не запускает `go vet ./...`. Старый workflow **Build and test** авторский. Его не подменяйте сборщиком бинарника.
 
 Репозиторий `zerolabnet/mox` закрытый. Ветка по умолчанию `webmail-custom`. Ветка `main` там повторяет `upstream/main` на момент последней отправки.
 

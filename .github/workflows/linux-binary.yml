@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   push:
 
+permissions:
+  contents: write
+
 jobs:
   linux-amd64:
     runs-on: ubuntu-latest
@@ -17,14 +20,27 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          go-version: '1.25.x'
+          go-version-file: go.mod
 
       - run: make frontend
 
-      - run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o mox
+      - run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o mox-linux-amd64
 
       - uses: actions/upload-artifact@v7
         with:
           name: mox-linux-amd64
-          path: mox
+          path: mox-linux-amd64
           if-no-files-found: error
+
+      - name: Publish release
+        if: github.ref == 'refs/heads/webmail-custom'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="mox-${GITHUB_SHA}"
+          notes="Linux amd64 build of ${GITHUB_SHA}."
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" mox-linux-amd64 --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" mox-linux-amd64 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "mox linux amd64" --notes "$notes"
+          fi
