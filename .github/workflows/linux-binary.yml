@@ -8,10 +8,8 @@ permissions:
   contents: write
 
 jobs:
-  linux-amd64:
+  linux:
     runs-on: ubuntu-latest
-    env:
-      MOX_BUILD: "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o mox ."
     steps:
       - uses: actions/checkout@v7
 
@@ -26,12 +24,21 @@ jobs:
 
       - run: make frontend
 
-      - run: bash -c "$MOX_BUILD"
+      - run: |
+          for arch in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -trimpath -ldflags='-s -w' -o "mox-linux-${arch}" .
+          done
 
       - uses: actions/upload-artifact@v7
         with:
           name: mox-linux-amd64
-          path: mox
+          path: mox-linux-amd64
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mox-linux-arm64
+          path: mox-linux-arm64
           if-no-files-found: error
 
       - name: Publish release
@@ -42,20 +49,18 @@ jobs:
           short="${GITHUB_SHA::7}"
           day="$(git log -1 --format=%cs)"
           subject="$(git log -1 --format=%s)"
-          tag="linux-amd64-${day}-${short}"
-          title="Linux amd64, ${day}, ${short}"
+          tag="linux-${day}-${short}"
+          title="Linux, ${day}, ${short}"
           notes="$(mktemp)"
           {
-            printf '%s\n\n' "Сборка Linux amd64 для ветки webmail-custom."
+            printf '%s\n\n' "Сборка Linux для ветки webmail-custom."
             printf 'Коммит `%s`.\n' "$GITHUB_SHA"
             printf 'Дата %s.\n' "$day"
-            printf '%s\n\n' "$subject"
-            printf '%s\n\n' 'Файл называется `mox`. CGO выключен. Пути в бинарнике обрезаны. Таблица символов убрана.'
-            printf '```\n%s\n```\n' "$MOX_BUILD"
+            printf '%s\n' "$subject"
           } >"$notes"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --title "$title" --notes-file "$notes" --latest
-            gh release upload "$tag" "mox#Linux amd64" --clobber --repo "$GITHUB_REPOSITORY"
+            gh release upload "$tag" mox-linux-amd64 mox-linux-arm64 --clobber --repo "$GITHUB_REPOSITORY"
           else
-            gh release create "$tag" "mox#Linux amd64" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "$title" --notes-file "$notes"
+            gh release create "$tag" mox-linux-amd64 mox-linux-arm64 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "$title" --notes-file "$notes"
           fi
