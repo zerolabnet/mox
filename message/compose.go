@@ -9,6 +9,7 @@ import (
 	"mime/quotedprintable"
 	"net/mail"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/mjl-/mox/smtp"
 )
@@ -110,71 +111,114 @@ func (xc *Composer) HeaderAddrs(k string, l []NameAddress) {
 
 // Subject writes a subject message header.
 func (xc *Composer) Subject(subject string) {
+	value := strings.Join(subjectParts(subject, !xc.SMTPUTF8 && !isASCII(subject)), "")
 	var subjectValue strings.Builder
-	subjectLineLen := len("Subject: ")
-	for i, part := range subjectParts(subject, !xc.SMTPUTF8 && !isASCII(subject)) {
-		if i > 0 && subjectLineLen+len(part) > 77 {
-			subjectValue.WriteString("\r\n\t")
-			subjectLineLen = 1
-		}
-		subjectValue.WriteString(part)
-		subjectLineLen += len(part)
-	}
+	lineLen := len("Subject: ")
+	writeFolded(&subjectValue, value, &lineLen, subjectLineLenLimit)
 	xc.Header("Subject", subjectValue.String())
 }
 
-// subjectParts splits a subject into segments for writing. When encodeUTF8 is set,
-// non-ascii text is Q-encoded. Words are split on U+0020 only, matching the historical
-// encoder, but adjacent non-ascii words are merged so the space is inside one
-// encoded-word: RFC 2047 ignores whitespace between adjacent encoded-words.
-// Other ASCII, including tabs and newlines, stays inside the word and is Q-encoded
-// with it when the word is not ASCII.
+// subjectLineLenLimit is the RFC 5322 recommended maximum line length. The hard
+// limit is 998 octets. Folding is lossless here, so staying at the recommended
+// length costs nothing.
+const subjectLineLenLimit = 78
+
+// writeFolded writes s to sb, wrapping lines at whitespace that is already
+// present in s. The CRLF is inserted immediately before that whitespace, and
+// RFC 5322 unfolding removes a CRLF that is directly followed by whitespace
+// while keeping the whitespace itself, so the logical header value comes out
+// byte-for-byte identical to s.
+//
+// Folding must not introduce whitespace of its own. Writing "\r\n\t" between two
+// segments leaves a tab in the unfolded value.
+func writeFolded(sb *strings.Builder, s string, lineLen *int, limit int) {
+	for i := 0; i < len(s); {
+		if s[i] != ' ' && s[i] != '\t' {
+			j := i
+			for j < len(s) && s[j] != ' ' && s[j] != '\t' {
+				j++
+			}
+			sb.WriteString(s[i:j])
+			*lineLen += j - i
+			i = j
+			continue
+		}
+		j := i
+		for j < len(s) && (s[j] == ' ' || s[j] == '\t') {
+			j++
+		}
+		k := j
+		for k < len(s) && s[k] != ' ' && s[k] != '\t' {
+			k++
+		}
+		if *lineLen+(k-i) > limit && *lineLen > 1 {
+			sb.WriteString("\r\n")
+			*lineLen = 0
+		}
+		sb.WriteString(s[i:k])
+		*lineLen += k - i
+		i = k
+	}
+}
+
+// subjectParts splits a subject into segments for writing. When encodeUTF8 is
+// set, non-ascii text is Q-encoded. Whitespace between non-ascii words is
+// included in a single encoded segment. RFC 2047 ignores whitespace between
+// adjacent encoded-words, so a space left between two of them is dropped.
 func subjectParts(subject string, encodeUTF8 bool) []string {
 	if !encodeUTF8 {
 		return []string{subject}
 	}
-	words := strings.Split(subject, " ")
 	var parts []string
-	var asciiBuf, utfBuf strings.Builder
-	flushASCII := func() {
-		if asciiBuf.Len() == 0 {
-			return
-		}
-		parts = append(parts, asciiBuf.String())
-		asciiBuf.Reset()
-	}
-	flushUTF := func() {
-		if utfBuf.Len() == 0 {
-			return
-		}
-		parts = append(parts, mime.QEncoding.Encode("utf-8", utfBuf.String()))
-		utfBuf.Reset()
-	}
-	for i, word := range words {
-		if isASCII(word) {
-			if utfBuf.Len() > 0 {
-				flushUTF()
+	for i := 0; i < len(subject); {
+		r, _ := utf8.DecodeRuneInString(subject[i:])
+		if r < 0x80 {
+			j := i
+			for j < len(subject) {
+				r2, size2 := utf8.DecodeRuneInString(subject[j:])
+				if r2 >= 0x80 {
+					break
+				}
+				j += size2
 			}
-			if i > 0 {
-				asciiBuf.WriteByte(' ')
+			chunk := subject[i:j]
+			// A raw CR or LF would split the header line. Encode it with the rest of the word.
+			if strings.ContainsAny(chunk, "\r\n") {
+				chunk = mime.QEncoding.Encode("utf-8", chunk)
 			}
-			asciiBuf.WriteString(word)
+			parts = append(parts, chunk)
+			i = j
 			continue
 		}
-		if asciiBuf.Len() > 0 {
-			if i > 0 {
-				asciiBuf.WriteByte(' ')
+		j := i
+		for j < len(subject) {
+			r2, size2 := utf8.DecodeRuneInString(subject[j:])
+			if r2 >= 0x80 {
+				j += size2
+				continue
 			}
-			flushASCII()
-		} else if utfBuf.Len() > 0 {
-			utfBuf.WriteByte(' ')
+			if r2 == ' ' || r2 == '\t' {
+				k := j
+				for k < len(subject) {
+					r3, size3 := utf8.DecodeRuneInString(subject[k:])
+					if r3 == ' ' || r3 == '\t' {
+						k += size3
+						continue
+					}
+					break
+				}
+				if k < len(subject) {
+					r3, _ := utf8.DecodeRuneInString(subject[k:])
+					if r3 >= 0x80 {
+						j = k
+						continue
+					}
+				}
+			}
+			break
 		}
-		utfBuf.WriteString(word)
-	}
-	flushASCII()
-	flushUTF()
-	if len(parts) == 0 {
-		return []string{subject}
+		parts = append(parts, mime.QEncoding.Encode("utf-8", subject[i:j]))
+		i = j
 	}
 	return parts
 }
