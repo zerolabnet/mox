@@ -302,6 +302,8 @@ ensureCSS('.nav-account button.nav-layout.isOn, .nav-account button.nav-layout.i
 ensureCSS('.nav-account button.nav-layout .icon', {width: '1.15em', height: '1.15em'})
 ensureCSS('.msgActionRow', {display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '.45em .65em'})
 ensureCSS('.msgActionRow button', {flex: '0 1 auto'})
+ensureCSS('.msgActionRow button.msgActionBtn, .msgListActionBar button.msgActionBtn', {display: 'inline-flex', alignItems: 'center', gap: '6px'})
+ensureCSS('.msgActionBtn svg', {width: '16px', height: '16px', flex: 'none'})
 ensureCSS('.msgListActionBar', {display: 'none', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '.45em .65em', borderBottom: '1px solid', borderBottomColor: styles.borderColor, backgroundColor: styles.backgroundColorMild})
 ensureCSS('.msgListActionBar.isOpen', {display: 'flex'})
 ensureCSS('.msgItemFlagBtn, .msgItemFlagBtn:hover:not(:disabled)', {flexShrink: '0', padding: '2px', lineHeight: '1', minWidth: '22px', backgroundColor: 'transparent', borderColor: 'transparent', boxShadow: 'none', color: styles.colorMild})
@@ -3986,8 +3988,8 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 	let buttonPm: api.ParsedMessage | null = parsedMessageOpt || null
 
 	const trashOrDeleteBtn = () => m.MailboxID === trashMailboxID ?
-		dom.clickbutton(ui("Delete"), attr.title(ui("Permanently delete message.")), clickCmd(msglistView.cmdDelete, shortcuts)) :
-		dom.clickbutton(ui("Trash"), attr.title(ui("Move to the Trash mailbox.")), clickCmd(msglistView.cmdTrash, shortcuts))
+		msgActionButton(ui("Delete"), strokePaths.trash, attr.title(ui("Permanently delete message.")), clickCmd(msglistView.cmdDelete, shortcuts)) :
+		msgActionButton(ui("Trash"), strokePaths.trash, attr.title(ui("Move to the Trash mailbox.")), clickCmd(msglistView.cmdTrash, shortcuts))
 
 	const moreActionsPopover = (ref: HTMLElement) => {
 		menuPopover(ref, [
@@ -4021,14 +4023,14 @@ const newMsgView = (miv: MsgitemView, msglistView: MsglistView, listMailboxes: l
 		buttonPm = pm
 		const oneRecipient = (mi.Envelope.To || []).length <= 1 && (mi.Envelope.CC || []).length === 0 && (mi.Envelope.BCC || []).length === 0
 		const row = dom.div(dom._class('msgActionRow'),
-			m.MailboxID === draftMailboxID ? dom.clickbutton(ui("Edit"), attr.title(ui("Continue editing this draft message.")), clickCmd(cmdComposeDraft, shortcuts)) : [],
-			(pm && pm.ListReplyAddress && formatEmail(pm.ListReplyAddress) === fromAddress) ? [] : dom.clickbutton(ui("Reply"), attr.title(ui("Compose a reply to the sender of this message.")), clickCmd(cmdReply, shortcuts)),
-			oneRecipient ? [] : dom.clickbutton(ui("Reply all"), attr.title(ui("Compose a reply to all participants of this message.")), clickCmd(cmdReplyAll, shortcuts)),
-			dom.clickbutton(ui("Forward"), attr.title(ui("Compose a forwarding message, optionally including attachments.")), clickCmd(cmdForward, shortcuts)),
+			m.MailboxID === draftMailboxID ? msgActionButton(ui("Edit"), strokePaths.pencil, attr.title(ui("Continue editing this draft message.")), clickCmd(cmdComposeDraft, shortcuts)) : [],
+			(pm && pm.ListReplyAddress && formatEmail(pm.ListReplyAddress) === fromAddress) ? [] : msgActionButton(ui("Reply"), strokePaths.reply, attr.title(ui("Compose a reply to the sender of this message.")), clickCmd(cmdReply, shortcuts)),
+			oneRecipient ? [] : msgActionButton(ui("Reply all"), strokePaths.replyAll, attr.title(ui("Compose a reply to all participants of this message.")), clickCmd(cmdReplyAll, shortcuts)),
+			msgActionButton(ui("Forward"), strokePaths.forward, attr.title(ui("Compose a forwarding message, optionally including attachments.")), clickCmd(cmdForward, shortcuts)),
 			trashOrDeleteBtn(),
-			dom.clickbutton(ui("Archive"), attr.title(ui("Move to the Archive mailbox.")), clickCmd(msglistView.cmdArchive, shortcuts)),
-			dom.clickbutton(ui("More"), attr.title(ui("More actions.")), function click(e: MouseEvent) {
-				moreActionsPopover(e.target! as HTMLElement)
+			msgActionButton(ui("Archive"), strokePaths.archive, attr.title(ui("Move to the Archive mailbox.")), clickCmd(msglistView.cmdArchive, shortcuts)),
+			msgActionButton(ui("More"), strokePaths.more, attr.title(ui("More actions.")), function click(e: MouseEvent) {
+				moreActionsPopover(e.currentTarget as HTMLElement)
 			}),
 		)
 		dom._kids(msgbuttonElem,
@@ -4928,12 +4930,12 @@ const newMsglistView = (msgElem: HTMLElement, activeMailbox: () => api.Mailbox |
 		const movable = rows.map(miv => miv.messageitem.Message).filter(m => rows.length === 1 || !sentMailboxID || m.MailboxID !== sentMailboxID || !otherMailbox(sentMailboxID))
 		listActionBar.classList.add('isOpen')
 		dom._kids(listActionBar,
-			dom.clickbutton(ui("Archive"), attr.title(ui("Move to the Archive mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdArchive, shortcuts)),
+			msgActionButton(ui("Archive"), strokePaths.archive, attr.title(ui("Move to the Archive mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdArchive, shortcuts)),
 			allTrash ?
-				dom.clickbutton(ui("Delete"), attr.title(ui("Permanently delete messages.")), clickCmd(cmdDelete, shortcuts)) :
-				dom.clickbutton(ui("Trash"), attr.title(ui("Move to the Trash mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdTrash, shortcuts)),
-			dom.clickbutton(ui("More"), attr.title(ui("More actions.")), function click(e: MouseEvent) {
-				menuPopover(e.target! as HTMLElement, [
+				msgActionButton(ui("Delete"), strokePaths.trash, attr.title(ui("Permanently delete messages.")), clickCmd(cmdDelete, shortcuts)) :
+				msgActionButton(ui("Trash"), strokePaths.trash, attr.title(ui("Move to the Trash mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdTrash, shortcuts)),
+			msgActionButton(ui("More"), strokePaths.more, attr.title(ui("More actions.")), function click(e: MouseEvent) {
+				menuPopover(e.currentTarget as HTMLElement, [
 					dom.clickbutton(ui("Junk"), attr.title(ui("Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdJunk, shortcuts)),
 					dom.clickbutton(ui("Move to..."), function click(ev: MouseEvent) {
 						movePopover(ev, listMailboxes(), movable)
@@ -6111,6 +6113,23 @@ const strokePaths = {
 		'M18 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0',
 		'M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0',
 	],
+	reply: [
+		'M20 18v-2a4 4 0 0 0-4-4H4',
+		'm9 17-5-5 5-5',
+	],
+	replyAll: [
+		'm12 17-5-5 5-5',
+		'M22 18v-2a4 4 0 0 0-4-4H7',
+		'm7 17-5-5 5-5',
+	],
+	forward: [
+		'm15 17 5-5-5-5',
+		'M4 18v-2a4 4 0 0 1 4-4h12',
+	],
+	pencil: [
+		'M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z',
+		'm15 5 4 4',
+	],
 	back: ['m12 19-7-7 7-7', 'M19 12H5'],
 	x: ['M18 6 6 18', 'm6 6 12 12'],
 	flag: ['M6 22V2.8a.8.8 0 0 1 1.17-.71l11.38 5.69a.8.8 0 0 1 0 1.44L6 15.5'],
@@ -6188,6 +6207,9 @@ const strokeIcon = (paths: string[], circles?: Array<[string, string, string]>, 
 	}
 	return svg
 }
+
+const msgActionButton = (label: string, paths: string[], ...opts: any[]) =>
+	dom.clickbutton(dom._class('msgActionBtn'), strokeIcon(paths), label, ...opts)
 
 const threadCollapseIcon = (): SVGSVGElement => {
 	const icon = strokeIcon(strokePaths.minus)
