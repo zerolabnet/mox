@@ -22,21 +22,34 @@ const findBlock = (code: number): number => {
 	return s
 }
 
-// formatText adds s to element e, in a way that makes switching unicode scripts
-// clear, with alternating DOM TextNode and span elements with a "switchscript"
-// class. Useful for highlighting look alikes, e.g. a (ascii 0x61) and а (cyrillic
-// 0x430).
-//
-// This is only called one string at a time, so the UI can still display strings
-// without highlighting switching scripts, by calling formatText on the parts.
+// letterScript groups look-alike writing systems. Latin extensions stay Latin.
+// Cyrillic extensions stay Cyrillic. A period or a digit is not its own script.
+const letterScript = (code: number): number => {
+	if (code <= 0x024F || (code >= 0x1E00 && code <= 0x1EFF) || (code >= 0x2C60 && code <= 0x2C7F) || (code >= 0xA720 && code <= 0xA7FF) || (code >= 0xAB30 && code <= 0xAB6F)) {
+		return 0
+	}
+	if ((code >= 0x0370 && code <= 0x03FF) || (code >= 0x1F00 && code <= 0x1FFF)) {
+		return 1
+	}
+	if ((code >= 0x0400 && code <= 0x052F) || (code >= 0x1C80 && code <= 0x1C8F) || (code >= 0x2DE0 && code <= 0x2DFF) || (code >= 0xA640 && code <= 0xA69F)) {
+		return 2
+	}
+	return 1000 + findBlock(code)
+}
+
+const isLetter = (code: number): boolean => /\p{L}/u.test(String.fromCodePoint(code))
+
+// formatText adds s to element e. A word that mixes letter scripts, such as
+// Latin "p" beside Cyrillic "а", gets an orange underline on the later script.
+// A whole Cyrillic sentence, or "Hello мир", does not. Punctuation and digits
+// are not a script change.
 const formatText = (e: HTMLElement, s: string): void => {
-	// Handle some common cases quickly.
 	if (!s) {
 		return
 	}
 	let ascii = true
 	for (const c of s) {
-		const cp = c.codePointAt(0) // For typescript, to check for undefined.
+		const cp = c.codePointAt(0)
 		if (cp !== undefined && cp >= 0x0080) {
 			ascii = false
 			break
@@ -47,47 +60,58 @@ const formatText = (e: HTMLElement, s: string): void => {
 		return
 	}
 
-	// todo: handle grapheme clusters? wait for Intl.Segmenter?
-
-	let n = 0 // Number of text/span parts added.
-	let str = '' // Collected so far.
-	let block = -1 // Previous block/script.
-	let mod = 1
-	const put = (nextblock: number) => {
-		if (n === 0 && nextblock === 0) {
-			// Start was non-ascii, second block is ascii, we'll start marked as switched.
-			mod = 0
-		}
-		if (n % 2 === mod) {
-			const x = document.createElement('span')
-			x.classList.add('scriptswitch')
-			x.appendChild(document.createTextNode(str))
-			e.appendChild(x)
-		} else {
-			e.appendChild(document.createTextNode(str))
-		}
-		n++
-		str = ''
-	}
-	for (const c of s) {
-		// Basic whitespace does not switch blocks. Will probably need to extend with more
-		// punctuation in the future. Possibly for digits too. But perhaps not in all
-		// scripts.
-		if (c === ' ' || c === '\t' || c === '\r' || c === '\n') {
-			str += c
+	for (const part of s.split(/([ \t\r\n]+)/)) {
+		if (!part) {
 			continue
 		}
-		const code: number = c.codePointAt(0) as number
-		if (block < 0 || !(code >= scriptblocks[block] && (code < scriptblocks[block+1] || block === scriptblocks.length-1))) {
-			const nextblock = code < 0x0080 ? 0 : findBlock(code)
-			if (block >= 0) {
-				put(nextblock)
-			}
-			block = nextblock
+		if (/^[ \t\r\n]+$/.test(part)) {
+			e.appendChild(document.createTextNode(part))
+			continue
 		}
-		str += c
+		const runs: {script: number, text: string}[] = []
+		const scripts = new Set<number>()
+		let buf = ''
+		let bufScript = -2
+		const flush = () => {
+			if (!buf) {
+				return
+			}
+			runs.push({script: bufScript, text: buf})
+			if (bufScript >= 0) {
+				scripts.add(bufScript)
+			}
+			buf = ''
+		}
+		for (const c of part) {
+			const code = c.codePointAt(0) as number
+			const script = isLetter(code) ? letterScript(code) : -1
+			if (script !== bufScript) {
+				flush()
+				bufScript = script
+			}
+			buf += c
+		}
+		flush()
+		const mixed = scripts.size >= 2
+		let first = -1
+		for (const run of runs) {
+			if (run.script >= 0) {
+				first = run.script
+				break
+			}
+		}
+		for (const run of runs) {
+			if (mixed && run.script >= 0 && run.script !== first) {
+				const x = document.createElement('span')
+				x.classList.add('scriptswitch')
+				x.title = 'This word mixes scripts. That can imitate another word.'
+				x.appendChild(document.createTextNode(run.text))
+				e.appendChild(x)
+			} else {
+				e.appendChild(document.createTextNode(run.text))
+			}
+		}
 	}
-	put(-1)
 }
 
 const _domKids = <T extends HTMLElement>(e: T, l: ElemArg[]): T => {

@@ -17,6 +17,19 @@
 		}
 		return s;
 	}, "findBlock");
+	var letterScript = /* @__PURE__ */ __name((code) => {
+		if (code <= 591 || code >= 7680 && code <= 7935 || code >= 11360 && code <= 11391 || code >= 42784 && code <= 43007 || code >= 43824 && code <= 43887) {
+			return 0;
+		}
+		if (code >= 880 && code <= 1023 || code >= 7936 && code <= 8191) {
+			return 1;
+		}
+		if (code >= 1024 && code <= 1327 || code >= 7296 && code <= 7311 || code >= 11744 && code <= 11775 || code >= 42560 && code <= 42655) {
+			return 2;
+		}
+		return 1e3 + findBlock(code);
+	}, "letterScript");
+	var isLetter = /* @__PURE__ */ __name((code) => /\p{L}/u.test(String.fromCodePoint(code)), "isLetter");
 	var formatText = /* @__PURE__ */ __name((e, s) => {
 		if (!s) {
 			return;
@@ -33,41 +46,58 @@
 			e.appendChild(document.createTextNode(s));
 			return;
 		}
-		let n = 0;
-		let str = "";
-		let block = -1;
-		let mod = 1;
-		const put = /* @__PURE__ */ __name((nextblock) => {
-			if (n === 0 && nextblock === 0) {
-				mod = 0;
-			}
-			if (n % 2 === mod) {
-				const x = document.createElement("span");
-				x.classList.add("scriptswitch");
-				x.appendChild(document.createTextNode(str));
-				e.appendChild(x);
-			} else {
-				e.appendChild(document.createTextNode(str));
-			}
-			n++;
-			str = "";
-		}, "put");
-		for (const c of s) {
-			if (c === " " || c === "	" || c === "\r" || c === "\n") {
-				str += c;
+		for (const part of s.split(/([ \t\r\n]+)/)) {
+			if (!part) {
 				continue;
 			}
-			const code = c.codePointAt(0);
-			if (block < 0 || !(code >= scriptblocks[block] && (code < scriptblocks[block + 1] || block === scriptblocks.length - 1))) {
-				const nextblock = code < 128 ? 0 : findBlock(code);
-				if (block >= 0) {
-					put(nextblock);
-				}
-				block = nextblock;
+			if (/^[ \t\r\n]+$/.test(part)) {
+				e.appendChild(document.createTextNode(part));
+				continue;
 			}
-			str += c;
+			const runs = [];
+			const scripts = /* @__PURE__ */ new Set();
+			let buf = "";
+			let bufScript = -2;
+			const flush = /* @__PURE__ */ __name(() => {
+				if (!buf) {
+					return;
+				}
+				runs.push({ script: bufScript, text: buf });
+				if (bufScript >= 0) {
+					scripts.add(bufScript);
+				}
+				buf = "";
+			}, "flush");
+			for (const c of part) {
+				const code = c.codePointAt(0);
+				const script = isLetter(code) ? letterScript(code) : -1;
+				if (script !== bufScript) {
+					flush();
+					bufScript = script;
+				}
+				buf += c;
+			}
+			flush();
+			const mixed = scripts.size >= 2;
+			let first = -1;
+			for (const run of runs) {
+				if (run.script >= 0) {
+					first = run.script;
+					break;
+				}
+			}
+			for (const run of runs) {
+				if (mixed && run.script >= 0 && run.script !== first) {
+					const x = document.createElement("span");
+					x.classList.add("scriptswitch");
+					x.title = "This word mixes scripts. That can imitate another word.";
+					x.appendChild(document.createTextNode(run.text));
+					e.appendChild(x);
+				} else {
+					e.appendChild(document.createTextNode(run.text));
+				}
+			}
 		}
-		put(-1);
 	}, "formatText");
 	var _domKids = /* @__PURE__ */ __name((e, l) => {
 		l.forEach((c) => {
@@ -1031,12 +1061,688 @@
 		return await new Promise(fn);
 	}, "_sherpaCall");
 
+	// .js/webmail/i18n.js
+	var langKey = "lang-preference";
+	var ru = {
+		"Archive": "\u0412 \u0430\u0440\u0445\u0438\u0432",
+		"Trash": "\u0412 \u043A\u043E\u0440\u0437\u0438\u043D\u0443",
+		"Delete": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C",
+		"More": "\u0415\u0449\u0451",
+		"Reply": "\u041E\u0442\u0432\u0435\u0442\u0438\u0442\u044C",
+		"Reply all": "\u041E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u0432\u0441\u0435\u043C",
+		"Forward": "\u041F\u0435\u0440\u0435\u0441\u043B\u0430\u0442\u044C",
+		"Edit": "\u041F\u0440\u0430\u0432\u0438\u0442\u044C",
+		"Junk": "\u0421\u043F\u0430\u043C",
+		"Print": "\u041F\u0435\u0447\u0430\u0442\u044C",
+		"Close": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C",
+		"Cancel": "\u041E\u0442\u043C\u0435\u043D\u0430",
+		"Save": "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C",
+		"Send": "\u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
+		"Help": "\u0421\u043F\u0440\u0430\u0432\u043A\u0430",
+		"Settings": "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438",
+		"Logout": "\u0412\u044B\u0439\u0442\u0438",
+		"Login": "\u0412\u043E\u0439\u0442\u0438",
+		"Tooltip": "\u041F\u043E\u0434\u0441\u043A\u0430\u0437\u043A\u0438",
+		"Undo": "\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C",
+		"Register": "\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u0442\u044C",
+		"Unregister": "\u0421\u043D\u044F\u0442\u044C \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044E",
+		"To": "\u041A\u043E\u043C\u0443",
+		"Cc": "\u041A\u043E\u043F\u0438\u044F",
+		"Bcc": "\u0421\u043A\u0440\u044B\u0442\u0430\u044F \u043A\u043E\u043F\u0438\u044F",
+		"Reply-To": "\u041E\u0431\u0440\u0430\u0442\u043D\u044B\u0439 \u0430\u0434\u0440\u0435\u0441",
+		"Custom From": "\u0421\u0432\u043E\u0439 \u0430\u0434\u0440\u0435\u0441",
+		"Now": "\u0421\u0435\u0439\u0447\u0430\u0441",
+		"Sent": "\u041E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0435",
+		"Draft": "\u0427\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u0438",
+		"Create": "\u0421\u043E\u0437\u0434\u0430\u0442\u044C",
+		"Rename": "\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u0442\u044C",
+		"Search": "\u041F\u043E\u0438\u0441\u043A",
+		"Auto": "\u0410\u0432\u0442\u043E",
+		"Bottom": "\u0421\u043D\u0438\u0437\u0443",
+		"Top": "\u0421\u0432\u0435\u0440\u0445\u0443",
+		"Signature": "\u041F\u043E\u0434\u043F\u0438\u0441\u044C",
+		"Global": "\u041E\u0431\u0449\u0435\u0435",
+		"Mailbox": "\u041F\u0430\u043F\u043A\u0430",
+		"Message list": "\u0421\u043F\u0438\u0441\u043E\u043A \u043F\u0438\u0441\u0435\u043C",
+		"Compose": "\u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C",
+		"Message": "\u041F\u0438\u0441\u044C\u043C\u043E",
+		"Attachments": "\u0412\u043B\u043E\u0436\u0435\u043D\u0438\u044F",
+		"HTML": "HTML",
+		"Text": "\u0422\u0435\u043A\u0441\u0442",
+		"Label": "\u041C\u0435\u0442\u043A\u0430",
+		"Password": "\u041F\u0430\u0440\u043E\u043B\u044C",
+		"Email address": "\u0410\u0434\u0440\u0435\u0441 \u043F\u043E\u0447\u0442\u044B",
+		"Light or dark theme": "\u0421\u0432\u0435\u0442\u043B\u0430\u044F \u0438\u043B\u0438 \u0442\u0451\u043C\u043D\u0430\u044F \u0442\u0435\u043C\u0430",
+		"Dark theme": "\u0422\u0451\u043C\u043D\u0430\u044F \u0442\u0435\u043C\u0430",
+		"Follow the browser language": "\u041A\u0430\u043A \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435",
+		"English": "\u0410\u043D\u0433\u043B\u0438\u0439\u0441\u043A\u0438\u0439",
+		"Russian": "\u0420\u0443\u0441\u0441\u043A\u0438\u0439",
+		"From:": "\u041E\u0442:",
+		"To:": "\u041A\u043E\u043C\u0443:",
+		"Cc:": "\u041A\u043E\u043F\u0438\u044F:",
+		"Bcc:": "\u0421\u043A\u0440\u044B\u0442\u0430\u044F \u043A\u043E\u043F\u0438\u044F:",
+		"Reply-To:": "\u041E\u0431\u0440\u0430\u0442\u043D\u044B\u0439 \u0430\u0434\u0440\u0435\u0441:",
+		"Subject:": "\u0422\u0435\u043C\u0430:",
+		"Date:": "\u0414\u0430\u0442\u0430:",
+		"y": "\u0433",
+		"mo": "\u043C\u0435\u0441",
+		"d": "\u0434",
+		"h": "\u0447",
+		"min": "\u043C\u0438\u043D",
+		"<1min": "<1 \u043C\u0438\u043D",
+		"Label: ": "\u041C\u0435\u0442\u043A\u0430: ",
+		"Date header in message: ": "\u0414\u0430\u0442\u0430 \u0432 \u043F\u0438\u0441\u044C\u043C\u0435: ",
+		"(missing/invalid)": "(\u043D\u0435\u0442 \u0438\u043B\u0438 \u043D\u0435\u0432\u0435\u0440\u043D\u0430\u044F)",
+		"Mailto links": "\u0421\u0441\u044B\u043B\u043A\u0438 mailto",
+		"No active elements with tooltips found.": "\u041D\u0435\u0442 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432 \u0441 \u043F\u043E\u0434\u0441\u043A\u0430\u0437\u043A\u0430\u043C\u0438.",
+		"Can only compose one message at a time.": "\u041E\u0434\u043D\u043E\u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043C\u043E\u0436\u043D\u043E \u043F\u0438\u0441\u0430\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u043E\u0434\u043D\u043E \u043F\u0438\u0441\u044C\u043C\u043E.",
+		"Saving draft": "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u0430",
+		"no designated drafts mailbox": "\u043F\u0430\u043F\u043A\u0430 \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u043E\u0432 \u043D\u0435 \u043D\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0430",
+		"Unsaved changes": "\u041D\u0435\u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F",
+		"Keep editing.": "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C \u043F\u0440\u0430\u0432\u043A\u0443.",
+		"The message has unsaved changes. What would you like to do?": "\u0412 \u043F\u0438\u0441\u044C\u043C\u0435 \u0435\u0441\u0442\u044C \u043D\u0435\u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F. \u0427\u0442\u043E \u0441\u0434\u0435\u043B\u0430\u0442\u044C?",
+		"Discard changes": "\u041E\u0442\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F",
+		"Remove draft": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A",
+		"Save draft": "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A",
+		"Removing draft": "\u0423\u0434\u0430\u043B\u0435\u043D\u0438\u0435 \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u0430",
+		"Sending email": "\u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430",
+		"Sending email and archive": "\u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0438 \u0430\u0440\u0445\u0438\u0432",
+		"Jane <jane@example.org>": "\u0418\u0432\u0430\u043D <ivan@example.org>",
+		"subject...": "\u0442\u0435\u043C\u0430...",
+		"Remove address.": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0430\u0434\u0440\u0435\u0441.",
+		"Save draft message.": "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A.",
+		"Close window, saving draft message if body has changed or a draft was saved earlier.": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043E\u043A\u043D\u043E. \u0427\u0435\u0440\u043D\u043E\u0432\u0438\u043A \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0441\u044F, \u0435\u0441\u043B\u0438 \u0442\u0435\u043A\u0441\u0442 \u043C\u0435\u043D\u044F\u043B\u0441\u044F \u0438\u043B\u0438 \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A \u0443\u0436\u0435 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u043B\u0438.",
+		"Set custom From address/name.": "\u0423\u043A\u0430\u0437\u0430\u0442\u044C \u0441\u0432\u043E\u0439 \u0430\u0434\u0440\u0435\u0441 \u0438 \u0438\u043C\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u0435\u043B\u044F.",
+		"Forward attachments: ": "\u0412\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u043F\u0435\u0440\u0435\u0441\u044B\u043B\u043A\u0438: ",
+		" (Toggle all)": " (\u0432\u0441\u0435)",
+		"Message mentions attachments, but no files are attached.": "\u0412 \u043F\u0438\u0441\u044C\u043C\u0435 \u0443\u043F\u043E\u043C\u0438\u043D\u0430\u044E\u0442\u0441\u044F \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u044F, \u043D\u043E \u0444\u0430\u0439\u043B\u044B \u043D\u0435 \u043F\u0440\u0438\u043A\u0440\u0435\u043F\u043B\u0435\u043D\u044B.",
+		"Attachments ": "\u0412\u043B\u043E\u0436\u0435\u043D\u0438\u044F ",
+		"TLS ": "TLS ",
+		"With RequireTLS": "\u0422\u0440\u0435\u0431\u043E\u0432\u0430\u0442\u044C TLS",
+		"Fallback to insecure": "\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C \u0431\u0435\u0437 \u0437\u0430\u0449\u0438\u0442\u044B",
+		"Start of next day": "\u041D\u0430\u0447\u0430\u043B\u043E \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0433\u043E \u0434\u043D\u044F",
+		"+1 hour": "+1 \u0447\u0430\u0441",
+		"+1 day": "+1 \u0434\u0435\u043D\u044C",
+		" in local timezone ": " \u0432 \u043C\u0435\u0441\u0442\u043D\u043E\u043C \u0447\u0430\u0441\u043E\u0432\u043E\u043C \u043F\u043E\u044F\u0441\u0435 ",
+		"Send and archive": "\u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0438 \u0432 \u0430\u0440\u0445\u0438\u0432",
+		"only messages in draft mailbox can be edited": "\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u043C\u043E\u0436\u043D\u043E \u0442\u043E\u043B\u044C\u043A\u043E \u043F\u0438\u0441\u044C\u043C\u0430 \u0432 \u043F\u0430\u043F\u043A\u0435 \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u043E\u0432",
+		"Looking up referenced message": "\u041F\u043E\u0438\u0441\u043A \u0438\u0441\u0445\u043E\u0434\u043D\u043E\u0433\u043E \u043F\u0438\u0441\u044C\u043C\u0430",
+		"Add/remove this label to the message(s), leaving other labels unchanged.": "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0438\u043B\u0438 \u0441\u043D\u044F\u0442\u044C \u044D\u0442\u0443 \u043C\u0435\u0442\u043A\u0443, \u043E\u0441\u0442\u0430\u043B\u044C\u043D\u044B\u0435 \u043D\u0435 \u043C\u0435\u043D\u044F\u0442\u044C.",
+		"Adding label": "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043C\u0435\u0442\u043A\u0438",
+		"Removing label": "\u0421\u043D\u044F\u0442\u0438\u0435 \u043C\u0435\u0442\u043A\u0438",
+		"Adding new label": "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043D\u043E\u0432\u043E\u0439 \u043C\u0435\u0442\u043A\u0438",
+		"Add new label": "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043C\u0435\u0442\u043A\u0443",
+		"Add this label to the message(s), leaving other labels unchanged.": "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u044D\u0442\u0443 \u043C\u0435\u0442\u043A\u0443, \u043E\u0441\u0442\u0430\u043B\u044C\u043D\u044B\u0435 \u043D\u0435 \u043C\u0435\u043D\u044F\u0442\u044C.",
+		"Moving to mailbox": "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u0435 \u0432 \u043F\u0430\u043F\u043A\u0443",
+		"Checking rulesets": "\u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u043F\u0440\u0430\u0432\u0438\u043B",
+		"Remove rule?": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u0440\u0430\u0432\u0438\u043B\u043E?",
+		"Close without removing rule.": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0438 \u043D\u0435 \u0443\u0434\u0430\u043B\u044F\u0442\u044C \u043F\u0440\u0430\u0432\u0438\u043B\u043E.",
+		"Would you like to remove the server-side rule that automatically delivers messages from ": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0441\u0435\u0440\u0432\u0435\u0440\u043D\u043E\u0435 \u043F\u0440\u0430\u0432\u0438\u043B\u043E, \u043A\u043E\u0442\u043E\u0440\u043E\u0435 \u0441\u0430\u043C\u043E \u0440\u0430\u0441\u043A\u043B\u0430\u0434\u044B\u0432\u0430\u0435\u0442 \u043F\u0438\u0441\u044C\u043C\u0430 \u043E\u0442 ",
+		' to mailbox "': " \u0432 \u043F\u0430\u043F\u043A\u0443 \xAB",
+		"No, and don't ask again for ": "\u041D\u0435\u0442, \u0438 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u0441\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0442\u044C \u0434\u043B\u044F ",
+		"Store ruleset response": "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u043E\u0442\u0432\u0435\u0442\u0430 \u043E \u043F\u0440\u0430\u0432\u0438\u043B\u0435",
+		"No, and don't ask again when moving messages out of \"": "\u041D\u0435\u0442, \u0438 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u0441\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0442\u044C \u043F\u0440\u0438 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u0438 \u0438\u0437 \xAB",
+		"Not now": "\u041D\u0435 \u0441\u0435\u0439\u0447\u0430\u0441",
+		"Yes, remove rule": "\u0414\u0430, \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u0440\u0430\u0432\u0438\u043B\u043E",
+		"Remove ruleset": "\u0423\u0434\u0430\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u0430\u0432\u0438\u043B\u0430",
+		"Add rule?": "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043F\u0440\u0430\u0432\u0438\u043B\u043E?",
+		"Close without adding rule.": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0438 \u043D\u0435 \u0434\u043E\u0431\u0430\u0432\u043B\u044F\u0442\u044C \u043F\u0440\u0430\u0432\u0438\u043B\u043E.",
+		"Would you like to create a server-side ruleset that automatically delivers future messages from ": "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0441\u0435\u0440\u0432\u0435\u0440\u043D\u043E\u0435 \u043F\u0440\u0430\u0432\u0438\u043B\u043E, \u043A\u043E\u0442\u043E\u0440\u043E\u0435 \u0434\u0430\u043B\u044C\u0448\u0435 \u0441\u0430\u043C\u043E \u0431\u0443\u0434\u0435\u0442 \u0440\u0430\u0441\u043A\u043B\u0430\u0434\u044B\u0432\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u0430 \u043E\u0442 ",
+		"No, and don't ask again when moving messages to \"": "\u041D\u0435\u0442, \u0438 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u0441\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0442\u044C \u043F\u0440\u0438 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u0438 \u0432 \xAB",
+		"Yes, add rule": "\u0414\u0430, \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043F\u0440\u0430\u0432\u0438\u043B\u043E",
+		"Add ruleset": "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u043F\u0440\u0430\u0432\u0438\u043B\u0430",
+		"You are in the CC header": "\u0412\u044B \u0432 \u043F\u043E\u043B\u0435 \u043A\u043E\u043F\u0438\u0438",
+		"You are in the BCC header": "\u0412\u044B \u0432 \u043F\u043E\u043B\u0435 \u0441\u043A\u0440\u044B\u0442\u043E\u0439 \u043A\u043E\u043F\u0438\u0438",
+		"You are not in any To, From, CC, BCC header. Could message to a mailing list or Bcc without Bcc message header.": "\u0412\u0430\u0441 \u043D\u0435\u0442 \u0432 \u043F\u043E\u043B\u044F\u0445 \u041A\u043E\u043C\u0443, \u041E\u0442, \u041A\u043E\u043F\u0438\u044F \u0438 \u0421\u043A\u0440\u044B\u0442\u0430\u044F. \u042D\u0442\u043E \u043C\u043E\u0436\u0435\u0442 \u0431\u044B\u0442\u044C \u0440\u0430\u0441\u0441\u044B\u043B\u043A\u0430 \u0438\u043B\u0438 \u0441\u043A\u0440\u044B\u0442\u0430\u044F \u043A\u043E\u043F\u0438\u044F \u0431\u0435\u0437 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0430.",
+		"Same Message-ID.": "\u0422\u043E\u0442 \u0436\u0435 \u0438\u0434\u0435\u043D\u0442\u0438\u0444\u0438\u043A\u0430\u0442\u043E\u0440 \u043F\u0438\u0441\u044C\u043C\u0430.",
+		"Immediate parent message is missing.": "\u041F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0435 \u043F\u0438\u0441\u044C\u043C\u043E \u0446\u0435\u043F\u043E\u0447\u043A\u0438 \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442.",
+		"missing mailbox for message in thread": "\u0443 \u043F\u0438\u0441\u044C\u043C\u0430 \u0432 \u0446\u0435\u043F\u043E\u0447\u043A\u0435 \u043D\u0435\u0442 \u043F\u0430\u043F\u043A\u0438",
+		"addressed: ": "\u043A\u043E\u043C\u0443: ",
+		"Saving thread expand/collapse": "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u0441\u0432\u0451\u0440\u043D\u0443\u0442\u043E\u0439 \u0446\u0435\u043F\u043E\u0447\u043A\u0438",
+		"Expand thread.": "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0443.",
+		"Saving thread expanded": "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u0440\u0430\u0437\u0432\u0451\u0440\u043D\u0443\u0442\u043E\u0439 \u0446\u0435\u043F\u043E\u0447\u043A\u0438",
+		"Collapse thread.": "\u0421\u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0443.",
+		"Remove flag": "\u0421\u043D\u044F\u0442\u044C \u0444\u043B\u0430\u0436\u043E\u043A",
+		"Flag message": "\u041E\u0442\u043C\u0435\u0442\u0438\u0442\u044C \u0444\u043B\u0430\u0436\u043A\u043E\u043C",
+		"Remove flag.": "\u0421\u043D\u044F\u0442\u044C \u0444\u043B\u0430\u0436\u043E\u043A.",
+		"Flag message.": "\u041E\u0442\u043C\u0435\u0442\u0438\u0442\u044C \u0444\u043B\u0430\u0436\u043A\u043E\u043C.",
+		"Removing flag": "\u0421\u043D\u044F\u0442\u0438\u0435 \u0444\u043B\u0430\u0436\u043A\u0430",
+		"(no subject)": "(\u0431\u0435\u0437 \u0442\u0435\u043C\u044B)",
+		"Move to the Archive mailbox.": "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0432 \u0430\u0440\u0445\u0438\u0432.",
+		"No mailbox configured for archiving yet.": "\u041F\u0430\u043F\u043A\u0430 \u0430\u0440\u0445\u0438\u0432\u0430 \u0435\u0449\u0451 \u043D\u0435 \u043D\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0430.",
+		"Moving to archive mailbox": "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u0435 \u0432 \u0430\u0440\u0445\u0438\u0432",
+		"Permanently delete message.": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430.",
+		"Are you sure you want to permanently delete?": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430?",
+		"Permanently deleting messages": "\u0423\u0434\u0430\u043B\u0435\u043D\u0438\u0435 \u043F\u0438\u0441\u0435\u043C",
+		"Move to the Trash mailbox.": "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443.",
+		"No mailbox configured for trash yet.": "\u041F\u0430\u043F\u043A\u0430 \u043A\u043E\u0440\u0437\u0438\u043D\u044B \u0435\u0449\u0451 \u043D\u0435 \u043D\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0430.",
+		"Moving to trash mailbox": "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u0435 \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443",
+		"Part not found.": "\u0427\u0430\u0441\u0442\u044C \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430.",
+		"Saving view mode settings for address": "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u0432\u0438\u0434\u0430 \u0434\u043B\u044F \u0430\u0434\u0440\u0435\u0441\u0430",
+		"MIME internals": "\u0421\u043B\u0443\u0436\u0435\u0431\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435 MIME",
+		"Close internals.": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0441\u043B\u0443\u0436\u0435\u0431\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435.",
+		"Mime structure": "\u0421\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0430 MIME",
+		"Buttons and headers for message": "\u041A\u043D\u043E\u043F\u043A\u0438 \u0438 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0438 \u043F\u0438\u0441\u044C\u043C\u0430",
+		"Message body": "\u0422\u0435\u043A\u0441\u0442 \u043F\u0438\u0441\u044C\u043C\u0430",
+		"Reply to list": "\u041E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u0432 \u0441\u043F\u0438\u0441\u043E\u043A",
+		"Compose a reply to this mailing list.": "\u041E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u0432 \u044D\u0442\u043E\u0442 \u0441\u043F\u0438\u0441\u043E\u043A \u0440\u0430\u0441\u0441\u044B\u043B\u043A\u0438.",
+		"Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages.": "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0432 \u0441\u043F\u0430\u043C. \u041F\u0438\u0441\u044C\u043C\u043E \u0431\u0443\u0434\u0435\u0442 \u0443\u0447\u0438\u0442\u044B\u0432\u0430\u0442\u044C\u0441\u044F \u043F\u0440\u0438 \u043E\u0446\u0435\u043D\u043A\u0435 \u043D\u043E\u0432\u044B\u0445 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445.",
+		"Move to...": "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C\u2026",
+		"Labels...": "\u041C\u0435\u0442\u043A\u0438\u2026",
+		"Print message, opens in new tab and opens print dialog.": "\u041F\u0435\u0447\u0430\u0442\u044C. \u041E\u0442\u043A\u0440\u043E\u0435\u0442\u0441\u044F \u043D\u043E\u0432\u0430\u044F \u0432\u043A\u043B\u0430\u0434\u043A\u0430 \u0438 \u043E\u043A\u043D\u043E \u043F\u0435\u0447\u0430\u0442\u0438.",
+		"Mark Not Junk": "\u041D\u0435 \u0441\u043F\u0430\u043C",
+		"Mark as not junk, causing this message to be used in spam classification of new incoming messages.": "\u041E\u0442\u043C\u0435\u0442\u0438\u0442\u044C \u043A\u0430\u043A \u043D\u0435 \u0441\u043F\u0430\u043C. \u041F\u0438\u0441\u044C\u043C\u043E \u0431\u0443\u0434\u0435\u0442 \u0443\u0447\u0438\u0442\u044B\u0432\u0430\u0442\u044C\u0441\u044F \u043F\u0440\u0438 \u043E\u0446\u0435\u043D\u043A\u0435 \u043D\u043E\u0432\u044B\u0445 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445.",
+		"Mark Read": "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043E",
+		"Mark Unread": "\u041D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043E",
+		"Mute thread": "\u0417\u0430\u0433\u043B\u0443\u0448\u0438\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0443",
+		"Unmute thread": "\u0421\u043D\u044F\u0442\u044C \u0437\u0430\u0433\u043B\u0443\u0448\u043A\u0443",
+		"Open in new tab": "\u0412 \u043D\u043E\u0432\u043E\u0439 \u0432\u043A\u043B\u0430\u0434\u043A\u0435",
+		"Download raw original message": "\u0421\u043A\u0430\u0447\u0430\u0442\u044C \u043E\u0440\u0438\u0433\u0438\u043D\u0430\u043B",
+		"Export as ...": "\u042D\u043A\u0441\u043F\u043E\u0440\u0442\u2026",
+		"Export as...": "\u042D\u043A\u0441\u043F\u043E\u0440\u0442\u2026",
+		"Show raw original message in new tab": "\u041E\u0440\u0438\u0433\u0438\u043D\u0430\u043B \u0432 \u043D\u043E\u0432\u043E\u0439 \u0432\u043A\u043B\u0430\u0434\u043A\u0435",
+		"Show currently displayed part as decoded text": "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u044D\u0442\u0443 \u0447\u0430\u0441\u0442\u044C \u043A\u0430\u043A \u0442\u0435\u043A\u0441\u0442",
+		"Show internals in popup": "\u0421\u043B\u0443\u0436\u0435\u0431\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435",
+		"Continue editing this draft message.": "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C \u044D\u0442\u043E\u0442 \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A.",
+		"Compose a reply to the sender of this message.": "\u041E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u0435\u043B\u044E.",
+		"Compose a reply to all participants of this message.": "\u041E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u0432\u0441\u0435\u043C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430\u043C.",
+		"Compose a forwarding message, optionally including attachments.": "\u041F\u0435\u0440\u0435\u0441\u043B\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E, \u043F\u0440\u0438 \u0436\u0435\u043B\u0430\u043D\u0438\u0438 \u0441 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u044F\u043C\u0438.",
+		"More actions.": "\u0414\u0440\u0443\u0433\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F.",
+		"More actions": "\u0414\u0440\u0443\u0433\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
+		"undisclosed recipients": "\u0441\u043A\u0440\u044B\u0442\u044B\u0435 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u0438",
+		"(unknown sender)": "(\u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u0435\u043B\u044C \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u0435\u043D)",
+		"To: ": "\u041A\u043E\u043C\u0443: ",
+		" \xB7 Cc: ": " \xB7 \u041A\u043E\u043F\u0438\u044F: ",
+		"Mailing list": "\u0421\u043F\u0438\u0441\u043E\u043A \u0440\u0430\u0441\u0441\u044B\u043B\u043A\u0438",
+		"Received: ": "\u041F\u043E\u043B\u0443\u0447\u0435\u043D\u043E: ",
+		"Hide full headers.": "\u0421\u043A\u0440\u044B\u0442\u044C \u0432\u0441\u0435 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0438.",
+		"Show full headers.": "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u0432\u0441\u0435 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0438.",
+		"To previous viewable attachment.": "\u041A \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u043C\u0443 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u044E.",
+		"Attachment shown as text.": "\u0412\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043F\u043E\u043A\u0430\u0437\u0430\u043D\u043E \u043A\u0430\u043A \u0442\u0435\u043A\u0441\u0442.",
+		"Attachment as PDF.": "\u0412\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043A\u0430\u043A PDF.",
+		"Attachment could be a binary file.": "\u0412\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043C\u043E\u0436\u0435\u0442 \u0431\u044B\u0442\u044C \u0434\u0432\u043E\u0438\u0447\u043D\u044B\u043C \u0444\u0430\u0439\u043B\u043E\u043C.",
+		"View as text": "\u041A\u0430\u043A \u0442\u0435\u043A\u0441\u0442",
+		"Attachment shown as text, though it could be a binary file.": "\u0412\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043F\u043E\u043A\u0430\u0437\u0430\u043D\u043E \u043A\u0430\u043A \u0442\u0435\u043A\u0441\u0442, \u0445\u043E\u0442\u044F \u043E\u043D\u043E \u043C\u043E\u0436\u0435\u0442 \u0431\u044B\u0442\u044C \u0434\u0432\u043E\u0438\u0447\u043D\u044B\u043C.",
+		"To next viewable attachment.": "\u041A \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u043C\u0443 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u044E.",
+		"Attachments: ": "\u0412\u043B\u043E\u0436\u0435\u043D\u0438\u044F: ",
+		"View this file. Size: ": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0444\u0430\u0439\u043B. \u0420\u0430\u0437\u043C\u0435\u0440: ",
+		"Download this file. Size: ": "\u0421\u043A\u0430\u0447\u0430\u0442\u044C \u0444\u0430\u0439\u043B. \u0420\u0430\u0437\u043C\u0435\u0440: ",
+		"More...": "\u0415\u0449\u0451\u2026",
+		"Download all as zip": "\u0421\u043A\u0430\u0447\u0430\u0442\u044C \u0432\u0441\u0435 \u043A\u0430\u043A zip",
+		"HTML version of message with images inlined, without external resources loaded.": "HTML-\u0432\u0435\u0440\u0441\u0438\u044F. \u041A\u0430\u0440\u0442\u0438\u043D\u043A\u0438 \u0438\u0437 \u043F\u0438\u0441\u044C\u043C\u0430 \u0432\u0441\u0442\u0440\u043E\u0435\u043D\u044B, \u0432\u043D\u0435\u0448\u043D\u0438\u0435 \u0440\u0435\u0441\u0443\u0440\u0441\u044B \u043D\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0430\u044E\u0442\u0441\u044F.",
+		"HTML version of message with images inlined and with external resources loaded.": "HTML-\u0432\u0435\u0440\u0441\u0438\u044F. \u041A\u0430\u0440\u0442\u0438\u043D\u043A\u0438 \u0438\u0437 \u043F\u0438\u0441\u044C\u043C\u0430 \u0432\u0441\u0442\u0440\u043E\u0435\u043D\u044B, \u0432\u043D\u0435\u0448\u043D\u0438\u0435 \u0440\u0435\u0441\u0443\u0440\u0441\u044B \u0437\u0430\u0433\u0440\u0443\u0436\u0430\u044E\u0442\u0441\u044F.",
+		"Loading message": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430",
+		"fetching message failed": "\u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E",
+		"In the HTML viewer, the following potentially dangerous functionality is disabled: submitting forms, starting a download from a link, navigating away from this page by clicking a link. If a link does not work, try explicitly opening it in a new tab.": "\u0412 \u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u0435 HTML \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E \u043E\u043F\u0430\u0441\u043D\u043E\u0435: \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C, \u0441\u043A\u0430\u0447\u0438\u0432\u0430\u043D\u0438\u0435 \u043F\u043E \u0441\u0441\u044B\u043B\u043A\u0435 \u0438 \u0443\u0445\u043E\u0434 \u0441 \u044D\u0442\u043E\u0439 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u043F\u043E \u0441\u0441\u044B\u043B\u043A\u0435. \u0415\u0441\u043B\u0438 \u0441\u0441\u044B\u043B\u043A\u0430 \u043D\u0435 \u043E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442\u0441\u044F, \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0435\u0451 \u0432 \u043D\u043E\u0432\u043E\u0439 \u0432\u043A\u043B\u0430\u0434\u043A\u0435.",
+		"No textual content": "\u041D\u0435\u0442 \u0442\u0435\u043A\u0441\u0442\u0430",
+		"HTML-only message": "\u041F\u0438\u0441\u044C\u043C\u043E \u0442\u043E\u043B\u044C\u043A\u043E \u0432 HTML",
+		"HTML ext": "HTML \u0432\u043D\u0435\u0448.",
+		"HTML with external resources": "HTML \u0441 \u0432\u043D\u0435\u0448\u043D\u0438\u043C\u0438 \u0440\u0435\u0441\u0443\u0440\u0441\u0430\u043C\u0438",
+		"Marking current message as read": "\u041E\u0442\u043C\u0435\u0442\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C",
+		"Marking current message as not junk": "\u041E\u0442\u043C\u0435\u0442\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430 \u043A\u0430\u043A \u043D\u0435 \u0441\u043F\u0430\u043C",
+		"Moving to junk mailbox": "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u0435 \u0432 \u0441\u043F\u0430\u043C",
+		"No mailbox configured for junk yet.": "\u041F\u0430\u043F\u043A\u0430 \u0441\u043F\u0430\u043C\u0430 \u0435\u0449\u0451 \u043D\u0435 \u043D\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0430.",
+		"Marking as not junk": "\u041E\u0442\u043C\u0435\u0442\u043A\u0430 \u043A\u0430\u043A \u043D\u0435 \u0441\u043F\u0430\u043C",
+		"Marking as read": "\u041E\u0442\u043C\u0435\u0442\u043A\u0430 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C",
+		"Marking as not read": "\u041E\u0442\u043C\u0435\u0442\u043A\u0430 \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C",
+		"Muting thread": "\u0417\u0430\u0433\u043B\u0443\u0448\u0435\u043D\u0438\u0435 \u0446\u0435\u043F\u043E\u0447\u043A\u0438",
+		"Unmuting thread": "\u0421\u043D\u044F\u0442\u0438\u0435 \u0437\u0430\u0433\u043B\u0443\u0448\u043A\u0438",
+		"Toggle muting threads is only available when threading is enabled.": "\u0417\u0430\u0433\u043B\u0443\u0448\u0430\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0438 \u043C\u043E\u0436\u043D\u043E \u0442\u043E\u043B\u044C\u043A\u043E \u043A\u043E\u0433\u0434\u0430 \u0446\u0435\u043F\u043E\u0447\u043A\u0438 \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u044B.",
+		"Toggling thread collapse/expand is only available when threading is enabled.": "\u0421\u0432\u043E\u0440\u0430\u0447\u0438\u0432\u0430\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0438 \u043C\u043E\u0436\u043D\u043E \u0442\u043E\u043B\u044C\u043A\u043E \u043A\u043E\u0433\u0434\u0430 \u0446\u0435\u043F\u043E\u0447\u043A\u0438 \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u044B.",
+		"Permanently delete messages.": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u0430 \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430.",
+		"Add/remove labels ...": "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0438\u043B\u0438 \u0441\u043D\u044F\u0442\u044C \u043C\u0435\u0442\u043A\u0438\u2026",
+		"Selected messages": "\u0412\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u043F\u0438\u0441\u044C\u043C\u0430",
+		" Recursive": " \u0412\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435",
+		"Mbox ": "Mbox ",
+		"Export as mbox file, not wrapped in an archive.": "\u042D\u043A\u0441\u043F\u043E\u0440\u0442 \u0432 \u0444\u0430\u0439\u043B mbox, \u0431\u0435\u0437 \u0430\u0440\u0445\u0438\u0432\u0430.",
+		"Maildir ": "Maildir ",
+		"Mark as read": "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0432\u0441\u0435",
+		"Mark all messages in the mailbox and its sub mailboxes as read.": "\u041E\u0442\u043C\u0435\u0442\u0438\u0442\u044C \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C\u0438 \u0432\u0441\u0435 \u043F\u0438\u0441\u044C\u043C\u0430 \u0432 \u044D\u0442\u043E\u0439 \u043F\u0430\u043F\u043A\u0435 \u0438 \u0432\u043E \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0445.",
+		"Marking mailboxes as read": "\u041E\u0442\u043C\u0435\u0442\u043A\u0430 \u043F\u0430\u043F\u043E\u043A \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C\u0438",
+		"Create mailbox": "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u0430\u043F\u043A\u0443",
+		"Create new mailbox within this mailbox.": "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u0430\u043F\u043A\u0443 \u0432\u043D\u0443\u0442\u0440\u0438 \u044D\u0442\u043E\u0439.",
+		"Create new mailbox.": "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u0430\u043F\u043A\u0443.",
+		"Creating mailbox": "\u0421\u043E\u0437\u0434\u0430\u043D\u0438\u0435 \u043F\u0430\u043F\u043A\u0438",
+		"Name ": "\u0418\u043C\u044F ",
+		"Move to trash": "\u0412 \u043A\u043E\u0440\u0437\u0438\u043D\u0443",
+		"Move mailbox, its messages and its mailboxes to the trash.": "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u043F\u0430\u043F\u043A\u0443, \u0435\u0451 \u043F\u0438\u0441\u044C\u043C\u0430 \u0438 \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438 \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443.",
+		"Are you sure you want to move this mailbox, its messages and its mailboxes to the trash?": "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u044D\u0442\u0443 \u043F\u0430\u043F\u043A\u0443, \u0435\u0451 \u043F\u0438\u0441\u044C\u043C\u0430 \u0438 \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438 \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443?",
+		"Moving mailbox to trash": "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u0435 \u043F\u0430\u043F\u043A\u0438 \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443",
+		"Delete mailbox": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u0430\u043F\u043A\u0443",
+		"Permanently delete this mailbox and all its messages.": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u044D\u0442\u0443 \u043F\u0430\u043F\u043A\u0443 \u0438 \u0432\u0441\u0435 \u0435\u0451 \u043F\u0438\u0441\u044C\u043C\u0430 \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430.",
+		"Are you sure you want to permanently delete this mailbox and all its messages?": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u044D\u0442\u0443 \u043F\u0430\u043F\u043A\u0443 \u0438 \u0432\u0441\u0435 \u0435\u0451 \u043F\u0438\u0441\u044C\u043C\u0430 \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430?",
+		"Deleting mailbox": "\u0423\u0434\u0430\u043B\u0435\u043D\u0438\u0435 \u043F\u0430\u043F\u043A\u0438",
+		"Empty mailbox": "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u043F\u0430\u043F\u043A\u0443",
+		"Remove all messages from the mailbox, but not mailboxes inside this mailbox or their messages.": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0432\u0441\u0435 \u043F\u0438\u0441\u044C\u043C\u0430 \u0438\u0437 \u043F\u0430\u043F\u043A\u0438. \u0412\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438 \u0438 \u0438\u0445 \u043F\u0438\u0441\u044C\u043C\u0430 \u043D\u0435 \u0442\u0440\u043E\u0433\u0430\u0442\u044C.",
+		"Are you sure you want to empty this mailbox, permanently removing its messages? Mailboxes inside this mailbox are not affected.": "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u043F\u0430\u043F\u043A\u0443 \u0438 \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430 \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0435\u0451 \u043F\u0438\u0441\u044C\u043C\u0430? \u0412\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438 \u043D\u0435 \u0437\u0430\u0442\u0440\u0430\u0433\u0438\u0432\u0430\u044E\u0442\u0441\u044F.",
+		"Emptying mailbox": "\u041E\u0447\u0438\u0441\u0442\u043A\u0430 \u043F\u0430\u043F\u043A\u0438",
+		"Rename mailbox": "\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u0442\u044C \u043F\u0430\u043F\u043A\u0443",
+		"Renaming mailbox": "\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u0435 \u043F\u0430\u043F\u043A\u0438",
+		"Set role for mailbox...": "\u041D\u0430\u0437\u043D\u0430\u0447\u0438\u0442\u044C \u0440\u043E\u043B\u044C \u043F\u0430\u043F\u043A\u0438\u2026",
+		"Set a special-use role on the mailbox, making it the designated mailbox for either Archived, Sent, Draft, Trashed or Junk messages.": "\u041D\u0430\u0437\u043D\u0430\u0447\u0438\u0442\u044C \u043F\u0430\u043F\u043A\u0435 \u0440\u043E\u043B\u044C: \u0430\u0440\u0445\u0438\u0432, \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0435, \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u0438, \u043A\u043E\u0440\u0437\u0438\u043D\u0430 \u0438\u043B\u0438 \u0441\u043F\u0430\u043C.",
+		"Marking mailbox as special use": "\u041D\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0440\u043E\u043B\u0438 \u043F\u0430\u043F\u043A\u0438",
+		"Opening mailbox": "\u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043F\u0430\u043F\u043A\u0438",
+		"Moving to ": "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u0438\u0435 \u0432 ",
+		"Mailbox actions": "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u0441 \u043F\u0430\u043F\u043A\u043E\u0439",
+		"Actions on mailbox, like deleting, emptying, renaming.": "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u0441 \u043F\u0430\u043F\u043A\u043E\u0439: \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0435, \u043E\u0447\u0438\u0441\u0442\u043A\u0430, \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u0435.",
+		"Total messages: ": "\u0412\u0441\u0435\u0433\u043E \u043F\u0438\u0441\u0435\u043C: ",
+		" unread": " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0445",
+		"Mailboxes actions": "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u0441 \u043F\u0430\u043F\u043A\u0430\u043C\u0438",
+		"Actions on mailboxes like creating a new mailbox or exporting all email.": "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u0441 \u043F\u0430\u043F\u043A\u0430\u043C\u0438: \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u0430\u043F\u043A\u0443 \u0438\u043B\u0438 \u044D\u043A\u0441\u043F\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043F\u043E\u0447\u0442\u0443.",
+		"Requesting messages": "\u0417\u0430\u043F\u0440\u043E\u0441 \u043F\u0438\u0441\u0435\u043C",
+		"unknown mailbox": "\u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u0430\u044F \u043F\u0430\u043F\u043A\u0430",
+		"Header name": "\u0418\u043C\u044F \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0430",
+		"Header value": "\u0417\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0430",
+		"Add row for another header filter.": "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0435\u0449\u0451 \u043E\u0434\u0438\u043D \u0444\u0438\u043B\u044C\u0442\u0440 \u043F\u043E \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0443.",
+		"Remove row.": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0441\u0442\u0440\u043E\u043A\u0443.",
+		"Close search.": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043F\u043E\u0438\u0441\u043A.",
+		"Filter by mailbox, including children of the mailbox.": "\u0424\u0438\u043B\u044C\u0442\u0440 \u043F\u043E \u043F\u0430\u043F\u043A\u0435, \u0432\u043A\u043B\u044E\u0447\u0430\u044F \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435.",
+		"All mailboxes except Trash/Junk/Rejects": "\u0412\u0441\u0435 \u043F\u0430\u043F\u043A\u0438, \u043A\u0440\u043E\u043C\u0435 \u043A\u043E\u0440\u0437\u0438\u043D\u044B, \u0441\u043F\u0430\u043C\u0430 \u0438 \u043E\u0442\u043A\u0430\u0437\u043E\u0432",
+		"All mailboxes": "\u0412\u0441\u0435 \u043F\u0430\u043F\u043A\u0438",
+		"Filter by text, case-insensitive, substring match, not necessarily whole words.": "\u0424\u0438\u043B\u044C\u0442\u0440 \u043F\u043E \u0442\u0435\u043A\u0441\u0442\u0443, \u0431\u0435\u0437 \u0443\u0447\u0451\u0442\u0430 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430, \u043F\u043E \u0447\u0430\u0441\u0442\u0438 \u0441\u043B\u043E\u0432\u0430.",
+		"Address or name": "\u0410\u0434\u0440\u0435\u0441 \u0438\u043B\u0438 \u0438\u043C\u044F",
+		"Search on addressee, including Cc and Bcc headers.": "\u041F\u043E\u0438\u0441\u043A \u043F\u043E \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044E, \u0432\u043A\u043B\u044E\u0447\u0430\u044F \u043A\u043E\u043F\u0438\u044E \u0438 \u0441\u043A\u0440\u044B\u0442\u0443\u044E \u043A\u043E\u043F\u0438\u044E.",
+		"Address or name, also matches Cc and Bcc addresses": "\u0410\u0434\u0440\u0435\u0441 \u0438\u043B\u0438 \u0438\u043C\u044F, \u0442\u0430\u043A\u0436\u0435 \u043A\u043E\u043F\u0438\u044F \u0438 \u0441\u043A\u0440\u044B\u0442\u0430\u044F \u043A\u043E\u043F\u0438\u044F",
+		"Received between": "\u041F\u043E\u043B\u0443\u0447\u0435\u043D\u043E \u043C\u0435\u0436\u0434\u0443",
+		"Clear start date.": "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0434\u0430\u0442\u0443 \u043D\u0430\u0447\u0430\u043B\u0430.",
+		"Clear end date.": "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0434\u0430\u0442\u0443 \u043A\u043E\u043D\u0446\u0430.",
+		" None": " \u041D\u0435\u0442",
+		" Any": " \u041B\u044E\u0431\u044B\u0435",
+		" Images": " \u0418\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F",
+		" PDFs": " PDF",
+		" Archives": " \u0410\u0440\u0445\u0438\u0432\u044B",
+		" Spreadsheets": " \u0422\u0430\u0431\u043B\u0438\u0446\u044B",
+		" Documents": " \u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B",
+		" Presentations": " \u041F\u0440\u0435\u0437\u0435\u043D\u0442\u0430\u0446\u0438\u0438",
+		"User-defined labels.": "\u0421\u0432\u043E\u0438 \u043C\u0435\u0442\u043A\u0438.",
+		"Size between": "\u0420\u0430\u0437\u043C\u0435\u0440 \u043C\u0435\u0436\u0434\u0443",
+		"loading...": "\u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430...",
+		"Refine:": "\u0424\u0438\u043B\u044C\u0442\u0440",
+		"Refine message listing with quick filters. These refinement filters are in addition to any search criteria, but the refine attachment filter overrides a search attachment criteria.": "\u0411\u044B\u0441\u0442\u0440\u044B\u0435 \u0444\u0438\u043B\u044C\u0442\u0440\u044B \u0441\u043F\u0438\u0441\u043A\u0430. \u041E\u043D\u0438 \u0434\u043E\u0431\u0430\u0432\u043B\u044F\u044E\u0442\u0441\u044F \u043A \u043F\u043E\u0438\u0441\u043A\u0443. \u0424\u0438\u043B\u044C\u0442\u0440 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u0439 \u0437\u0434\u0435\u0441\u044C \u0437\u0430\u043C\u0435\u043D\u044F\u0435\u0442 \u0443\u0441\u043B\u043E\u0432\u0438\u0435 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u0439 \u0432 \u043F\u043E\u0438\u0441\u043A\u0435.",
+		"Only show messages marked as unread.": "\u0422\u043E\u043B\u044C\u043A\u043E \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0435.",
+		"Only show messages marked as read.": "\u0422\u043E\u043B\u044C\u043A\u043E \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0435.",
+		"Only show messages with attachments.": "\u0422\u043E\u043B\u044C\u043A\u043E \u0441 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u044F\u043C\u0438.",
+		"Only show flagged/starred messages.": "\u0422\u043E\u043B\u044C\u043A\u043E \u043E\u0442\u043C\u0435\u0447\u0435\u043D\u043D\u044B\u0435 \u0444\u043B\u0430\u0436\u043A\u043E\u043C.",
+		"No labels yet": "\u041C\u0435\u0442\u043E\u043A \u043F\u043E\u043A\u0430 \u043D\u0435\u0442",
+		"Clear refinement filters.": "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0443\u0442\u043E\u0447\u043D\u0435\u043D\u0438\u044F.",
+		"Thread modes.": "\u0420\u0435\u0436\u0438\u043C \u0446\u0435\u043F\u043E\u0447\u0435\u043A.",
+		"Threads: Off": "\u0412\u044B\u043A\u043B",
+		"Threads: On": "\u0412\u043A\u043B",
+		"Threads: Unread": "\u041D\u0435\u043F\u0440\u043E\u0447.",
+		"Toggle sorting by date received.": "\u0421\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u043A\u0430 \u043F\u043E \u0434\u0430\u0442\u0435 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F.",
+		"Logging out": "\u0412\u044B\u0445\u043E\u0434",
+		"Top bar": "\u0412\u0435\u0440\u0445\u043D\u044F\u044F \u043F\u0430\u043D\u0435\u043B\u044C",
+		"Compose new email message.": "\u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E.",
+		"Open mailboxes.": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u0430\u043F\u043A\u0438.",
+		"Search...": "\u041F\u043E\u0438\u0441\u043A...",
+		"Search messages based on criteria like matching free-form text, in a mailbox, labels, addressees.": "\u0418\u0441\u043A\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u0430 \u043F\u043E \u0442\u0435\u043A\u0441\u0442\u0443, \u043F\u0430\u043F\u043A\u0435, \u043C\u0435\u0442\u043A\u0430\u043C \u0438 \u0430\u0434\u0440\u0435\u0441\u0430\u043C.",
+		"Cancel and clear search and open Inbox.": "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u043F\u043E\u0438\u0441\u043A \u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0435.",
+		"Cannot find inbox.": "\u041F\u0430\u043F\u043A\u0430 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430.",
+		"Back to message list.": "\u041A \u0441\u043F\u0438\u0441\u043A\u0443 \u043F\u0438\u0441\u0435\u043C.",
+		"Auto layout": "\u0410\u0432\u0442\u043E\u043C\u0430\u043A\u0435\u0442",
+		"Top/bottom": "\u0421\u0432\u0435\u0440\u0445\u0443/\u0441\u043D\u0438\u0437\u0443",
+		"Left/right": "\u0421\u043B\u0435\u0432\u0430/\u0441\u043F\u0440\u0430\u0432\u0430",
+		"Layout of message list and message panes. Top/bottom has message list above message view. Left/Right has message list left, message view right. Auto selects based on window width and automatically switches on resize. Wide screens get left/right, smaller screens get top/bottom.": "\u0420\u0430\u0441\u043F\u043E\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0441\u043F\u0438\u0441\u043A\u0430 \u0438 \u043F\u0438\u0441\u044C\u043C\u0430. \u0421\u0432\u0435\u0440\u0445\u0443/\u0441\u043D\u0438\u0437\u0443: \u0441\u043F\u0438\u0441\u043E\u043A \u043D\u0430\u0434 \u043F\u0438\u0441\u044C\u043C\u043E\u043C. \u0421\u043B\u0435\u0432\u0430/\u0441\u043F\u0440\u0430\u0432\u0430: \u0441\u043F\u0438\u0441\u043E\u043A \u0441\u043B\u0435\u0432\u0430, \u043F\u0438\u0441\u044C\u043C\u043E \u0441\u043F\u0440\u0430\u0432\u0430. \u0410\u0432\u0442\u043E \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0442 \u043F\u043E \u0448\u0438\u0440\u0438\u043D\u0435 \u043E\u043A\u043D\u0430.",
+		'Show tooltips, based on the title attributes (underdotted text) for the focused element and all user interface elements below it. Use the keyboard shortcut "ctrl ?" instead of clicking on the tooltip button, which changes focus to the tooltip button.': "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043F\u043E\u0434\u0441\u043A\u0430\u0437\u043A\u0438 \u0443 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u0430 \u0432 \u0444\u043E\u043A\u0443\u0441\u0435 \u0438 \u0443 \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432 \u043F\u043E\u0434 \u043D\u0438\u043C. \u0421\u043E\u0447\u0435\u0442\u0430\u043D\u0438\u0435 \u043A\u043B\u0430\u0432\u0438\u0448 ctrl ? \u0443\u0434\u043E\u0431\u043D\u0435\u0435 \u043A\u043D\u043E\u043F\u043A\u0438, \u043F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u043A\u043D\u043E\u043F\u043A\u0430 \u0437\u0430\u0431\u0438\u0440\u0430\u0435\u0442 \u0444\u043E\u043A\u0443\u0441.",
+		"Show popup with basic usage information and a keyboard shortcuts.": "\u041A\u0440\u0430\u0442\u043A\u0430\u044F \u0441\u043F\u0440\u0430\u0432\u043A\u0430 \u0438 \u0441\u043E\u0447\u0435\u0442\u0430\u043D\u0438\u044F \u043A\u043B\u0430\u0432\u0438\u0448.",
+		"Change settings for composing messages.": "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043D\u0430\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u043F\u0438\u0441\u0435\u043C.",
+		"Logout, invalidating this session.": "\u0412\u044B\u0439\u0442\u0438 \u0438 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0441\u0435\u0430\u043D\u0441.",
+		"Decoding MIME words for subject": "\u0420\u0430\u0437\u0431\u043E\u0440 \u0442\u0435\u043C\u044B",
+		"Error parsing compose mailto URL: ": "\u041E\u0448\u0438\u0431\u043A\u0430 \u0440\u0430\u0437\u0431\u043E\u0440\u0430 \u0441\u0441\u044B\u043B\u043A\u0438 mailto: ",
+		"Loading compose message": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u043F\u0438\u0441\u044C\u043C\u0430",
+		"Error opening draft message: ": "\u041E\u0448\u0438\u0431\u043A\u0430 \u043E\u0442\u043A\u0440\u044B\u0442\u0438\u044F \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u0430: ",
+		"Not connected": "\u041D\u0435\u0442 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u044F",
+		"Not receiving real-time updates, including of new deliveries.": "\u041D\u0435\u0442 \u0436\u0438\u0432\u044B\u0445 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0439, \u0432 \u0442\u043E\u043C \u0447\u0438\u0441\u043B\u0435 \u043E \u043D\u043E\u0432\u044B\u0445 \u043F\u0438\u0441\u044C\u043C\u0430\u0445.",
+		"Fetching token for connection with real-time updates": "\u041F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u0435 \u043A\u043B\u044E\u0447\u0430 \u0434\u043B\u044F \u0436\u0438\u0432\u044B\u0445 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0439",
+		"Error fetching connection token": "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u043A\u043B\u044E\u0447\u0430 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u044F",
+		", not automatically retrying. ": ", \u043F\u043E\u0432\u0442\u043E\u0440 \u0441\u0430\u043C \u043D\u0435 \u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u0441\u044F. ",
+		"Error parsing mailto URL: ": "\u041E\u0448\u0438\u0431\u043A\u0430 \u0440\u0430\u0437\u0431\u043E\u0440\u0430 \u0441\u0441\u044B\u043B\u043A\u0438 mailto: ",
+		"Connecting... ": "\u0421\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435... ",
+		"(not connected)": "(\u043D\u0435\u0442 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u044F)",
+		"Connection failed": "\u0421\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u0435 \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C",
+		"(no error message)": "(\u043D\u0435\u0442 \u0442\u0435\u043A\u0441\u0442\u0430 \u043E\u0448\u0438\u0431\u043A\u0438)",
+		'Server error: "': "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430: \xAB",
+		"Server shutting down, will try to reconnect in a few seconds": "\u0421\u0435\u0440\u0432\u0435\u0440 \u043E\u0441\u0442\u0430\u043D\u0430\u0432\u043B\u0438\u0432\u0430\u0435\u0442\u0441\u044F, \u043F\u043E\u0432\u0442\u043E\u0440 \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434",
+		"invalid event from server: ": "\u043D\u0435\u043F\u043E\u043D\u044F\u0442\u043D\u043E\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u0435 \u0441\u0435\u0440\u0432\u0435\u0440\u0430: ",
+		"(no message)": "(\u043D\u0435\u0442 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F)",
+		"Saving before reloading due to server update": "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435 \u043F\u0435\u0440\u0435\u0434 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435\u043C \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B",
+		"Error from server during request for messages: ": "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u043F\u0440\u0438 \u0437\u0430\u043F\u0440\u043E\u0441\u0435 \u043F\u0438\u0441\u0435\u043C: ",
+		"Could not find message to continue scrolling, resetting the view.": "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043D\u0430\u0439\u0442\u0438 \u043F\u0438\u0441\u044C\u043C\u043E, \u0447\u0442\u043E\u0431\u044B \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C \u043F\u0440\u043E\u043A\u0440\u0443\u0442\u043A\u0443. \u0421\u043F\u0438\u0441\u043E\u043A \u043E\u0431\u043D\u043E\u0432\u043B\u044F\u0435\u0442\u0441\u044F.",
+		"Error processing changes (reloading advised): ": "\u041E\u0448\u0438\u0431\u043A\u0430 \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0438 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439, \u043B\u0443\u0447\u0448\u0435 \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443: ",
+		" (not available)": " (\u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E)",
+		"A JavaScript error occurred": "\u041F\u0440\u043E\u0438\u0437\u043E\u0448\u043B\u0430 \u043E\u0448\u0438\u0431\u043A\u0430 JavaScript",
+		"Close error details.": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u043E\u0441\u0442\u0438 \u043E\u0448\u0438\u0431\u043A\u0438.",
+		"There is a good chance this is a bug in Mox Webmail.": "\u0421\u043A\u043E\u0440\u0435\u0435 \u0432\u0441\u0435\u0433\u043E, \u044D\u0442\u043E \u043E\u0448\u0438\u0431\u043A\u0430 \u0432\u0435\u0431-\u043F\u043E\u0447\u0442\u044B Mox.",
+		'Consider filing a bug report ("issue") at ': "\u041C\u043E\u0436\u043D\u043E \u0441\u043E\u043E\u0431\u0449\u0438\u0442\u044C \u043E\u0431 \u043E\u0448\u0438\u0431\u043A\u0435 \u0437\u0434\u0435\u0441\u044C: ",
+		'mox webmail js error: "': "\u043E\u0448\u0438\u0431\u043A\u0430 JavaScript \u0432\u0435\u0431-\u043F\u043E\u0447\u0442\u044B mox: \xAB",
+		". The link includes the error details.": ". \u0412 \u0441\u0441\u044B\u043B\u043A\u0435 \u0443\u0436\u0435 \u0435\u0441\u0442\u044C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u043E\u0441\u0442\u0438.",
+		"Before reporting you could check previous ": "\u041F\u0435\u0440\u0435\u0434 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435\u043C \u043C\u043E\u0436\u043D\u043E \u043F\u043E\u0441\u043C\u043E\u0442\u0440\u0435\u0442\u044C \u043F\u0440\u0435\u0436\u043D\u0438\u0435 ",
+		"webmail bug reports": "\u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u043E\u0431 \u043E\u0448\u0438\u0431\u043A\u0430\u0445",
+		"Your feedback will help improve mox, thanks!": "\u0422\u0430\u043A mox \u0441\u0442\u0430\u043D\u0435\u0442 \u043B\u0443\u0447\u0448\u0435, \u0441\u043F\u0430\u0441\u0438\u0431\u043E.",
+		"Silence for 1 week": "\u0417\u0430\u043C\u043E\u043B\u0447\u0430\u0442\u044C \u043D\u0430 \u043D\u0435\u0434\u0435\u043B\u044E",
+		"Error: ": "\u041E\u0448\u0438\u0431\u043A\u0430: ",
+		"login error": "\u043E\u0448\u0438\u0431\u043A\u0430 \u0432\u0445\u043E\u0434\u0430",
+		"Reply above/below original": "\u041E\u0442\u0432\u0435\u0442 \u043D\u0430\u0434 \u0446\u0438\u0442\u0430\u0442\u043E\u0439 \u0438\u043B\u0438 \u043F\u043E\u0434 \u043D\u0435\u0439",
+		"Auto: If text is selected, only the replied text is quoted and editing starts below. Otherwise, the full message is quoted and editing starts at the top.": "\u0410\u0432\u0442\u043E: \u0435\u0441\u043B\u0438 \u0432\u044B\u0434\u0435\u043B\u0435\u043D \u0442\u0435\u043A\u0441\u0442, \u0446\u0438\u0442\u0438\u0440\u0443\u0435\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u043E\u043D, \u0438 \u043A\u0443\u0440\u0441\u043E\u0440 \u0441\u0442\u0430\u0432\u0438\u0442\u0441\u044F \u043D\u0438\u0436\u0435. \u0418\u043D\u0430\u0447\u0435 \u0446\u0438\u0442\u0438\u0440\u0443\u0435\u0442\u0441\u044F \u0432\u0441\u0451 \u043F\u0438\u0441\u044C\u043C\u043E, \u0438 \u043A\u0443\u0440\u0441\u043E\u0440 \u0441\u0442\u0430\u0432\u0438\u0442\u0441\u044F \u0441\u0432\u0435\u0440\u0445\u0443.",
+		"Show address security indications": "\u041F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0442\u044C \u0437\u0430\u0449\u0438\u0442\u0443 \u0430\u0434\u0440\u0435\u0441\u0430",
+		"Show bars underneath address input fields, indicating support for STARTTLS/DNSSEC/DANE/MTA-STS/RequireTLS.": "\u041F\u043E\u043B\u043E\u0441\u043A\u0438 \u043F\u043E\u0434 \u043F\u043E\u043B\u0435\u043C \u0430\u0434\u0440\u0435\u0441\u0430: \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 STARTTLS, DNSSEC, DANE, MTA-STS \u0438 RequireTLS.",
+		"Show email as HTML instead of text by default for first-time senders": "\u0414\u043B\u044F \u043D\u043E\u0432\u044B\u0445 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u0435\u043B\u0435\u0439 \u0441\u043D\u0430\u0447\u0430\u043B\u0430 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0442\u044C HTML, \u0430 \u043D\u0435 \u0442\u0435\u043A\u0441\u0442",
+		"Whether to show HTML or text is remembered per sender. This sets the default for unknown correspondents.": "\u0412\u044B\u0431\u043E\u0440 HTML \u0438\u043B\u0438 \u0442\u0435\u043A\u0441\u0442\u0430 \u0437\u0430\u043F\u043E\u043C\u0438\u043D\u0430\u0435\u0442\u0441\u044F \u0434\u043B\u044F \u043A\u0430\u0436\u0434\u043E\u0433\u043E \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u0435\u043B\u044F. \u0417\u0434\u0435\u0441\u044C \u0437\u0430\u0434\u0430\u0451\u0442\u0441\u044F \u0432\u0438\u0434 \u0434\u043B\u044F \u043D\u0435\u0437\u043D\u0430\u043A\u043E\u043C\u044B\u0445.",
+		"Show shortcut keys in bottom left after interaction with mouse": "\u041F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0442\u044C \u043A\u043B\u0430\u0432\u0438\u0448\u0438 \u0432\u043D\u0438\u0437\u0443 \u0441\u043B\u0435\u0432\u0430 \u043F\u043E\u0441\u043B\u0435 \u0449\u0435\u043B\u0447\u043A\u0430 \u043C\u044B\u0448\u044C\u044E",
+		"Show additional headers": "\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0438",
+		"One header name per line, for example Delivered-To, X-Mox-Reason, User-Agent, \u2026 Refresh mailbox view for changes to take effect.": "\u041F\u043E \u043E\u0434\u043D\u043E\u043C\u0443 \u0438\u043C\u0435\u043D\u0438 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0430 \u0432 \u0441\u0442\u0440\u043E\u043A\u0435, \u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440 Delivered-To, X-Mox-Reason, User-Agent. \u0427\u0442\u043E\u0431\u044B \u0443\u0432\u0438\u0434\u0435\u0442\u044C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F, \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u0435 \u043F\u0430\u043F\u043A\u0443.",
+		"Close without saving.": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0431\u0435\u0437 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F.",
+		"In most browsers, registering is only allowed on HTTPS URLs. Your browser may ask for confirmation. If nothing appears to happen, the registration may already have been present.": "\u0412 \u0431\u043E\u043B\u044C\u0448\u0438\u043D\u0441\u0442\u0432\u0435 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u043E\u0432 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044F \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u0430 \u0442\u043E\u043B\u044C\u043A\u043E \u043F\u043E HTTPS. \u0411\u0440\u0430\u0443\u0437\u0435\u0440 \u043C\u043E\u0436\u0435\u0442 \u0441\u043F\u0440\u043E\u0441\u0438\u0442\u044C \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435. \u0415\u0441\u043B\u0438 \u043D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043F\u0440\u043E\u0438\u0437\u043E\u0448\u043B\u043E, \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0443\u0436\u0435 \u043C\u043E\u0433 \u0431\u044B\u0442\u044C \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u043D.",
+		'Registering a protocol handler ("mailto:") is not supported by your browser.': "\u042D\u0442\u043E\u0442 \u0431\u0440\u0430\u0443\u0437\u0435\u0440 \u043D\u0435 \u0443\u043C\u0435\u0435\u0442 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A mailto:.",
+		'"mailto:"-links have been registered': "\u0421\u0441\u044B\u043B\u043A\u0438 mailto: \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u044B",
+		'Error registering "mailto:" protocol handler: ': "\u041E\u0448\u0438\u0431\u043A\u0430 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438 mailto: ",
+		"Not all browsers implement unregistering via JavaScript.": "\u041D\u0435 \u0432\u0441\u0435 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u044B \u0443\u043C\u0435\u044E\u0442 \u0441\u043D\u0438\u043C\u0430\u0442\u044C \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044E \u0438\u0437 \u0441\u043A\u0440\u0438\u043F\u0442\u0430.",
+		'Unregistering a protocol handler ("mailto:") via JavaScript is not supported by your browser. See your browser settings to unregister.': "\u042D\u0442\u043E\u0442 \u0431\u0440\u0430\u0443\u0437\u0435\u0440 \u043D\u0435 \u0443\u043C\u0435\u0435\u0442 \u0441\u043D\u0438\u043C\u0430\u0442\u044C \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A mailto: \u0438\u0437 \u0441\u043A\u0440\u0438\u043F\u0442\u0430. \u0421\u043D\u0438\u043C\u0438\u0442\u0435 \u0435\u0433\u043E \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430.",
+		'Error unregistering "mailto:" protocol handler: ': "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043D\u044F\u0442\u0438\u044F \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438 mailto: ",
+		'"mailto:" protocol handler unregistered.': "\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A mailto: \u0441\u043D\u044F\u0442.",
+		"Help and keyboard shortcuts": "\u0421\u043F\u0440\u0430\u0432\u043A\u0430 \u0438 \u043A\u043B\u0430\u0432\u0438\u0448\u0438",
+		"Close help.": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u0441\u043F\u0440\u0430\u0432\u043A\u0443.",
+		"compose new message": "\u043D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E",
+		"search": "\u043F\u043E\u0438\u0441\u043A",
+		"open inbox": "\u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0435",
+		"help": "\u0441\u043F\u0440\u0430\u0432\u043A\u0430",
+		"tooltip for focused element": "\u043F\u043E\u0434\u0441\u043A\u0430\u0437\u043A\u0430 \u0434\u043B\u044F \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u0430 \u0432 \u0444\u043E\u043A\u0443\u0441\u0435",
+		"focus message": "\u043F\u0435\u0440\u0435\u0439\u0442\u0438 \u043A \u043F\u0438\u0441\u044C\u043C\u0443",
+		"collapse": "\u0441\u0432\u0435\u0440\u043D\u0443\u0442\u044C",
+		"expand": "\u0440\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044C",
+		"show more actions": "\u0435\u0449\u0451 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
+		"down one message": "\u043D\u0430 \u043F\u0438\u0441\u044C\u043C\u043E \u0432\u043D\u0438\u0437",
+		"up one message": "\u043D\u0430 \u043F\u0438\u0441\u044C\u043C\u043E \u0432\u0432\u0435\u0440\u0445",
+		"down one screen": "\u043D\u0430 \u044D\u043A\u0440\u0430\u043D \u0432\u043D\u0438\u0437",
+		"up one screen": "\u043D\u0430 \u044D\u043A\u0440\u0430\u043D \u0432\u0432\u0435\u0440\u0445",
+		"to last message": "\u043A \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0435\u043C\u0443 \u043F\u0438\u0441\u044C\u043C\u0443",
+		"to first message": "\u043A \u043F\u0435\u0440\u0432\u043E\u043C\u0443 \u043F\u0438\u0441\u044C\u043C\u0443",
+		"toggle selection of message": "\u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0438\u043B\u0438 \u0441\u043D\u044F\u0442\u044C \u0432\u044B\u0431\u043E\u0440",
+		"move to trash folder": "\u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443",
+		"delete permanently": "\u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043D\u0430\u0432\u0441\u0435\u0433\u0434\u0430",
+		"move to junk folder": "\u0432 \u0441\u043F\u0430\u043C",
+		"mark not junk": "\u043E\u0442\u043C\u0435\u0442\u0438\u0442\u044C \u043A\u0430\u043A \u043D\u0435 \u0441\u043F\u0430\u043C",
+		"move to archive folder": "\u0432 \u0430\u0440\u0445\u0438\u0432",
+		"mark unread and clear (non)junk flags": "\u0441\u0434\u0435\u043B\u0430\u0442\u044C \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C \u0438 \u0441\u043D\u044F\u0442\u044C \u043C\u0435\u0442\u043A\u0438 \u0441\u043F\u0430\u043C\u0430",
+		"mark read": "\u0441\u0434\u0435\u043B\u0430\u0442\u044C \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C",
+		"to next unread message": "\u043A \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u043C\u0443 \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u043E\u043C\u0443",
+		"to root of thread or previous thread": "\u043A \u043D\u0430\u0447\u0430\u043B\u0443 \u0446\u0435\u043F\u043E\u0447\u043A\u0438 \u0438\u043B\u0438 \u043A \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0439",
+		"to root of next thread": "\u043A \u043D\u0430\u0447\u0430\u043B\u0443 \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0439 \u0446\u0435\u043F\u043E\u0447\u043A\u0438",
+		"select thread messages": "\u0432\u044B\u0431\u0440\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u0430 \u0446\u0435\u043F\u043E\u0447\u043A\u0438",
+		"toggle thread collapse": "\u0441\u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0438\u043B\u0438 \u0440\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0443",
+		"toggle thread mute, automatically marking new messages as read": "\u0437\u0430\u0433\u043B\u0443\u0448\u0438\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0443, \u043D\u043E\u0432\u044B\u0435 \u043F\u0438\u0441\u044C\u043C\u0430 \u0431\u0443\u0434\u0443\u0442 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C\u0438",
+		"collapse thread": "\u0441\u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0443",
+		"expand thread": "\u0440\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0443",
+		"send message": "\u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
+		"send message and archive thread": "\u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0438 \u0443\u0431\u0440\u0430\u0442\u044C \u0446\u0435\u043F\u043E\u0447\u043A\u0443 \u0432 \u0430\u0440\u0445\u0438\u0432",
+		"close message": "\u0437\u0430\u043A\u0440\u044B\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E",
+		"add To": "\u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u041A\u043E\u043C\u0443",
+		"add Cc": "\u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043A\u043E\u043F\u0438\u044E",
+		"add Bcc": "\u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0441\u043A\u0440\u044B\u0442\u0443\u044E \u043A\u043E\u043F\u0438\u044E",
+		"add Reply-To": "\u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043E\u0431\u0440\u0430\u0442\u043D\u044B\u0439 \u0430\u0434\u0440\u0435\u0441",
+		"remove current address if empty": "\u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u0443\u0441\u0442\u043E\u0439 \u0430\u0434\u0440\u0435\u0441",
+		"add address of same type": "\u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0430\u0434\u0440\u0435\u0441 \u0442\u043E\u0433\u043E \u0436\u0435 \u0432\u0438\u0434\u0430",
+		"reply or list reply": "\u043E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u0438\u043B\u0438 \u043E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u0432 \u0441\u043F\u0438\u0441\u043E\u043A",
+		"reply all": "\u043E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u0432\u0441\u0435\u043C",
+		"forward message": "\u043F\u0435\u0440\u0435\u0441\u043B\u0430\u0442\u044C",
+		"edit draft": "\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A",
+		"view attachments": "\u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u044F",
+		"view text version": "\u0442\u0435\u043A\u0441\u0442\u043E\u0432\u0430\u044F \u0432\u0435\u0440\u0441\u0438\u044F",
+		"view HTML version": "HTML-\u0432\u0435\u0440\u0441\u0438\u044F",
+		"open message in new tab": "\u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0432 \u043D\u043E\u0432\u043E\u0439 \u0432\u043A\u043B\u0430\u0434\u043A\u0435",
+		"show raw message": "\u043F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u043E\u0440\u0438\u0433\u0438\u043D\u0430\u043B",
+		"print message": "\u043F\u0435\u0447\u0430\u0442\u044C",
+		"toggle internals": "\u0441\u043B\u0443\u0436\u0435\u0431\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435",
+		"toggle all headers": "\u0432\u0441\u0435 \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0438",
+		"scroll up": "\u043F\u0440\u043E\u043A\u0440\u0443\u0442\u0438\u0442\u044C \u0432\u0432\u0435\u0440\u0445",
+		"scroll down": "\u043F\u0440\u043E\u043A\u0440\u0443\u0442\u0438\u0442\u044C \u0432\u043D\u0438\u0437",
+		"scroll to top": "\u0432 \u043D\u0430\u0447\u0430\u043B\u043E",
+		"scroll to end": "\u0432 \u043A\u043E\u043D\u0435\u0446",
+		"previous attachment": "\u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0435 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u0435",
+		"next attachment": "\u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0435 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u0435",
+		"first attachment": "\u043F\u0435\u0440\u0432\u043E\u0435 \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u0435",
+		"download": "\u0441\u043A\u0430\u0447\u0430\u0442\u044C",
+		"hold ctrl to only move focus": "\u0441 ctrl \u0442\u043E\u043B\u044C\u043A\u043E \u043F\u0435\u0440\u0435\u043D\u043E\u0441 \u0444\u043E\u043A\u0443\u0441\u0430",
+		"hold shift to expand selection": "\u0441 shift \u0440\u0430\u0441\u0448\u0438\u0440\u0438\u0442\u044C \u0432\u044B\u0431\u043E\u0440",
+		"ctrl-l and ctrl-u are left for the browser the handle": "ctrl-l \u0438 ctrl-u \u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u044B \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0443",
+		"Underdotted text": "\u041F\u0443\u043D\u043A\u0442\u0438\u0440",
+		"Underdotted text shows additional information on hover.": "\u041F\u0443\u043D\u043A\u0442\u0438\u0440 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0435\u0442 \u043F\u043E\u044F\u0441\u043D\u0435\u043D\u0438\u0435 \u043F\u0440\u0438 \u043D\u0430\u0432\u0435\u0434\u0435\u043D\u0438\u0438.",
+		" show an explanation or additional information when hovered.": " \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0435\u0442 \u043F\u043E\u044F\u0441\u043D\u0435\u043D\u0438\u0435 \u043F\u0440\u0438 \u043D\u0430\u0432\u0435\u0434\u0435\u043D\u0438\u0438.",
+		"Multiple messages can be selected by clicking messages while holding the control and/or shift keys. Dragging messages and dropping them on a mailbox moves the messages to that mailbox.": "\u041D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u043F\u0438\u0441\u0435\u043C \u0432\u044B\u0431\u0438\u0440\u0430\u044E\u0442\u0441\u044F \u0449\u0435\u043B\u0447\u043A\u043E\u043C \u0441 ctrl \u0438\u043B\u0438 shift. \u041F\u0435\u0440\u0435\u0442\u0430\u0441\u043A\u0438\u0432\u0430\u043D\u0438\u0435 \u043F\u0438\u0441\u044C\u043C\u0430 \u043D\u0430 \u043F\u0430\u043F\u043A\u0443 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0430\u0435\u0442 \u0435\u0433\u043E \u0442\u0443\u0434\u0430.",
+		"orange underline": "\u043E\u0440\u0430\u043D\u0436\u0435\u0432\u043E\u0435 \u043F\u043E\u0434\u0447\u0451\u0440\u043A\u0438\u0432\u0430\u043D\u0438\u0435",
+		"A word that mixes scripts, such as Latin and Cyrillic, with no space between them has an ": "\u0421\u043B\u043E\u0432\u043E, \u0432 \u043A\u043E\u0442\u043E\u0440\u043E\u043C \u0431\u0435\u0437 \u043F\u0440\u043E\u0431\u0435\u043B\u0430 \u0441\u043C\u0435\u0448\u0430\u043D\u044B \u043F\u0438\u0441\u044C\u043C\u0435\u043D\u043D\u043E\u0441\u0442\u0438, \u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440 \u043B\u0430\u0442\u0438\u043D\u0438\u0446\u0430 \u0438 \u043A\u0438\u0440\u0438\u043B\u043B\u0438\u0446\u0430, \u043F\u043E\u043B\u0443\u0447\u0430\u0435\u0442 ",
+		". That can be a sign of an intent to mislead (e.g. phishing).": ". \u0422\u0430\u043A \u0438\u043D\u043E\u0433\u0434\u0430 \u043C\u0430\u0441\u043A\u0438\u0440\u0443\u044E\u0442 \u0434\u0440\u0443\u0433\u043E\u0435 \u0441\u043B\u043E\u0432\u043E, \u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440 \u043F\u0440\u0438 \u0444\u0438\u0448\u0438\u043D\u0433\u0435.",
+		"Mox is open source email server software, this is version ": "Mox \u2014 \u0441\u0432\u043E\u0431\u043E\u0434\u043D\u044B\u0439 \u043F\u043E\u0447\u0442\u043E\u0432\u044B\u0439 \u0441\u0435\u0440\u0432\u0435\u0440, \u044D\u0442\u043E \u0432\u0435\u0440\u0441\u0438\u044F ",
+		"licenses": "\u043B\u0438\u0446\u0435\u043D\u0437\u0438\u0438",
+		"Feedback, including bug reports, is appreciated! ": "\u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F \u043E\u0431 \u043E\u0448\u0438\u0431\u043A\u0430\u0445 \u0438 \u043E\u0442\u0437\u044B\u0432\u044B \u043F\u043E\u043B\u0435\u0437\u043D\u044B. ",
+		"Replied/answered": "\u0415\u0441\u0442\u044C \u043E\u0442\u0432\u0435\u0442",
+		"Flagged": "\u0424\u043B\u0430\u0436\u043E\u043A",
+		"Forwarded": "\u041F\u0435\u0440\u0435\u0441\u043B\u0430\u043D\u043E",
+		"Deleted, used in IMAP, message will likely be removed soon.": "\u041F\u043E\u043C\u0435\u0447\u0435\u043D\u043E \u043A \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044E \u0432 IMAP, \u043F\u0438\u0441\u044C\u043C\u043E \u0441\u043A\u043E\u0440\u043E \u0438\u0441\u0447\u0435\u0437\u043D\u0435\u0442.",
+		"Phishing": "\u0424\u0438\u0448\u0438\u043D\u0433",
+		"Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages": "\u041D\u0435 \u0440\u0430\u0437\u043E\u0431\u0440\u0430\u043D\u043E: \u043D\u0438 \u0441\u043F\u0430\u043C, \u043D\u0438 \u043D\u0435 \u0441\u043F\u0430\u043C. \u041D\u0430 \u043E\u0446\u0435\u043D\u043A\u0443 \u043D\u043E\u0432\u044B\u0445 \u043F\u0438\u0441\u0435\u043C \u043D\u0435 \u0432\u043B\u0438\u044F\u0435\u0442.",
+		"Has at least one attachment": "\u0415\u0441\u0442\u044C \u0432\u043B\u043E\u0436\u0435\u043D\u0438\u0435",
+		"Muted, new messages are automatically marked as read.": "\u0417\u0430\u0433\u043B\u0443\u0448\u0435\u043D\u043E, \u043D\u043E\u0432\u044B\u0435 \u043F\u0438\u0441\u044C\u043C\u0430 \u0441\u0440\u0430\u0437\u0443 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0435.",
+		"Move to the Archive mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.": "\u0412 \u0430\u0440\u0445\u0438\u0432. \u0418\u0437 \u043F\u0430\u043F\u043A\u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445 \u043F\u0438\u0441\u044C\u043C\u0430 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0430\u044E\u0442\u0441\u044F, \u0442\u043E\u043B\u044C\u043A\u043E \u0435\u0441\u043B\u0438 \u0432\u044B\u0431\u0440\u0430\u043D\u043E \u043E\u0434\u043D\u043E \u0438\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0430 \u0441\u0430\u043C\u0430 \u043F\u0430\u043F\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445.",
+		"Move to the Trash mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.": "\u0412 \u043A\u043E\u0440\u0437\u0438\u043D\u0443. \u0418\u0437 \u043F\u0430\u043F\u043A\u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445 \u043F\u0438\u0441\u044C\u043C\u0430 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0430\u044E\u0442\u0441\u044F, \u0442\u043E\u043B\u044C\u043A\u043E \u0435\u0441\u043B\u0438 \u0432\u044B\u0431\u0440\u0430\u043D\u043E \u043E\u0434\u043D\u043E \u0438\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0430 \u0441\u0430\u043C\u0430 \u043F\u0430\u043F\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445.",
+		"Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.": "\u0412 \u0441\u043F\u0430\u043C. \u041F\u0438\u0441\u044C\u043C\u043E \u0443\u0447\u0438\u0442\u044B\u0432\u0430\u0435\u0442\u0441\u044F \u043F\u0440\u0438 \u043E\u0446\u0435\u043D\u043A\u0435 \u043D\u043E\u0432\u044B\u0445 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445. \u0418\u0437 \u043F\u0430\u043F\u043A\u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445 \u043F\u0438\u0441\u044C\u043C\u0430 \u043F\u0435\u0440\u0435\u043C\u0435\u0449\u0430\u044E\u0442\u0441\u044F, \u0442\u043E\u043B\u044C\u043A\u043E \u0435\u0441\u043B\u0438 \u0432\u044B\u0431\u0440\u0430\u043D\u043E \u043E\u0434\u043D\u043E \u0438\u043B\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0430 \u0441\u0430\u043C\u0430 \u043F\u0430\u043F\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445.",
+		"Default": "\u041E\u0431\u044B\u0447\u043D\u043E",
+		"Require TLS": "\u0422\u0440\u0435\u0431\u043E\u0432\u0430\u0442\u044C TLS",
+		"Moving back": "\u0412\u043E\u0437\u0432\u0440\u0430\u0442",
+		"Moved": "\u041F\u0435\u0440\u0435\u043C\u0435\u0449\u0435\u043D\u043E",
+		"Unknown message type ": "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0432\u0438\u0434 \u043F\u0438\u0441\u044C\u043C\u0430 ",
+		"Message body.": "\u0422\u0435\u043A\u0441\u0442 \u043F\u0438\u0441\u044C\u043C\u0430.",
+		"Off: Threading disabled, messages are shown individually.\nOn: Group messages in threads, expanded by default except when (previously) manually collapsed.\nUnread: Only expand thread with unread messages, ignoring and not saving whether they were manually collapsed.": "\u0412\u044B\u043A\u043B: \u043A\u0430\u0436\u0434\u043E\u0435 \u043F\u0438\u0441\u044C\u043C\u043E \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E.\n\u0412\u043A\u043B: \u043F\u0438\u0441\u044C\u043C\u0430 \u0441\u043E\u0431\u0440\u0430\u043D\u044B \u0432 \u0446\u0435\u043F\u043E\u0447\u043A\u0438 \u0438 \u0440\u0430\u0437\u0432\u0451\u0440\u043D\u0443\u0442\u044B, \u043A\u0440\u043E\u043C\u0435 \u0442\u0435\u0445, \u0447\u0442\u043E \u0432\u044B \u0441\u0432\u0435\u0440\u043D\u0443\u043B\u0438.\n\u041D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0435: \u0440\u0430\u0437\u0432\u043E\u0440\u0430\u0447\u0438\u0432\u0430\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u0446\u0435\u043F\u043E\u0447\u043A\u0438 \u0441 \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u043C\u0438.",
+		"new-label": "\u043D\u043E\u0432\u0430\u044F-\u043C\u0435\u0442\u043A\u0430",
+		'New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"\\].': '\u041D\u043E\u0432\u0430\u044F \u043C\u0435\u0442\u043A\u0430: \u0441\u0442\u0440\u043E\u0447\u043D\u044B\u0435 \u043B\u0430\u0442\u0438\u043D\u0441\u043A\u0438\u0435 \u0431\u0443\u043A\u0432\u044B, \u0431\u0435\u0437 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u0432 \u0438 \u0431\u0435\u0437 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432 (){%*"\\].',
+		"Server was updated, and webmail wants to reload to get the latest changes, but encountered an error while saving changes your open draft message. Please reload at your earliest convenience.": "\u0421\u0435\u0440\u0432\u0435\u0440 \u043E\u0431\u043D\u043E\u0432\u0438\u043B\u0441\u044F, \u0438 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0430 \u0445\u043E\u0447\u0435\u0442 \u043F\u0435\u0440\u0435\u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C\u0441\u044F, \u043D\u043E \u0447\u0435\u0440\u043D\u043E\u0432\u0438\u043A \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C. \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u0435 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443, \u043A\u043E\u0433\u0434\u0430 \u0431\u0443\u0434\u0435\u0442 \u0443\u0434\u043E\u0431\u043D\u043E.",
+		'word "exact match" -notword': '\u0441\u043B\u043E\u0432\u043E "\u0442\u043E\u0447\u043D\u043E\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435" -\u0438\u0441\u043A\u043B\u044E\u0447\u0438\u0442\u044C',
+		'"exact match"': '"\u0442\u043E\u0447\u043D\u043E\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435"',
+		'todo -done "-dashingname"': '\u043C\u0435\u0442\u043A\u0430 -\u0441\u043D\u044F\u0442\u0430\u044F "-\u0438\u043C\u044F"',
+		"Security mechanisms known to be implemented by the recipient domain: ": "\u0417\u0430\u0449\u0438\u0442\u0430, \u043A\u043E\u0442\u043E\u0440\u0443\u044E \u0434\u043E\u043C\u0435\u043D \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F \u0443\u0436\u0435 \u043F\u0440\u043E\u044F\u0432\u043B\u044F\u043B: ",
+		"Error fetching security mechanisms known to be implemented by the recipient domain...\n\n": "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0443\u0437\u043D\u0430\u0442\u044C \u0437\u0430\u0449\u0438\u0442\u0443 \u0434\u043E\u043C\u0435\u043D\u0430 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F...\n\n",
+		"Description of security mechanisms recipient domains may implement:\n1. STARTTLS: Opportunistic (unverified) TLS with STARTTLS, successfully negotiated during the most recent delivery attempt.\n2. MTA-STS: For PKIX/WebPKI-verified TLS.\n3. DNSSEC: MX DNS records are DNSSEC-signed.\n4. DANE: First delivery destination host implements DANE for verified TLS.\n5. RequireTLS: SMTP extension for verified TLS delivery into recipient mailbox, support detected during the most recent delivery attempt.\n\nChecks STARTTLS, DANE and RequireTLS cover the most recently used delivery path, not necessarily all possible delivery paths.\n\nThe bars below the input field indicate implementation status by the recipient domain:\n- Red, not implemented/unsupported\n- Green, implemented/supported\n- Gray, error while determining\n- Absent/white, unknown or skipped (e.g. no previous delivery attempt, or DANE check skipped due to DNSSEC-lookup error)": "\u041A\u0430\u043A\u0443\u044E \u0437\u0430\u0449\u0438\u0442\u0443 \u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u044F\u0432\u043B\u044F\u0442\u044C \u0434\u043E\u043C\u0435\u043D \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F:\n1. STARTTLS: \u043E\u0431\u044B\u0447\u043D\u044B\u0439 TLS \u0431\u0435\u0437 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438, \u043E\u043D \u0443\u0434\u0430\u043B\u0441\u044F \u043F\u0440\u0438 \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0435\u0439 \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0435.\n2. MTA-STS: TLS \u0441 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u043E\u0439 \u0441\u0435\u0440\u0442\u0438\u0444\u0438\u043A\u0430\u0442\u0430.\n3. DNSSEC: \u0437\u0430\u043F\u0438\u0441\u0438 MX \u043F\u043E\u0434\u043F\u0438\u0441\u0430\u043D\u044B DNSSEC.\n4. DANE: \u043F\u0435\u0440\u0432\u044B\u0439 \u0441\u0435\u0440\u0432\u0435\u0440 \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0438 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 DANE.\n5. RequireTLS: \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u0435 SMTP \u0434\u043B\u044F \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0438 \u0442\u043E\u043B\u044C\u043A\u043E \u043F\u043E \u043F\u0440\u043E\u0432\u0435\u0440\u0435\u043D\u043D\u043E\u043C\u0443 TLS, \u043E\u043D\u043E \u0431\u044B\u043B\u043E \u0437\u0430\u043C\u0435\u0447\u0435\u043D\u043E \u043F\u0440\u0438 \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0435\u0439 \u043F\u043E\u043F\u044B\u0442\u043A\u0435.\n\nSTARTTLS, DANE \u0438 RequireTLS \u043E\u0442\u043D\u043E\u0441\u044F\u0442\u0441\u044F \u043A \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0435\u043C\u0443 \u043F\u0443\u0442\u0438 \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0438, \u043D\u0435 \u043A\u043E \u0432\u0441\u0435\u043C \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u044B\u043C.\n\n\u041F\u043E\u043B\u043E\u0441\u043A\u0438 \u043F\u043E\u0434 \u043F\u043E\u043B\u0435\u043C:\n- \u043A\u0440\u0430\u0441\u043D\u0430\u044F, \u043D\u0435 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F\n- \u0437\u0435\u043B\u0451\u043D\u0430\u044F, \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F\n- \u0441\u0435\u0440\u0430\u044F, \u043E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438\n- \u043D\u0435\u0442 \u043F\u043E\u043B\u043E\u0441\u043A\u0438, \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u043E \u0438\u043B\u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u0430",
+		"How to use TLS for message delivery over SMTP:\n\nDefault: Delivery attempts follow the policies published by the recipient domain: Verification with MTA-STS and/or DANE, or optional opportunistic unverified STARTTLS if the domain does not specify a policy.\n\nWith RequireTLS: For sensitive messages, you may want to require verified TLS. The recipient destination domain SMTP server must support the REQUIRETLS SMTP extension for delivery to succeed. It is automatically chosen when the destination domain mail servers of all recipients are known to support it.\n\nFallback to insecure: If delivery fails due to MTA-STS and/or DANE policies specified by the recipient domain, and the content is not sensitive, you may choose to ignore the recipient domain TLS policies so delivery can succeed.": "\u041A\u0430\u043A \u0434\u043E\u0441\u0442\u0430\u0432\u043B\u044F\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E \u043F\u043E SMTP:\n\n\u041E\u0431\u044B\u0447\u043D\u043E: \u043A\u0430\u043A \u043F\u0440\u043E\u0441\u0438\u0442 \u0434\u043E\u043C\u0435\u043D \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F. \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 MTA-STS \u0438/\u0438\u043B\u0438 DANE, \u043B\u0438\u0431\u043E \u043E\u0431\u044B\u0447\u043D\u044B\u0439 STARTTLS, \u0435\u0441\u043B\u0438 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0438 \u043D\u0435\u0442.\n\n\u0422\u0440\u0435\u0431\u043E\u0432\u0430\u0442\u044C TLS: \u0434\u043B\u044F \u0432\u0430\u0436\u043D\u043E\u0433\u043E \u043F\u0438\u0441\u044C\u043C\u0430 \u043D\u0443\u0436\u0435\u043D \u043F\u0440\u043E\u0432\u0435\u0440\u0435\u043D\u043D\u044B\u0439 TLS. \u0421\u0435\u0440\u0432\u0435\u0440 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F \u0434\u043E\u043B\u0436\u0435\u043D \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0442\u044C REQUIRETLS, \u0438\u043D\u0430\u0447\u0435 \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0430 \u043D\u0435 \u0441\u043E\u0441\u0442\u043E\u0438\u0442\u0441\u044F. \u0420\u0435\u0436\u0438\u043C \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0442\u0441\u044F \u0441\u0430\u043C, \u0435\u0441\u043B\u0438 \u044D\u0442\u043E \u0443\u043C\u0435\u044E\u0442 \u0441\u0435\u0440\u0432\u0435\u0440\u044B \u0432\u0441\u0435\u0445 \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u0435\u0439.\n\n\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C \u0431\u0435\u0437 \u0437\u0430\u0449\u0438\u0442\u044B: \u0435\u0441\u043B\u0438 \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0443 \u043E\u0441\u0442\u0430\u043D\u0430\u0432\u043B\u0438\u0432\u0430\u044E\u0442 \u043F\u0440\u0430\u0432\u0438\u043B\u0430 MTA-STS \u0438\u043B\u0438 DANE, \u0430 \u043F\u0438\u0441\u044C\u043C\u043E \u043D\u0435 \u0441\u0435\u043A\u0440\u0435\u0442\u043D\u043E\u0435, \u044D\u0442\u0438 \u043F\u0440\u0430\u0432\u0438\u043B\u0430 \u043C\u043E\u0436\u043D\u043E \u043D\u0435 \u0443\u0447\u0438\u0442\u044B\u0432\u0430\u0442\u044C.",
+		"Unread": "\u041D\u0435\u043F\u0440\u043E\u0447.",
+		"Read": "\u041F\u0440\u043E\u0447.",
+		"Mailboxes": "\u041F\u0430\u043F\u043A\u0438",
+		"Mail": "\u041F\u043E\u0447\u0442\u0430",
+		"Export": "\u042D\u043A\u0441\u043F\u043E\u0440\u0442",
+		"Part": "\u0427\u0430\u0441\u0442\u044C",
+		"Labels": "\u041C\u0435\u0442\u043A\u0438",
+		"Headers": "\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0438",
+		"Replied": "\u041E\u0442\u0432\u0435\u0447\u0435\u043D\u043E",
+		"Deleted": "\u0423\u0434\u0430\u043B\u0435\u043D\u043E",
+		"NotJunk": "\u041D\u0435 \u0441\u043F\u0430\u043C",
+		"MDNSent": "\u041A\u0432\u0438\u0442\u0430\u043D\u0446\u0438\u044F",
+		"Only show messages with the selected label.": "\u0422\u043E\u043B\u044C\u043A\u043E \u043F\u0438\u0441\u044C\u043C\u0430 \u0441 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0439 \u043C\u0435\u0442\u043A\u043E\u0439.",
+		"Filter and sorting buttons for message list": "\u0424\u0438\u043B\u044C\u0442\u0440\u044B \u0438 \u0441\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u043A\u0430 \u0441\u043F\u0438\u0441\u043A\u0430 \u043F\u0438\u0441\u0435\u043C",
+		"Without TLS": "\u0411\u0435\u0437 TLS",
+		"With TLS": "\u0421 TLS",
+		"Message has a signature": "\u041F\u0438\u0441\u044C\u043C\u043E \u043F\u043E\u0434\u043F\u0438\u0441\u0430\u043D\u043E",
+		"Message is encrypted": "\u041F\u0438\u0441\u044C\u043C\u043E \u0437\u0430\u0448\u0438\u0444\u0440\u043E\u0432\u0430\u043D\u043E",
+		"Signed": "\u041F\u043E\u0434\u043F\u0438\u0441\u044C",
+		"Encrypted": "\u0428\u0438\u0444\u0440\u043E\u0432\u0430\u043D\u0438\u0435",
+		"Less": "\u0421\u0432\u0435\u0440\u043D\u0443\u0442\u044C",
+		"Details": "\u041F\u043E\u0434\u0440\u043E\u0431\u043D\u0435\u0435",
+		"Less...": "\u041C\u0435\u043D\u044C\u0448\u0435...",
+		"More addresses:\n": "\u0415\u0449\u0451 \u0430\u0434\u0440\u0435\u0441\u0430:\n",
+		"Message came in from a forwarded address. Some message authentication policies, like DMARC, were not evaluated.": "\u041F\u0438\u0441\u044C\u043C\u043E \u043F\u0440\u0438\u0448\u043B\u043E \u0441 \u0430\u0434\u0440\u0435\u0441\u0430 \u043F\u0435\u0440\u0435\u0441\u044B\u043B\u043A\u0438. \u0427\u0430\u0441\u0442\u044C \u043F\u0440\u043E\u0432\u0435\u0440\u043E\u043A, \u0432\u043A\u043B\u044E\u0447\u0430\u044F DMARC, \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u043B\u0430\u0441\u044C.",
+		"Message was received from a mailing list. Some message authentication policies, like DMARC, were not evaluated.": "\u041F\u0438\u0441\u044C\u043C\u043E \u043F\u0440\u0438\u0448\u043B\u043E \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430 \u0440\u0430\u0441\u0441\u044B\u043B\u043A\u0438. \u0427\u0430\u0441\u0442\u044C \u043F\u0440\u043E\u0432\u0435\u0440\u043E\u043A, \u0432\u043A\u043B\u044E\u0447\u0430\u044F DMARC, \u043D\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u043B\u0430\u0441\u044C.",
+		"Message received (last hop) without TLS.": "\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u043F\u0435\u0440\u0435\u0445\u043E\u0434 \u043F\u0440\u043E\u0448\u0451\u043B \u0431\u0435\u0437 TLS.",
+		"Message received (last hop) with TLS.": "\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u043F\u0435\u0440\u0435\u0445\u043E\u0434 \u043F\u0440\u043E\u0448\u0451\u043B \u043F\u043E TLS.",
+		"Transported with RequireTLS, ensuring TLS along the entire delivery path from sender to recipient, with TLS certificate verification through MTA-STS and/or DANE.": "\u0414\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E \u0441 RequireTLS. TLS \u0431\u044B\u043B \u043D\u0430 \u0432\u0441\u0451\u043C \u043F\u0443\u0442\u0438, \u0441\u0435\u0440\u0442\u0438\u0444\u0438\u043A\u0430\u0442 \u043F\u0440\u043E\u0432\u0435\u0440\u0435\u043D \u0447\u0435\u0440\u0435\u0437 MTA-STS \u0438\u043B\u0438 DANE.",
+		"From": "\u041E\u0442",
+		"Subject": "\u0422\u0435\u043C\u0430",
+		"Schedule": "\u0417\u0430\u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u0442\u044C",
+		"1 day": "1 \u0434\u0435\u043D\u044C",
+		"1 week": "1 \u043D\u0435\u0434\u0435\u043B\u044F",
+		"1 month": "1 \u043C\u0435\u0441\u044F\u0446",
+		"1 year": "1 \u0433\u043E\u0434",
+		"and": "\u0438",
+		"Account": "\u0410\u043A\u043A\u0430\u0443\u043D\u0442",
+		"Layout": "\u041C\u0430\u043A\u0435\u0442",
+		"Language": "\u042F\u0437\u044B\u043A",
+		"Threads": "\u0426\u0435\u043F\u043E\u0447\u043A\u0438",
+		'Register "mailto:" links with the browser or operating system to compose a message in webmail.': "\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u0443\u0439\u0442\u0435 \u0441\u0441\u044B\u043B\u043A\u0438 mailto \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435 \u0438\u043B\u0438 \u0432 \u0441\u0438\u0441\u0442\u0435\u043C\u0435, \u0447\u0442\u043E\u0431\u044B \u043F\u0438\u0441\u0430\u0442\u044C \u043F\u0438\u0441\u044C\u043C\u043E \u043E\u0442\u0441\u044E\u0434\u0430.",
+		'word "with space" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"subject" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb': '\u0441\u043B\u043E\u0432\u043E "\u0441 \u043F\u0440\u043E\u0431\u0435\u043B\u043E\u043C" -\u043C\u0438\u043D\u0443\u0441\u0441\u043B\u043E\u0432\u043E mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"\u0442\u0435\u043C\u0430" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb',
+		"Also search in mailboxes below the selected mailbox.": "\u0418\u0441\u043A\u0430\u0442\u044C \u0442\u0430\u043A\u0436\u0435 \u0432\u043E \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0445 \u043F\u0430\u043F\u043A\u0430\u0445.",
+		"Flagging": "\u041F\u043E\u043C\u0435\u0442\u043A\u0430 \u0444\u043B\u0430\u0436\u043A\u043E\u043C",
+		"Can only drag items in selection.": "\u041F\u0435\u0440\u0435\u0442\u0430\u0441\u043A\u0438\u0432\u0430\u0442\u044C \u043C\u043E\u0436\u043D\u043E \u0442\u043E\u043B\u044C\u043A\u043E \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u043F\u0438\u0441\u044C\u043C\u0430.",
+		"Reconnect": "\u041F\u0435\u0440\u0435\u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0438\u0442\u044C",
+		"Ignore": "\u0421\u043A\u0440\u044B\u0442\u044C",
+		"Download": "\u0421\u043A\u0430\u0447\u0430\u0442\u044C",
+		"Requesting more messages": "\u0417\u0430\u043F\u0440\u043E\u0441 \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0445 \u043F\u0438\u0441\u0435\u043C",
+		"(unnamed)": "(\u0431\u0435\u0437 \u0438\u043C\u0435\u043D\u0438)",
+		"(none)": "(\u043D\u0435\u0442)",
+		"; domain ": "; \u0434\u043E\u043C\u0435\u043D ",
+		"jane@example.org": "ivan@example.org",
+		"Message would have matched a strict DMARC policy.": "\u041F\u0438\u0441\u044C\u043C\u043E \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B \u0441\u0442\u0440\u043E\u0433\u0443\u044E \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0443 DMARC.",
+		"Message matched DMARC policy of domain.": "\u041F\u0438\u0441\u044C\u043C\u043E \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0435 DMARC \u0434\u043E\u043C\u0435\u043D\u0430.",
+		"Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.": "\u0423 \u0434\u043E\u043C\u0435\u043D\u0430 \u043D\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0438 DMARC, \u043D\u043E \u043F\u0440\u0438 \u043C\u044F\u0433\u043A\u043E\u0439 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0435 \u043F\u0438\u0441\u044C\u043C\u043E \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B.",
+		"Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.": "\u041F\u0438\u0441\u044C\u043C\u043E \u043D\u0435 \u043F\u0440\u043E\u0448\u043B\u043E \u0431\u044B DMARC, \u043D\u043E \u043F\u0440\u0438\u0448\u043B\u043E \u0447\u0435\u0440\u0435\u0437 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043D\u043D\u044B\u0439 \u0441\u043F\u0438\u0441\u043E\u043A \u0440\u0430\u0441\u0441\u044B\u043B\u043A\u0438 \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u0441\u044B\u043B\u043A\u0443.",
+		"Either domain did not have a DMARC policy, or message did not adhere to it.": "\u0423 \u0434\u043E\u043C\u0435\u043D\u0430 \u043D\u0435\u0442 \u043F\u043E\u043B\u0438\u0442\u0438\u043A\u0438 DMARC, \u043B\u0438\u0431\u043E \u043F\u0438\u0441\u044C\u043C\u043E \u0435\u0439 \u043D\u0435 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442.",
+		"Unknown DMARC verification result.": "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 DMARC \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u0435\u043D."
+	};
+	var langPreference = /* @__PURE__ */ __name(() => {
+		try {
+			const v = localStorage.getItem(langKey);
+			if (v === "auto" || v === "en" || v === "ru") {
+				return v;
+			}
+		} catch (err) {
+		}
+		return "auto";
+	}, "langPreference");
+	var matchBrowserTag = /* @__PURE__ */ __name((tag) => {
+		const t = tag.toLowerCase().trim();
+		if (t === "en" || t.startsWith("en-")) {
+			return "en";
+		}
+		if (t === "ru" || t.startsWith("ru-")) {
+			return "ru";
+		}
+		return "";
+	}, "matchBrowserTag");
+	var browserLang = /* @__PURE__ */ __name(() => {
+		const list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+		for (let i = 0; i < list.length; i++) {
+			const lang = matchBrowserTag(list[i] || "");
+			if (lang) {
+				return lang;
+			}
+		}
+		return "en";
+	}, "browserLang");
+	var resolvedLang = /* @__PURE__ */ __name(() => {
+		const pref = langPreference();
+		if (pref === "ru" || pref === "en") {
+			return pref;
+		}
+		return browserLang();
+	}, "resolvedLang");
+	var uiLocale = /* @__PURE__ */ __name(() => resolvedLang() === "ru" ? "ru" : "en", "uiLocale");
+	var ui = /* @__PURE__ */ __name((en) => {
+		if (resolvedLang() !== "ru") {
+			return en;
+		}
+		const line = ru[en];
+		return line === void 0 ? en : line;
+	}, "ui");
+	var pluralCategory = /* @__PURE__ */ __name((n) => {
+		const count = n < 0 ? 0 : Math.trunc(n);
+		try {
+			return new Intl.PluralRules(uiLocale()).select(count);
+		} catch (err) {
+			return count === 1 ? "one" : "other";
+		}
+	}, "pluralCategory");
+	var unreadTitle = /* @__PURE__ */ __name((n) => {
+		if (resolvedLang() !== "ru") {
+			return n + " unread";
+		}
+		return n + (pluralCategory(n) === "one" ? " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u043E\u0435" : " \u043D\u0435\u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043D\u043D\u044B\u0445");
+	}, "unreadTitle");
+	var selectedTitle = /* @__PURE__ */ __name((n) => {
+		if (pluralCategory(n) === "one" && resolvedLang() !== "ru") {
+			return "1 message selected";
+		}
+		if (resolvedLang() !== "ru") {
+			return n + " messages selected";
+		}
+		const cat = pluralCategory(n);
+		const word = cat === "one" ? "\u043F\u0438\u0441\u044C\u043C\u043E" : cat === "few" ? "\u043F\u0438\u0441\u044C\u043C\u0430" : "\u043F\u0438\u0441\u0435\u043C";
+		return "\u0412\u044B\u0431\u0440\u0430\u043D\u043E " + n + " " + word;
+	}, "selectedTitle");
+	var chooseLang = /* @__PURE__ */ __name((pref) => {
+		if (pref === langPreference()) {
+			return;
+		}
+		try {
+			localStorage.setItem(langKey, pref);
+		} catch (err) {
+		}
+		location.reload();
+	}, "chooseLang");
+	var wroteLine = /* @__PURE__ */ __name((when, name) => {
+		if (resolvedLang() === "ru") {
+			return when + ", " + name + " \u043D\u0430\u043F\u0438\u0441\u0430\u043B(\u0430):\n";
+		}
+		return "On " + when + ", " + name + " wrote:\n";
+	}, "wroteLine");
+	var mailboxLabel = /* @__PURE__ */ __name((mb, shown) => {
+		const leaf = mb.Name.split("/").pop() || mb.Name;
+		const text = shown === void 0 ? leaf : shown;
+		if (text !== leaf && text !== mb.Name) {
+			return text;
+		}
+		if (resolvedLang() !== "ru") {
+			return text;
+		}
+		if (mb.Trash) {
+			return "\u041A\u043E\u0440\u0437\u0438\u043D\u0430";
+		}
+		if (mb.Junk) {
+			return "\u0421\u043F\u0430\u043C";
+		}
+		if (mb.Sent) {
+			return "\u041E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0435";
+		}
+		if (mb.Draft) {
+			return "\u0427\u0435\u0440\u043D\u043E\u0432\u0438\u043A\u0438";
+		}
+		if (mb.Archive) {
+			return "\u0410\u0440\u0445\u0438\u0432";
+		}
+		if (leaf === "Inbox" && mb.Name.split("/")[0] === "Inbox") {
+			return "\u0412\u0445\u043E\u0434\u044F\u0449\u0438\u0435";
+		}
+		return text;
+	}, "mailboxLabel");
+	document.documentElement.lang = resolvedLang();
+
 	// .js/webmail/lib.js
 	var cssStyleDark = dom.style(attr.type("text/css"));
 	document.head.prepend(cssStyleDark);
 	var styleSheetDark = cssStyleDark.sheet;
-	styleSheetDark.insertRule("@media (prefers-color-scheme: dark) {}");
-	var darkModeRule = styleSheetDark.cssRules[0];
+	var darkSelector = /* @__PURE__ */ __name((selector) => {
+		const parts = [];
+		let depth = 0;
+		let start = 0;
+		for (let i = 0; i < selector.length; i++) {
+			const c = selector[i];
+			if (c === "(") {
+				depth++;
+			} else if (c === ")") {
+				depth--;
+			} else if (c === "," && depth === 0) {
+				parts.push(selector.slice(start, i).trim());
+				start = i + 1;
+			}
+		}
+		parts.push(selector.slice(start).trim());
+		return parts.map((part) => part === ":root" || part === "html" ? '[data-theme="dark"]' : '[data-theme="dark"] ' + part).join(", ");
+	}, "darkSelector");
 	var cssStyle = dom.style(attr.type("text/css"));
 	document.head.prepend(cssStyle);
 	var styleSheet = cssStyle.sheet;
@@ -1066,9 +1772,9 @@
 					throw new Error("2 elements required for light/dark mode style, got " + v.length);
 				}
 				if (!darkst) {
-					const darkIndex = darkModeRule.cssRules.length;
-					darkModeRule.insertRule(selector + " {}", darkIndex);
-					darkst = darkModeRule.cssRules[darkIndex].style;
+					const darkIndex = styleSheetDark.cssRules.length;
+					styleSheetDark.insertRule(darkSelector(selector) + " {}", darkIndex);
+					darkst = styleSheetDark.cssRules[darkIndex].style;
 				}
 				st.setProperty(k, "" + v[0], important ? "important" : "");
 				darkst.setProperty(k, "" + v[1], important ? "important" : "");
@@ -1081,52 +1787,105 @@
 		ensureCSS("." + className, styles2, important);
 		return dom._class(className);
 	}, "css");
+	var themePreferenceKey = "theme-preference";
+	var readThemePreference = /* @__PURE__ */ __name(() => {
+		try {
+			const v = localStorage.getItem(themePreferenceKey);
+			if (v === "light" || v === "dark" || v === "auto") {
+				return v;
+			}
+		} catch (err) {
+		}
+		return "auto";
+	}, "readThemePreference");
+	var themePreference = /* @__PURE__ */ __name(() => readThemePreference(), "themePreference");
+	var prefersDark = /* @__PURE__ */ __name(() => window.matchMedia("(prefers-color-scheme: dark)").matches, "prefersDark");
+	var applyTheme = /* @__PURE__ */ __name((theme) => {
+		const resolved = theme === "auto" ? prefersDark() ? "dark" : "light" : theme;
+		document.documentElement.setAttribute("data-theme", resolved);
+		const toggle = document.getElementById("theme-toggle-switch");
+		const autoBtn = document.getElementById("theme-auto");
+		if (toggle) {
+			toggle.checked = resolved === "dark";
+		}
+		if (autoBtn) {
+			autoBtn.classList.toggle("active", theme === "auto");
+			autoBtn.setAttribute("aria-pressed", theme === "auto" ? "true" : "false");
+		}
+		try {
+			localStorage.setItem(themePreferenceKey, theme);
+		} catch (err) {
+		}
+	}, "applyTheme");
+	applyTheme(readThemePreference());
+	window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+		if (readThemePreference() === "auto") {
+			applyTheme("auto");
+		}
+	});
+	window.addEventListener("storage", (e) => {
+		if (e.key === themePreferenceKey && (e.newValue === "light" || e.newValue === "dark" || e.newValue === "auto")) {
+			applyTheme(e.newValue);
+		}
+	});
 	ensureCSS(":root", {
-		"--color": ["black", "#ddd"],
-		"--colorMild": ["#555", "#bbb"],
-		"--colorMilder": ["#666", "#aaa"],
-		"--backgroundColor": ["white", "#222"],
-		"--backgroundColorMild": ["#f8f8f8", "#080808"],
-		"--backgroundColorMilder": ["#999", "#777"],
-		"--borderColor": ["#ccc", "#333"],
-		"--mailboxesTopBackgroundColor": ["#fdfdf1", "#1a1200"],
-		"--msglistBackgroundColor": ["#f5ffff", "#04130d"],
-		"--boxShadow": ["0 0 20px rgba(0, 0, 0, 0.1)", "0px 0px 20px #000"],
-		"--buttonBackground": ["#eee", "#222"],
-		"--buttonBorderColor": ["#888", "#666"],
-		"--buttonHoverBackground": ["#ddd", "#333"],
-		"--overlayOpaqueBackgroundColor": ["#eee", "#011"],
-		"--overlayBackgroundColor": ["rgba(0, 0, 0, 0.2)", "rgba(0, 0, 0, 0.5)"],
-		"--popupColor": ["black", "white"],
-		"--popupBackgroundColor": ["white", "#313233"],
-		"--popupBorderColor": ["#ccc", "#555"],
-		"--highlightBackground": ["gold", "#a70167"],
-		"--highlightBorderColor": ["#8c7600", "#fd1fa7"],
-		"--highlightBackgroundHover": ["#ffbd21", "#710447"],
-		"--mailboxActiveBackground": ["linear-gradient(135deg, #ffc7ab 0%, #ffdeab 100%)", "linear-gradient(135deg, #b63d00 0%, #8c5a0d 100%)"],
-		"--mailboxHoverBackgroundColor": ["#eee", "#421f15"],
-		"--msgItemActiveBackground": ["linear-gradient(135deg, #8bc8ff 0%, #8ee5ff 100%)", "linear-gradient(135deg, #045cac 0%, #027ba0 100%)"],
-		"--msgItemHoverBackgroundColor": ["#eee", "#073348"],
-		"--msgItemFocusBorderColor": ["#2685ff", "#2685ff"],
-		"--buttonTristateOnBackground": ["#c4ffa9", "#277e00"],
-		"--buttonTristateOffBackground": ["#ffb192", "#bf410f"],
-		"--warningBackgroundColor": ["#ffca91", "#a85700"],
-		"--successBackground": ["#d2f791", "#1fa204"],
-		"--emphasisBackground": ["#666", "#aaa"],
+		"--radius": "8px",
+		"--color": ["#2c3035", "#e3e6e9"],
+		"--colorMild": ["#555b61", "#b3b9bf"],
+		"--colorMilder": ["#868d94", "#828a91"],
+		"--backgroundColor": ["#f2f3f5", "#15171a"],
+		"--backgroundColorMild": ["#ffffff", "#1e2125"],
+		"--backgroundColorMilder": ["#e1e4e8", "#3a4048"],
+		"--borderColor": ["#e1e4e8", "#2e333a"],
+		"--borderStrong": ["#cdd2d8", "#3a4048"],
+		"--mailboxesTopBackgroundColor": ["#2b2f33", "#101214"],
+		"--mailboxesSidebarBackground": ["#ffffff", "#1e2125"],
+		"--msglistBackgroundColor": ["#f7f8fa", "#24282d"],
+		"--boxShadow": ["0 2px 10px rgba(0, 0, 0, 0.08)", "0 2px 12px rgba(0, 0, 0, 0.5)"],
+		"--shadowSm": ["0 1px 2px rgba(0, 0, 0, 0.06)", "0 1px 2px rgba(0, 0, 0, 0.3)"],
+		"--accent": ["#5b7083", "#7e95a8"],
+		"--accentHover": ["#44535f", "#98abbb"],
+		"--accentSoft": ["#eef1f4", "#262b31"],
+		"--buttonBackground": ["#f7f8fa", "#24282d"],
+		"--buttonBorderColor": ["#cdd2d8", "#3a4048"],
+		"--buttonHoverBackground": ["#eef1f4", "#262b31"],
+		"--buttonPrimaryBackground": ["#5b7083", "#7e95a8"],
+		"--buttonPrimaryHover": ["#44535f", "#98abbb"],
+		"--navTextColor": ["#c4c9ce", "#c4c9ce"],
+		"--navTextHover": ["#ffffff", "#ffffff"],
+		"--overlayOpaqueBackgroundColor": ["rgba(242, 243, 245, 0.92)", "rgba(21, 23, 26, 0.92)"],
+		"--overlayBackgroundColor": ["rgba(0, 0, 0, 0.25)", "rgba(0, 0, 0, 0.55)"],
+		"--popupColor": ["#2c3035", "#e3e6e9"],
+		"--popupBackgroundColor": ["#ffffff", "#1e2125"],
+		"--popupBorderColor": ["#e1e4e8", "#2e333a"],
+		"--floatBorderColor": ["#b4bdc7", "rgba(255, 255, 255, 0.16)"],
+		"--floatShadow": ["0 1px 2px rgba(44, 48, 53, 0.06), 0 16px 40px rgba(44, 48, 53, 0.16)", "0 1px 2px rgba(0, 0, 0, 0.45), 0 18px 44px rgba(0, 0, 0, 0.58)"],
+		"--highlightBackground": ["#eef1f4", "#262b31"],
+		"--highlightBorderColor": ["#5b7083", "#7e95a8"],
+		"--highlightBackgroundHover": ["#e1e4e8", "#3a4048"],
+		"--mailboxActiveBackground": ["#eef1f4", "#262b31"],
+		"--mailboxActiveBorder": ["#5b7083", "#7e95a8"],
+		"--mailboxHoverBackgroundColor": ["#f7f8fa", "#24282d"],
+		"--msgItemActiveBackground": ["#eef1f4", "#262b31"],
+		"--msgItemActiveBorder": ["#5b7083", "#7e95a8"],
+		"--msgItemHoverBackgroundColor": ["#f7f8fa", "#24282d"],
+		"--msgItemFocusBorderColor": ["#5b7083", "#7e95a8"],
+		"--buttonTristateOnBackground": ["rgba(58, 138, 95, 0.16)", "rgba(58, 138, 95, 0.25)"],
+		"--buttonTristateOffBackground": ["rgba(179, 71, 58, 0.16)", "rgba(179, 71, 58, 0.25)"],
+		"--warningBackgroundColor": ["rgba(185, 129, 12, 0.12)", "rgba(185, 129, 12, 0.2)"],
+		"--successBackground": ["rgba(58, 138, 95, 0.12)", "rgba(58, 138, 95, 0.2)"],
+		"--emphasisBackground": ["#555b61", "#b3b9bf"],
 		// For authentication/security results.
-		"--underlineGreen": "#50c40f",
-		"--underlineRed": "#e15d1c",
-		"--underlineBlue": "#09f",
-		"--underlineGrey": "#888",
-		"--quoted1Color": ["#03828f", "#71f2ff"],
-		// red
-		"--quoted2Color": ["#c7445c", "#ec4c4c"],
-		// green
-		"--quoted3Color": ["#417c10", "#73e614"],
-		// blue
-		"--scriptSwitchUnderlineColor": ["#dca053", "#e88f1e"],
-		"--linkColor": ["#096bc2", "#63b6ff"],
-		"--linkVisitedColor": ["#0704c1", "#c763ff"]
+		"--underlineGreen": "#3a8a5f",
+		"--underlineRed": "#b3473a",
+		"--underlineBlue": "#5b7083",
+		"--underlineGrey": "#868d94",
+		"--quoted1Color": ["#3f6079", "#8fb0c9"],
+		"--quoted2Color": ["#5b7083", "#98abbb"],
+		"--quoted3Color": ["#44535f", "#7e95a8"],
+		"--scriptSwitchUnderlineColor": ["#b9810c", "#e8b84a"],
+		"--linkColor": ["#3f6079", "#8fb0c9"],
+		"--linkVisitedColor": ["#27384a", "#b6cee0"]
 	});
 	var styles = {
 		color: "var(--color)",
@@ -1136,23 +1895,38 @@
 		backgroundColorMild: "var(--backgroundColorMild)",
 		backgroundColorMilder: "var(--backgroundColorMilder)",
 		borderColor: "var(--borderColor)",
+		borderStrong: "var(--borderStrong)",
 		mailboxesTopBackgroundColor: "var(--mailboxesTopBackgroundColor)",
+		mailboxesSidebarBackground: "var(--mailboxesSidebarBackground)",
 		msglistBackgroundColor: "var(--msglistBackgroundColor)",
 		boxShadow: "var(--boxShadow)",
+		shadowSm: "var(--shadowSm)",
+		radius: "var(--radius)",
+		accent: "var(--accent)",
+		accentHover: "var(--accentHover)",
+		accentSoft: "var(--accentSoft)",
 		buttonBackground: "var(--buttonBackground)",
 		buttonBorderColor: "var(--buttonBorderColor)",
 		buttonHoverBackground: "var(--buttonHoverBackground)",
+		buttonPrimaryBackground: "var(--buttonPrimaryBackground)",
+		buttonPrimaryHover: "var(--buttonPrimaryHover)",
+		navTextColor: "var(--navTextColor)",
+		navTextHover: "var(--navTextHover)",
 		overlayOpaqueBackgroundColor: "var(--overlayOpaqueBackgroundColor)",
 		overlayBackgroundColor: "var(--overlayBackgroundColor)",
 		popupColor: "var(--popupColor)",
 		popupBackgroundColor: "var(--popupBackgroundColor)",
 		popupBorderColor: "var(--popupBorderColor)",
+		floatBorderColor: "var(--floatBorderColor)",
+		floatShadow: "var(--floatShadow)",
 		highlightBackground: "var(--highlightBackground)",
 		highlightBorderColor: "var(--highlightBorderColor)",
 		highlightBackgroundHover: "var(--highlightBackgroundHover)",
 		mailboxActiveBackground: "var(--mailboxActiveBackground)",
+		mailboxActiveBorder: "var(--mailboxActiveBorder)",
 		mailboxHoverBackgroundColor: "var(--mailboxHoverBackgroundColor)",
 		msgItemActiveBackground: "var(--msgItemActiveBackground)",
+		msgItemActiveBorder: "var(--msgItemActiveBorder)",
 		msgItemHoverBackgroundColor: "var(--msgItemHoverBackgroundColor)",
 		msgItemFocusBorderColor: "var(--msgItemFocusBorderColor)",
 		buttonTristateOnBackground: "var(--buttonTristateOnBackground)",
@@ -1183,20 +1957,23 @@
 		scriptswitch: css("scriptswitch", { textDecoration: "underline 2px", textDecorationColor: styles.scriptSwitchUnderlineColor }),
 		textMild: css("textMild", { color: styles.colorMild }),
 		// For keywords (also known as flags/labels/tags) on messages.
-		keyword: css("keyword", { padding: "0 .15em", borderRadius: ".15em", fontWeight: "normal", fontSize: ".9em", margin: "0 .15em", whiteSpace: "nowrap", background: styles.highlightBackground, color: styles.color, border: "1px solid", borderColor: styles.highlightBorderColor }),
+		keyword: css("keyword", { padding: "2px 8px", borderRadius: "20px", fontWeight: "600", fontSize: "11px", margin: "0 .15em", whiteSpace: "nowrap", background: styles.accentSoft, color: styles.accent, border: "1px solid", borderColor: styles.highlightBorderColor }),
 		msgHeaders: css("msgHeaders", { marginBottom: "1ex", width: "100%" })
 	};
 	ensureCSS(".msgHeaders td", { wordBreak: "break-word" });
 	ensureCSS(".keyword.keywordCollapsed", { opacity: 0.75 }), // Generic styling.
-	ensureCSS("html", { backgroundColor: "var(--backgroundColor)", color: "var(--color)" });
-	ensureCSS("*", { fontSize: "inherit", fontFamily: "'ubuntu', 'lato', sans-serif", margin: 0, padding: 0, boxSizing: "border-box" });
-	ensureCSS(".mono, .mono *", { fontFamily: "'ubuntu mono', monospace" });
-	ensureCSS("table td, table th", { padding: ".15em .25em" });
-	ensureCSS(".pad", { padding: ".5em" });
+	ensureCSS("html", { backgroundColor: "var(--backgroundColor)", color: "var(--color)", lineHeight: "1.55" });
+	ensureCSS("body", { fontSize: "14px" });
+	ensureCSS("*", { fontSize: "inherit", fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', margin: 0, padding: 0, boxSizing: "border-box" });
+	ensureCSS(".mono, .mono *", { fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace" });
+	ensureCSS("table td, table th", { padding: ".35em .5em" });
+	ensureCSS(".pad", { padding: ".65em" });
 	ensureCSS("iframe", { border: 0 });
 	ensureCSS("img, embed, video, iframe", { backgroundColor: "white", color: "black" });
-	ensureCSS("a", { color: styles.linkColor });
+	ensureCSS("a", { color: styles.linkColor, textDecoration: "none", transition: "color .2s ease" });
+	ensureCSS("a:hover", { color: "var(--linkVisitedColor)" });
 	ensureCSS("a:visited", { color: styles.linkVisitedColor });
+	ensureCSS("h1, h2, h3", { color: styles.color, fontWeight: "600", lineHeight: "1.25" });
 	ensureCSS(".textmulti > *:nth-child(even)", { backgroundColor: ["#f4f4f4", "#141414"] });
 	ensureCSS(".textmulti > *", {
 		padding: "2ex .5em",
@@ -1293,7 +2070,7 @@
 			if (!use) {
 				return domstr;
 			}
-			const extra = domstr === ascii ? "" : "; domain " + ascii;
+			const extra = domstr === ascii ? "" : ui("; domain ") + ascii;
 			let name = "";
 			let color = "";
 			let title = "";
@@ -1301,32 +2078,32 @@
 				case Validation.ValidationStrict:
 					name = "Strict";
 					color = styles.underlineGreen;
-					title = "Message would have matched a strict DMARC policy.";
+					title = ui("Message would have matched a strict DMARC policy.");
 					break;
 				case Validation.ValidationDMARC:
 					name = "DMARC";
 					color = styles.underlineGreen;
-					title = "Message matched DMARC policy of domain.";
+					title = ui("Message matched DMARC policy of domain.");
 					break;
 				case Validation.ValidationRelaxed:
 					name = "Relaxed";
 					color = styles.underlineGreen;
-					title = "Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.";
+					title = ui("Domain did not have a DMARC policy, but message would match a relaxed policy if it had existed.");
 					break;
 				case Validation.ValidationNone:
 					if (m.IsForward || m.IsMailingList) {
 						name = "Forwardlist";
 						color = styles.underlineBlue;
-						title = "Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.";
+						title = ui("Message would not pass DMARC policy, but came in through a configured mailing list or forwarding address.");
 					} else {
 						name = "Bad";
 						color = styles.underlineRed;
-						title = "Either domain did not have a DMARC policy, or message did not adhere to it.";
+						title = ui("Either domain did not have a DMARC policy, or message did not adhere to it.");
 					}
 					break;
 				default:
 					name = "Unknown";
-					title = "Unknown DMARC verification result.";
+					title = ui("Unknown DMARC verification result.");
 					return dom.span(attr.title(title + extra), domstr);
 			}
 			return dom.span(attr.title(title + extra), css("addressValidation" + name, { borderBottom: "1.5px solid", borderBottomColor: color, textDecoration: "none" }), domstr);
@@ -1355,8 +2132,8 @@
 		if (l.length <= 5 || allAddrs) {
 			return dom.span(join(l.map((a) => formatAddressElem(a)), () => ", "));
 		}
-		let elem = dom.span(join(l.slice(0, 4).map((a) => formatAddressElem(a)), () => ", "), " ", dom.clickbutton("More...", attr.title("More addresses:\n" + l.slice(4).map((a) => formatAddress(a)).join(",\n")), /* @__PURE__ */ __name(function click() {
-			const nelem = dom.span(join(l.map((a) => formatAddressElem(a)), () => ", "), " ", dom.clickbutton("Less...", /* @__PURE__ */ __name(function click2() {
+		let elem = dom.span(join(l.slice(0, 4).map((a) => formatAddressElem(a)), () => ", "), " ", dom.clickbutton(ui("More..."), attr.title(ui("More addresses:\n") + l.slice(4).map((a) => formatAddress(a)).join(",\n")), /* @__PURE__ */ __name(function click() {
+			const nelem = dom.span(join(l.map((a) => formatAddressElem(a)), () => ", "), " ", dom.clickbutton(ui("Less..."), /* @__PURE__ */ __name(function click2() {
 				elem.replaceWith(addressList(allAddrs, l));
 			}, "click")));
 			elem.replaceWith(nelem);
@@ -1364,21 +2141,65 @@
 		}, "click")));
 		return elem;
 	}, "addressList");
+	var avatarPalette = ["#4c6ef5", "#e8590c", "#2f9e44", "#9c36b5", "#1c7ed6", "#c2255c", "#0ca678", "#f08c00"];
+	var avatarColor = /* @__PURE__ */ __name((key) => {
+		let h = 0;
+		for (const c of key) {
+			h = Math.imul(h, 31) + (c.codePointAt(0) || 0);
+		}
+		const i = (h >>> 0) % avatarPalette.length;
+		return avatarPalette[i];
+	}, "avatarColor");
+	var avatarInitial = /* @__PURE__ */ __name((name, user) => {
+		const raw = name.trim() || user || "?";
+		const ch = Array.from(raw)[0] || "?";
+		return ch.toLocaleUpperCase();
+	}, "avatarInitial");
+	var senderAvatar = /* @__PURE__ */ __name((a) => {
+		const email = a.User && a.Domain.ASCII ? (a.User + "@" + a.Domain.ASCII).trim().toLowerCase() : "";
+		const node = dom.span(dom._class("msgFromAvatar"), style({ backgroundColor: avatarColor(email || a.Name || a.User || "?") }), avatarInitial(a.Name, a.User));
+		node.setAttribute("aria-hidden", "true");
+		if (email && typeof crypto !== "undefined" && crypto.subtle) {
+			void crypto.subtle.digest("SHA-256", new TextEncoder().encode(email)).then((buf) => {
+				const hash = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+				const img = document.createElement("img");
+				img.className = "msgFromAvatarImg";
+				img.alt = "";
+				img.referrerPolicy = "no-referrer";
+				img.onload = () => {
+					node.replaceChildren(img);
+					node.classList.add("hasPhoto");
+				};
+				img.src = "https://www.gravatar.com/avatar/" + hash + "?s=64&d=404";
+			}).catch(() => {
+			});
+		}
+		return node;
+	}, "senderAvatar");
+	ensureCSS(".msgFromPerson", { display: "inline-flex", alignItems: "center", gap: "10px", maxWidth: "100%", verticalAlign: "middle" });
+	ensureCSS(".msgFromAvatar", { width: "32px", height: "32px", borderRadius: "50%", flexShrink: "0", display: "inline-flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "#fff", fontSize: "14px", fontWeight: "600", lineHeight: "1", userSelect: "none" });
+	ensureCSS(".msgFromAvatar.hasPhoto", { backgroundColor: "transparent" });
+	ensureCSS(".msgFromAvatarImg", { width: "100%", height: "100%", objectFit: "cover", display: "block" });
+	ensureCSS(".msgFromIdentity", { minWidth: "0", display: "flex", flexDirection: "column" });
 	var loadMsgheaderView = /* @__PURE__ */ __name((msgheaderelem, mi, moreHeaders, refineKeyword, allAddrs) => {
 		const msgenv = mi.Envelope;
 		const received = mi.Message.Received;
 		const receivedlocal = new Date(received.getTime());
-		const msgHeaderFieldStyle = css("msgHeaderField", { textAlign: "right", color: styles.colorMild, whiteSpace: "nowrap" });
+		const msgHeaderFieldStyle = css("msgHeaderField", { textAlign: "right", color: styles.colorMild, whiteSpace: "nowrap", fontSize: "12px" });
 		const msgAttrStyle = css("msgAttr", { padding: "0px 0.15em", fontSize: ".9em" });
 		dom._kids(
 			msgheaderelem,
 			// todo: make addresses clickable, start search (keep current mailbox if any)
-			dom.tr(dom.td("From:", msgHeaderFieldStyle), dom.td(style({ width: "100%" }), dom.div(css("msgFromReceivedSpread", { display: "flex", justifyContent: "space-between" }), dom.div(join((msgenv.From || []).map((a) => formatAddressValidated(a, mi.Message, !!msgenv.From && msgenv.From.length === 1)), () => ", ")), dom.div(attr.title("Received: " + received.toString() + ";\nDate header in message: " + (msgenv.Date ? msgenv.Date.toString() : "(missing/invalid)")), receivedlocal.toDateString() + " " + receivedlocal.toTimeString().split(" ")[0])))),
-			(msgenv.ReplyTo || []).length === 0 ? [] : dom.tr(dom.td("Reply-To:", msgHeaderFieldStyle), dom.td(join((msgenv.ReplyTo || []).map((a) => formatAddressElem(a)), () => ", "))),
-			dom.tr(dom.td("To:", msgHeaderFieldStyle), dom.td(addressList(allAddrs, msgenv.To || []))),
-			(msgenv.CC || []).length === 0 ? [] : dom.tr(dom.td("Cc:", msgHeaderFieldStyle), dom.td(addressList(allAddrs, msgenv.CC || []))),
-			(msgenv.BCC || []).length === 0 ? [] : dom.tr(dom.td("Bcc:", msgHeaderFieldStyle), dom.td(addressList(allAddrs, msgenv.BCC || []))),
-			dom.tr(dom.td("Subject:", msgHeaderFieldStyle), dom.td(dom.div(css("msgSubjectAttrsSpread", { display: "flex", justifyContent: "space-between" }), dom.div(msgenv.Subject || ""), dom.div(mi.Message.IsForward ? dom.span(msgAttrStyle, "Forwarded", attr.title("Message came in from a forwarded address. Some message authentication policies, like DMARC, were not evaluated.")) : [], mi.Message.IsMailingList ? dom.span(msgAttrStyle, "Mailing list", attr.title("Message was received from a mailing list. Some message authentication policies, like DMARC, were not evaluated.")) : [], mi.Message.ReceivedTLSVersion === 1 ? dom.span(msgAttrStyle, css("msgAttrNoTLS", { borderBottom: "1.5px solid", borderBottomColor: styles.underlineRed }), "Without TLS", attr.title("Message received (last hop) without TLS.")) : [], mi.Message.ReceivedTLSVersion > 1 && !mi.Message.ReceivedRequireTLS ? dom.span(msgAttrStyle, css("msgAttrTLS", { borderBottom: "1.5px solid", borderBottomColor: styles.underlineGreen }), "With TLS", attr.title("Message received (last hop) with TLS.")) : [], mi.Message.ReceivedRequireTLS ? dom.span(css("msgAttrRequireTLS", { padding: ".1em .3em", fontSize: ".9em", backgroundColor: styles.successBackground, border: "1px solid", borderColor: styles.borderColor, borderRadius: "3px" }), "With RequireTLS", attr.title("Transported with RequireTLS, ensuring TLS along the entire delivery path from sender to recipient, with TLS certificate verification through MTA-STS and/or DANE.")) : [], mi.IsSigned ? dom.span(msgAttrStyle, css("msgAttrSigned", { backgroundColor: styles.colorMild, color: styles.backgroundColorMild, borderRadius: ".15em" }), "Message has a signature") : [], mi.IsEncrypted ? dom.span(msgAttrStyle, css("msgAttrEncrypted", { backgroundColor: styles.colorMild, color: styles.backgroundColorMild, borderRadius: ".15em" }), "Message is encrypted") : [], refineKeyword ? (mi.Message.Keywords || []).map((kw) => dom.clickbutton(styleClasses.keyword, dom._class("keywordButton"), kw, /* @__PURE__ */ __name(async function click() {
+			dom.tr(dom.td(ui("From:"), msgHeaderFieldStyle), dom.td(style({ width: "100%" }), dom.div(css("msgFromReceivedSpread", { display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "flex-start" }), dom.div(css("msgFromLead", { minWidth: "0", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px" }), (msgenv.From || []).length === 0 ? dom.span(dom._class("msgFromPerson"), senderAvatar({ Name: "", User: "", Domain: { ASCII: "", Unicode: "" } }), dom.span(dom._class("msgFromName"), ui("(unknown sender)"))) : join((msgenv.From || []).map((a) => {
+				const parts = formatAddressValidated(a, mi.Message, (msgenv.From || []).length === 1);
+				const detail = typeof parts[0] === "string" && a.Name && parts[0] === a.Name + " " ? parts.slice(1) : parts;
+				return dom.span(dom._class("msgFromPerson"), senderAvatar(a), dom.span(dom._class("msgFromIdentity"), dom.span(dom._class("msgFromName"), formatAddressShort(a, !!mi.Message.Junk)), dom.span(dom._class("msgFromDetail"), ...detail)));
+			}), () => ", ")), dom.div(attr.title(ui("Received: ") + received.toString() + ";\n" + ui("Date header in message: ") + (msgenv.Date ? msgenv.Date.toString() : ui("(missing/invalid)"))), receivedlocal.toLocaleDateString(uiLocale()) + " " + receivedlocal.toLocaleTimeString(uiLocale(), { hour: "2-digit", minute: "2-digit", second: "2-digit" }))))),
+			(msgenv.ReplyTo || []).length === 0 ? [] : dom.tr(dom.td(ui("Reply-To:"), msgHeaderFieldStyle), dom.td(join((msgenv.ReplyTo || []).map((a) => formatAddressElem(a)), () => ", "))),
+			dom.tr(dom.td(ui("To:"), msgHeaderFieldStyle), dom.td(addressList(allAddrs, msgenv.To || []))),
+			(msgenv.CC || []).length === 0 ? [] : dom.tr(dom.td(ui("Cc:"), msgHeaderFieldStyle), dom.td(addressList(allAddrs, msgenv.CC || []))),
+			(msgenv.BCC || []).length === 0 ? [] : dom.tr(dom.td(ui("Bcc:"), msgHeaderFieldStyle), dom.td(addressList(allAddrs, msgenv.BCC || []))),
+			dom.tr(dom.td(ui("Subject:"), msgHeaderFieldStyle), dom.td(dom.div(css("msgSubjectAttrsSpread", { display: "flex", justifyContent: "space-between", fontSize: "13px" }), dom.div(msgenv.Subject || ""), dom.div(mi.Message.IsForward ? dom.span(msgAttrStyle, ui("Forwarded"), attr.title(ui("Message came in from a forwarded address. Some message authentication policies, like DMARC, were not evaluated."))) : [], mi.Message.IsMailingList ? dom.span(msgAttrStyle, ui("Mailing list"), attr.title(ui("Message was received from a mailing list. Some message authentication policies, like DMARC, were not evaluated."))) : [], mi.Message.ReceivedTLSVersion === 1 ? dom.span(msgAttrStyle, css("msgAttrNoTLS", { borderBottom: "1.5px solid", borderBottomColor: styles.underlineRed }), ui("Without TLS"), attr.title(ui("Message received (last hop) without TLS."))) : [], mi.Message.ReceivedTLSVersion > 1 && !mi.Message.ReceivedRequireTLS ? dom.span(msgAttrStyle, css("msgAttrTLS", { borderBottom: "1.5px solid", borderBottomColor: styles.underlineGreen }), ui("With TLS"), attr.title(ui("Message received (last hop) with TLS."))) : [], mi.Message.ReceivedRequireTLS ? dom.span(css("msgAttrRequireTLS", { padding: ".1em .3em", fontSize: ".9em", backgroundColor: styles.successBackground, border: "1px solid", borderColor: styles.borderColor, borderRadius: "3px" }), ui("With RequireTLS"), attr.title(ui("Transported with RequireTLS, ensuring TLS along the entire delivery path from sender to recipient, with TLS certificate verification through MTA-STS and/or DANE."))) : [], mi.IsSigned ? dom.span(msgAttrStyle, css("msgAttrSigned", { backgroundColor: styles.colorMild, color: styles.backgroundColorMild, borderRadius: ".15em" }), ui("Message has a signature")) : [], mi.IsEncrypted ? dom.span(msgAttrStyle, css("msgAttrEncrypted", { backgroundColor: styles.colorMild, color: styles.backgroundColorMild, borderRadius: ".15em" }), ui("Message is encrypted")) : [], refineKeyword ? (mi.Message.Keywords || []).map((kw) => dom.clickbutton(styleClasses.keyword, dom._class("keywordButton"), kw, /* @__PURE__ */ __name(async function click() {
 				await refineKeyword(kw);
 			}, "click"))) : [])))),
 			(mi.MoreHeaders || []).map((t) => dom.tr(dom.td(t[0] + ":", msgHeaderFieldStyle), dom.td(t[1]))),
@@ -1406,10 +2227,6 @@
 	var flag = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M5 15.64c2-.87 4.28-.76 6.18.33c1.37.78 2.89 1.18 4.42 1.18c1.12 0 2.24-.21 3.32-.64l1.45-.58A1 1 0 0 0 21 15V4a1 1 0 0 0-1.37-.93l-1.45.58c-1.97.79-4.16.63-6-.42A8.9 8.9 0 0 0 3.77 3l-.21.1a1 1 0 0 0-.55.89v18h2v-6.36ZM5 4.63c2-.87 4.28-.75 6.18.34c2.37 1.36 5.19 1.55 7.74.54l.08-.03v8.85l-.82.33a6.85 6.85 0 0 1-6-.42a8.95 8.95 0 0 0-4.42-1.18c-.93 0-1.86.15-2.75.44V4.63Z"), "flag");
 	var forward = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M12.66 3.25c-.29-.26-.72-.33-1.07-.17c-.36.16-.59.52-.59.91v4h-1c-4.41 0-8 3.59-8 8v4c0 .42.27.8.67.94q.165.06.33.06c.3 0 .59-.13.78-.38l1.9-2.37a5.98 5.98 0 0 1 4.69-2.25h.64v4c0 .39.23.75.59.91s.78.1 1.07-.17l9-8c.21-.19.34-.46.34-.75s-.12-.56-.34-.75zM13 17.77V14h-2.64a7.97 7.97 0 0 0-6.25 3l-.12.15V16c0-3.31 2.69-6 6-6h3V6.23L19.48 12l-6.49 5.77Z"), "forward");
 	var reply = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M14 8h-1V4c0-.39-.23-.75-.59-.91a.98.98 0 0 0-1.07.17l-9 7.99c-.21.19-.34.46-.34.75s.12.56.34.75l9 8c.29.26.72.33 1.07.17c.36-.16.59-.52.59-.91v-4h.64c1.83 0 3.54.82 4.69 2.25l1.9 2.37a1 1 0 0 0 .78.38q.165 0 .33-.06c.4-.14.67-.52.67-.94v-4c0-4.41-3.59-8-8-8Zm6 9.15l-.12-.15c-1.53-1.91-3.8-3-6.25-3h-2.64v3.77L4.5 12l6.49-5.77V10h3c3.31 0 6 2.69 6 6v1.15Z"), "reply");
-	var archive = /* @__PURE__ */ __name(() => svgIcon(24, 24, "m21.8 6.4l-2.7-3.6c-.38-.5-.97-.8-1.6-.8h-11c-.63 0-1.23.3-1.6.8L2.2 6.4h.01c-.13.18-.21.37-.21.6v13c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-.23-.09-.42-.21-.59h.01ZM6.5 4h11L19 6H5zM4 20V8h16v12z", "M8 11h8v2H8z"), "archive");
-	var draft = /* @__PURE__ */ __name(() => svgIcon(24, 24, "m19.94 7.68l-.03-.09a.8.8 0 0 0-.2-.29l-5-5c-.09-.09-.19-.15-.29-.2l-.09-.03a.8.8 0 0 0-.26-.05c-.02 0-.04-.01-.06-.01H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-12s-.01-.04-.01-.06c0-.09-.02-.17-.05-.26ZM6 20V4h7v4c0 .55.45 1 1 1h4v11z", "M8 11h8v2H8zm0 4h8v2H8zm0-8h3v2H8z"), "draft");
-	var sent = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M20.56 3.17c-.29-.2-.67-.23-.99-.08l-17 8.01a.999.999 0 0 0 .03 1.82L8 15.28V22l5.84-4.17l4.76 2.08c.13.06.26.08.4.08c.18 0 .36-.05.52-.15a.99.99 0 0 0 .48-.79l1-15c.02-.35-.14-.69-.43-.89Zm-2.47 14.34l-5.21-2.28L16 9l-7.65 4.25l-2.93-1.28l13.47-6.34l-.79 11.89Z"), "sent");
-	var inbox = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 2v7h-3.42c-.4 0-.76.24-.92.6c-.64 1.46-2.08 2.4-3.66 2.4s-3.02-.94-3.66-2.4c-.16-.36-.52-.6-.92-.6H4V5zM4 19v-5h2.81c1.06 1.84 3.04 3 5.19 3s4.13-1.16 5.19-3H20v5z"), "inbox");
 	var trash = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M17 6V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v2H2v2h2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8h2V6zM9 4h6v2H9zM6 20V8h12v12z", "M9 10h2v8H9zm4 0h2v8h-2z"), "trash");
 	var junk = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M17.55 6.17c-.31-.2-.7-.22-1.03-.05c-.32.17-.53.51-.53.88c0 1.63-.5 5-2 5c-.23 0-.63-.13-.78-.41c-.21-.39.02-1.15.61-2.03c2-3-.59-6.12-2.23-7.35a.99.99 0 0 0-.83-.17a.98.98 0 0 0-.66.53C9.52 3.74 8.24 4.79 7.01 5.8c-.63.52-1.22 1-1.73 1.51c-2.27 2.27-2.29 5.57-2.29 5.71c0 4.96 4.04 9 9 9s9-4.04 9-9c0-.19-.04-4.56-3.45-6.83ZM12 20c-3.86 0-7-3.14-7-7c0-.03.04-2.63 1.71-4.3c.44-.44.99-.9 1.58-1.38c1-.82 2.1-1.73 2.92-2.79c.85.89 1.94 2.45.96 3.91c-1.33 1.99-1.12 3.32-.71 4.08c.54 1.02 1.67 1.47 2.54 1.47c1.21 0 2.82-.65 3.59-3.76c.09-.35.16-.71.21-1.05c1.15 1.7 1.19 3.75 1.19 3.8c0 3.86-3.14 7-7 7Z"), "junk");
 	var rejects = /* @__PURE__ */ __name(() => svgIcon(24, 24, "M12 2c-4.96 0-9 4.04-9 9v8h.05c.25 1.69 1.69 3 3.45 3c1.17 0 2.07-.42 2.67-1.17c.72.72 1.72 1.17 2.83 1.17s2.11-.46 2.84-1.19c.6.76 1.5 1.19 2.66 1.19c1.93 0 3.5-1.57 3.5-3.5V11c0-4.96-4.04-9-9-9m7 16.5c0 .83-.67 1.5-1.5 1.5c-.45 0-1.5 0-1.5-2v-1h-2v1c0 1.1-.9 2-2 2s-2-.9-2-2v-1H8v1c0 1.85-.77 2-1.5 2c-.83 0-1.5-.67-1.5-1.5V11c0-3.86 3.14-7 7-7s7 3.14 7 7z", "M15.5 9a1.5 1.5 0 1 0 0 3a1.5 1.5 0 1 0 0-3m-7 0a1.5 1.5 0 1 0 0 3a1.5 1.5 0 1 0 0-3"), "rejects");
@@ -1433,31 +2250,435 @@
 		compose: "2",
 		searchView: "3",
 		searchbar: "4",
-		popup: "5",
-		popover: "5",
+		popup: "10",
+		popover: "9",
 		attachments: "5",
 		shortcut: "6",
-		login: "7"
+		login: "7",
+		mailboxesDrawer: "8",
+		mobileHeader: "8"
 	};
+	var MOBILE_BP = 1280;
+	var viewportWidth = /* @__PURE__ */ __name(() => document.documentElement.clientWidth, "viewportWidth");
+	var isMobile = /* @__PURE__ */ __name(() => viewportWidth() <= MOBILE_BP, "isMobile");
+	var updateMobileMode = /* @__PURE__ */ __name(() => {
+		document.documentElement.classList.toggle("mobile", isMobile());
+	}, "updateMobileMode");
 	ensureCSS(".button", { display: "inline-block" });
-	ensureCSS("button, .button, select", { backgroundColor: styles.buttonBackground, border: "1px solid", borderColor: styles.buttonBorderColor, borderRadius: ".15em", padding: "0 .15em" });
+	ensureCSS("button, .button, select", { backgroundColor: styles.buttonBackground, border: "1px solid", borderColor: styles.buttonBorderColor, borderRadius: styles.radius, padding: "6px 12px", fontSize: "13px", cursor: "pointer", transition: "background .2s, border-color .2s, color .2s" });
 	ensureCSS("button, .button, select, a.button:visited", { color: styles.color });
-	ensureCSS("button.active, .button.active, button.active:hover, .button.active:hover", { backgroundColor: styles.highlightBackground });
-	ensureCSS("button:hover:not(:disabled), .button:hover:not(:disabled), select:hover:not(:disabled)", { backgroundColor: styles.buttonHoverBackground });
-	ensureCSS("button.active:hover:not(:disabled), .button.active:hover:not(:disabled)", { backgroundColor: styles.highlightBackgroundHover });
-	ensureCSS("button:disabled, .button:disabled, select:disabled", { opacity: 0.5 });
-	ensureCSS("input, textarea", { backgroundColor: styles.backgroundColor, color: styles.color, border: "1px solid", borderColor: "#888", borderRadius: ".15em", padding: "0 .15em" });
-	ensureCSS("input:hover:not(:disabled), textarea:hover:not(:disabled)", { borderColor: styles.colorMilder });
-	ensureCSS(".btngroup button, .btngroup .button", { borderRadius: 0, borderRightWidth: 0 });
-	ensureCSS(".btngroup button:first-child, .btngroup .button:first-child", { borderRadius: ".15em 0 0 .15em" });
-	ensureCSS(".btngroup button:last-child, .btngroup .button:last-child", { borderRadius: "0 .15em .15em 0", borderRightWidth: "1px" });
+	ensureCSS("button.active, .button.active, button.active:hover, .button.active:hover", { backgroundColor: styles.accentSoft, borderColor: styles.accent, color: styles.accent });
+	ensureCSS("button:hover:not(:disabled), .button:hover:not(:disabled), select:hover:not(:disabled)", { backgroundColor: styles.buttonHoverBackground, borderColor: styles.accent, textDecoration: "none" });
+	ensureCSS("button, .button", { textDecoration: "none" });
+	ensureCSS("button:disabled, .button:disabled, select:disabled", { opacity: 0.5, cursor: "default" });
+	ensureCSS(".btnPrimary, .btnPrimary:hover:not(:disabled)", { backgroundColor: styles.buttonPrimaryBackground, borderColor: styles.buttonPrimaryBackground, color: "#fff" });
+	ensureCSS(".btnPrimary:hover:not(:disabled)", { backgroundColor: styles.buttonPrimaryHover, borderColor: styles.buttonPrimaryHover });
+	ensureCSS("input, textarea", { backgroundColor: styles.backgroundColorMild, color: styles.color, border: "1px solid", borderColor: styles.borderStrong, borderRadius: styles.radius, padding: "8px 10px", fontSize: "13px", fontFamily: "inherit", transition: "border-color .2s, background .2s" });
+	ensureCSS("input:focus, textarea:focus, select:focus", { outline: "none", borderColor: styles.accent, backgroundColor: styles.backgroundColorMild });
+	ensureCSS("input:hover:not(:disabled), textarea:hover:not(:disabled)", { borderColor: styles.accent });
+	ensureCSS(".btngroup", { display: "inline-flex", alignItems: "stretch", flexWrap: "nowrap", verticalAlign: "middle" });
+	ensureCSS(".btngroup button, .btngroup .button", { borderRadius: 0, borderRightWidth: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", margin: 0, boxSizing: "border-box" });
+	ensureCSS(".btngroup button:first-child, .btngroup .button:first-child", { borderRadius: styles.radius + " 0 0 " + styles.radius });
+	ensureCSS(".btngroup button:last-child, .btngroup .button:last-child", { borderRadius: "0 " + styles.radius + " " + styles.radius + " 0", borderRightWidth: "1px" });
+	ensureCSS(".btngroup button:hover:not(:disabled), .btngroup .button:hover:not(:disabled), .btngroup button.active, .btngroup .button.active, .btngroup button.active:hover, .btngroup .button.active:hover", { position: "relative", zIndex: 1 });
+	ensureCSS(".btngroup button:not(:last-child):hover:not(:disabled), .btngroup .button:not(:last-child):hover:not(:disabled), .btngroup button.active:not(:last-child), .btngroup .button.active:not(:last-child), .btngroup button.active:not(:last-child):hover, .btngroup .button.active:not(:last-child):hover", { marginRight: "-1px", borderRightWidth: "1px" });
+	css("btnIcon", { minWidth: "26px", width: "26px", height: "26px", padding: 0, lineHeight: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "14px" });
+	css("btnCompact", { padding: "2px 8px", lineHeight: 1.3, fontSize: "12px", height: "auto" });
+	css("mailboxActionBtn", { padding: "0 6px", height: "26px", minHeight: "26px", minWidth: "26px", lineHeight: 1, fontSize: "12px", alignSelf: "center", verticalAlign: "middle", flexShrink: 0 });
+	ensureCSS(".topBar", { display: "flex", flexWrap: "wrap", position: "relative", zIndex: "6", backgroundColor: styles.mailboxesTopBackgroundColor, boxShadow: styles.shadowSm, color: styles.navTextColor });
+	ensureCSS(".topBarNav button, .topBarNav .button, .topBarNav select", { backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.15)", color: styles.navTextColor });
+	ensureCSS(".topBarNav button:hover:not(:disabled), .topBarNav .button:hover:not(:disabled), .topBarNav select:hover:not(:disabled)", { backgroundColor: "rgba(255,255,255,0.14)", borderColor: "rgba(255,255,255,0.25)", color: styles.navTextHover });
+	ensureCSS(".topBarNav button.active, .topBarNav .button.active", { backgroundColor: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.3)", color: styles.navTextHover });
+	ensureCSS(".topBarSearchForm", { display: "flex", alignItems: "stretch", flexGrow: 1, gap: "4px" });
+	ensureCSS(".topBarSearchInput", { flex: 1, minWidth: 0, height: "34px", boxSizing: "border-box", backgroundColor: "rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.2)", color: styles.navTextHover });
+	ensureCSS(".topBarSearchInput::placeholder", { color: styles.navTextColor });
+	ensureCSS(".topBarSearchInput:focus", { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.35)" });
+	ensureCSS(".topBarSearchInput.searchbarActive", { backgroundColor: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.35)" });
+	ensureCSS(".topBarSearchClear", { width: "34px", minWidth: "34px", height: "34px", padding: 0, lineHeight: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.15)", color: styles.navTextColor });
+	ensureCSS(".topBarSearchClear:hover:not(:disabled)", { backgroundColor: "rgba(255,255,255,0.14)", borderColor: "rgba(255,255,255,0.25)", color: styles.navTextHover });
+	ensureCSS(".topBar .btnPrimary, .topBar .btnPrimary:hover:not(:disabled)", { backgroundColor: styles.buttonPrimaryBackground, borderColor: styles.buttonPrimaryBackground, color: "#fff" });
+	ensureCSS(".topBar .btnPrimary:hover:not(:disabled)", { backgroundColor: styles.buttonPrimaryHover, borderColor: styles.buttonPrimaryHover });
+	ensureCSS(".topBar a", { color: styles.navTextColor });
+	ensureCSS(".topBar a:hover", { color: styles.navTextHover });
+	ensureCSS(".topBarNav span, .topBar .status", { color: styles.navTextColor });
+	ensureCSS(".searchOverlay", { position: "fixed", left: 0, right: 0, top: 0, bottom: 0, zIndex: zindexes.compose, backgroundColor: styles.overlayBackgroundColor });
+	ensureCSS(".searchOverlay .searchContent", { position: "fixed", left: 0, right: 0, bottom: 0, top: "auto", width: "100%", maxWidth: "none", maxHeight: "min(90dvh, calc(100dvh - 3.5em))", zIndex: 1, color: styles.popupColor, backgroundColor: styles.popupBackgroundColor, border: "1px solid", borderColor: styles.floatBorderColor, borderRadius: "12px 12px 0 0", boxShadow: styles.floatShadow, boxSizing: "border-box", padding: 0, overflow: "hidden", display: "grid", gridTemplateRows: "auto minmax(0, 1fr) auto" });
+	ensureCSS("html:not(.mobile) .searchOverlay .searchContent", { left: "50%", right: "auto", transform: "translateX(-50%)", width: "min(50em, calc(100vw - 2em))" });
+	ensureCSS(".searchOverlay .searchContent .dialogBody", { padding: "16px" });
+	ensureCSS(".searchOverlay .searchContent .dialogFooter", { padding: "12px 16px calc(12px + env(safe-area-inset-bottom, 0))" });
+	ensureCSS(".searchContent, .searchContent .searchTable", { backgroundColor: styles.popupBackgroundColor });
+	ensureCSS(".searchContent label", { color: styles.color, fontWeight: 600, fontSize: "13px" });
+	ensureCSS(".searchTable tr", { display: "block", marginBottom: "1em" });
+	ensureCSS(".searchTable td", { display: "block", width: "100%", padding: "0", boxSizing: "border-box" });
+	ensureCSS(".searchTable td:first-child", { width: "auto", paddingBottom: ".35em", fontWeight: 600, fontSize: "12px", color: styles.colorMild, whiteSpace: "normal" });
+	ensureCSS(".searchTable input, .searchTable select", { width: "100%", maxWidth: "100%", boxSizing: "border-box" });
+	ensureCSS(".searchMailboxKids", { marginTop: "8px" });
+	ensureCSS(".searchMailboxKids label", { display: "flex", alignItems: "flex-start", gap: "10px", fontWeight: 400, fontSize: "13px", lineHeight: "1.4", textAlign: "left" });
+	ensureCSS(".searchMailboxKids input[type=checkbox]", { width: "auto", flexShrink: 0, marginTop: "3px" });
+	ensureCSS(".searchKeywordButtons", { display: "flex", flexWrap: "wrap", gap: "6px", lineHeight: "normal", marginBottom: "8px" });
+	ensureCSS(".searchKeywordButtons button", { flex: "0 1 auto" });
+	ensureCSS(".searchTable .searchSizeRow", { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" });
+	ensureCSS(".searchTable .searchSizeRow input", { flex: "1 1 8em", width: "auto", minWidth: 0 });
+	ensureCSS(".searchContent input, .searchContent select, .searchContent textarea", { boxSizing: "border-box", backgroundColor: styles.backgroundColorMild, color: styles.color, border: "1px solid", borderColor: styles.borderStrong });
+	ensureCSS(".searchContent input:not([type=checkbox]):not([type=radio])", { minHeight: "38px", height: "38px" });
+	ensureCSS(".searchContent select", { minHeight: "38px", height: "38px" });
+	ensureCSS(".searchContent input:focus, .searchContent select:focus, .searchContent textarea:focus", { borderColor: styles.accent, backgroundColor: styles.backgroundColorMild, outline: "none" });
+	ensureCSS(".searchContent .dialogBody button, .searchContent .dialogBody .button", { backgroundColor: styles.buttonBackground, borderColor: styles.buttonBorderColor, color: styles.color });
+	ensureCSS(".searchContent .dialogBody button:hover:not(:disabled), .searchContent .dialogBody .button:hover:not(:disabled)", { backgroundColor: styles.buttonHoverBackground, borderColor: styles.accent, color: styles.color });
+	ensureCSS(".searchContent .dialogBody button.active, .searchContent .dialogBody .button.active", { backgroundColor: styles.accentSoft, borderColor: styles.accent, color: styles.accent });
+	ensureCSS(".searchContent .btngroup", { flexWrap: "wrap", gap: "6px" });
+	ensureCSS(".searchRadios", { display: "flex", flexWrap: "wrap", gap: "8px 12px" });
+	ensureCSS(".searchRadios label", { display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: 400, whiteSpace: "nowrap" });
+	ensureCSS(".searchDateRow", { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" });
+	ensureCSS(".searchDateRow input[type=date]", { flex: "1 1 9em", minWidth: 0 });
+	ensureCSS(".searchDateRow input[type=time]", { flex: "0 0 5.5em" });
+	ensureCSS(".searchDateRow > span", { color: styles.colorMild, padding: "0 2px" });
+	ensureCSS(".searchDateRow .btnIcon", { width: "38px", minWidth: "38px", height: "38px", minHeight: "38px", padding: 0, boxSizing: "border-box" });
+	ensureCSS(".attachmentsDownloadHeader .button", { flexShrink: 0 });
+	ensureCSS(".refineBar", { display: "flex", alignItems: "center", flexWrap: "nowrap", gap: "6px", minWidth: 0, flex: "1 1 auto", overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "thin" });
+	ensureCSS(".refineBar .refineTitle", { display: "inline", margin: 0, whiteSpace: "nowrap", position: "sticky", left: 0, zIndex: 1, flexShrink: 0, backgroundColor: styles.backgroundColorMild });
+	ensureCSS(".refineBar .btngroup", { flexWrap: "nowrap", flexShrink: 0 });
+	ensureCSS(".msgListFilterSortingControls", { display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto", flexShrink: 0, minWidth: 0 });
+	ensureCSS(".threadModeLabel", { color: styles.colorMild, whiteSpace: "nowrap" });
+	ensureCSS(".msgListFilterSortingControls .threadModeSelect", { width: "6.6em", maxWidth: "6.6em" });
+	ensureCSS(".msgListFilterSortingControls > span:empty", { display: "none" });
+	ensureCSS(".mailboxesRegion", { width: "100%", boxSizing: "border-box", backgroundColor: styles.mailboxesSidebarBackground });
+	ensureCSS(".mailboxesBox > .pad", { padding: "14px 10px" });
+	ensureCSS(".mailboxesList", { display: "flex", flexDirection: "column", gap: "3px" });
+	ensureCSS(".mailboxesHeader", { display: "flex", alignItems: "center", width: "100%", boxSizing: "border-box", marginBottom: 0, padding: "6px 6px 6px 8px" });
+	ensureCSS(".mailboxesHeader .mailboxesTitle", { margin: 0, flex: "1 1 auto", minWidth: 0 });
+	ensureCSS(".mailboxesHeader .mailboxActionBtn", { marginLeft: "auto", flexShrink: 0 });
+	ensureCSS(".mailboxItem", { display: "block", width: "100%", boxSizing: "border-box", padding: "10px 12px", margin: 0, cursor: "pointer", borderRadius: "8px", userSelect: "none", color: styles.colorMild, fontWeight: "600", fontSize: "0.92rem", transition: "background .15s, color .15s" });
+	ensureCSS(".mailboxItem svg", { width: "18px", height: "18px", flex: "none", opacity: ".8" });
+	ensureCSS(".mailboxItem.active svg", { opacity: "1" });
+	ensureCSS(".mailboxIcon", { display: "inline-flex", flex: "none", alignItems: "center" });
+	ensureCSS(".mailbox", { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 0, flex: 1, minWidth: 0, width: "100%", boxSizing: "border-box", gap: "11px" });
+	ensureCSS(".mailboxName", { flex: "1 1 auto", minWidth: 0, paddingRight: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: "inherit" });
+	ensureCSS(".mailboxActions", { display: "flex", alignItems: "center", gap: "4px", flexShrink: 0, marginLeft: "auto", paddingRight: "2px" });
+	ensureCSS(".mailboxUnreadBadge", { display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: "18px", height: "18px", padding: "0 6px", borderRadius: "9px", fontSize: "11px", fontWeight: 600, lineHeight: 1, flexShrink: 0, boxSizing: "border-box", backgroundColor: styles.buttonPrimaryBackground, color: "#fff" });
+	ensureCSS(".mailboxUnreadBadge.isEmpty", { display: "none" });
+	ensureCSS(".mailboxItem.active .mailboxUnreadBadge", { backgroundColor: styles.buttonPrimaryBackground, color: "#fff" });
+	ensureCSS(".topBarComposeDesktop", { display: "flex", justifyContent: "center", alignItems: "center", boxSizing: "border-box", padding: ".45em .5em", flex: "none" });
+	ensureCSS(".topBarComposeDesktop .btnPrimary", { width: "100%", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "7px" });
+	ensureCSS(".mailboxItem.active .mailboxActionBtn", { backgroundColor: "transparent", borderColor: styles.accent });
+	ensureCSS(".msgItem", { display: "flex", flexDirection: "row", flexWrap: "nowrap", alignItems: "flex-start", position: "relative", width: "100%", boxSizing: "border-box", userSelect: "none", cursor: "pointer", border: "1px solid transparent", borderLeft: "3px solid transparent", borderBottom: "1px solid", borderBottomColor: styles.borderColor, borderRadius: 0, margin: 0, transition: "background .15s, border-color .15s" });
+	ensureCSS(".msgItem .scriptswitch", { textDecoration: "none" });
+	ensureCSS(".msgItemCell", { padding: "4px 6px", boxSizing: "border-box" });
+	ensureCSS(".msgItemFlags", { flex: "0 0 auto", flexShrink: 0, boxSizing: "border-box", overflow: "hidden" });
+	ensureCSS(".msgThreadToggle", { display: "inline-flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", minWidth: "22px", height: "22px", padding: "0 5px", lineHeight: "1", fontSize: "12px", fontWeight: "600", flexShrink: "0" });
+	ensureCSS(".msgThreadToggle svg", { width: "14px", height: "14px", display: "block" });
+	ensureCSS(".msgItemAge", { flex: "0 0 auto", flexShrink: 0, boxSizing: "border-box", whiteSpace: "nowrap", overflow: "hidden" });
+	ensureCSS(".msgItemMain", { display: "flex", flexDirection: "column", gap: "1px", overflow: "hidden", position: "relative", minWidth: 0, flex: "1 1 auto" });
+	ensureCSS(".msgItemFromRow", { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", minWidth: 0 });
+	ensureCSS(".msgItemSubjectRow", { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", minWidth: 0 });
+	ensureCSS(".msgItemPreviewRow", { minWidth: 0 });
+	ensureCSS(".msgItemFromText", { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, flex: 1 });
+	ensureCSS(".msgItemSubjectText", { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: "12px", color: styles.colorMild, minWidth: 0, flex: 1 });
+	ensureCSS(".msgItemPreviewText", { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: "11px", color: styles.colorMilder, minWidth: 0 });
+	ensureCSS(".msgItemUnread .msgItemFromText", { fontWeight: "bold", color: styles.color });
+	ensureCSS(".msgItemUnread .msgItemSubjectText", { color: styles.color });
+	ensureCSS(".inlineAttachmentsLine", { display: "flex", flexWrap: "wrap", alignItems: "center", gap: ".5em" });
+	ensureCSS(".msgModeBar", { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
 	var keywordButtonStyle = css("keywordButton", { cursor: "pointer" });
 	ensureCSS(".keywordButton:hover:not(:disabled)", { backgroundColor: styles.highlightBackgroundHover });
+	ensureCSS(".topBarStatusRow", { display: "flex", flexGrow: 1, alignItems: "center", minWidth: 0 });
+	ensureCSS(".topBarSearchRow", { display: "flex", alignItems: "center", gap: "6px", flex: "1 1 auto", minWidth: 0 });
+	ensureCSS("html:not(.mobile) .topBar", { flexWrap: "nowrap", alignItems: "center" });
+	ensureCSS("html:not(.mobile) .topBarStatusRow", { flexGrow: 0, flexShrink: 0, minWidth: 0, justifyContent: "flex-end" });
+	ensureCSS("html:not(.mobile) .topBarStatusRow .status", { flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+	ensureCSS("html:not(.mobile) .topBarNav", { display: "flex", flexWrap: "nowrap", flexShrink: 0, gap: "6px", justifyContent: "flex-end", alignItems: "center", paddingLeft: "1em" });
+	ensureCSS(".theme-toggle-container", { display: "flex", alignItems: "center", alignSelf: "center", gap: 0, flex: "none", flexShrink: 0 });
+	ensureCSS("html:not(.mobile) .theme-toggle-container", { marginLeft: "10px", paddingLeft: "14px", borderLeft: "1px solid rgba(255,255,255,.15)" });
+	ensureCSS("html.mobile .theme-toggle-container", { marginLeft: "auto", paddingLeft: 0, borderLeft: 0 });
+	ensureCSS(".theme-toggle", { position: "relative", display: "inline-block", width: "3.26rem", height: "1.61rem", flex: "none", cursor: "pointer" });
+	ensureCSS(".theme-toggle input", { position: "absolute", opacity: 0, width: 0, height: 0, minHeight: 0, margin: 0, padding: 0, border: 0 });
+	ensureCSS(".theme-toggle .slider", { position: "absolute", cursor: "pointer", inset: 0, background: "rgba(255,255,255,.16)", borderRadius: "999px", transition: "background .25s" });
+	ensureCSS(".theme-toggle .slider::before", { content: '""', position: "absolute", width: "1.25rem", height: "1.25rem", left: ".18rem", top: ".18rem", background: "#fff", borderRadius: "50%", transition: "transform .25s", zIndex: 1 });
+	ensureCSS(".theme-toggle input:checked + .slider::before", { transform: "translateX(1.65rem)" });
+	ensureCSS(".theme-toggle input:focus-visible + .slider", { outline: "2px solid #fff", outlineOffset: "2px" });
+	ensureCSS(".theme-slot", { position: "absolute", top: ".18rem", width: "1.25rem", height: "1.25rem", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,.72)", pointerEvents: "none", zIndex: 2 });
+	ensureCSS(".theme-sun", { left: ".18rem" });
+	ensureCSS(".theme-moon", { right: ".18rem" });
+	ensureCSS(".theme-slot .icon", { width: ".78rem", height: ".78rem" });
+	ensureCSS(".theme-toggle input:not(:checked) + .slider .theme-sun, .theme-toggle input:checked + .slider .theme-moon", { color: "#1c2430" });
+	ensureCSS(".theme-toggle-container button.theme-auto, .theme-toggle-container button.theme-auto:hover, .theme-toggle-container button.theme-auto:hover:not(:disabled), .theme-toggle-container button.theme-auto.active, .theme-toggle-container button.theme-auto.active:hover", { display: "flex", alignItems: "center", justifyContent: "center", width: "1.61rem", minWidth: "1.61rem", height: "1.61rem", minHeight: "1.61rem", padding: 0, border: 0, borderRadius: "999px", backgroundColor: "transparent", boxShadow: "none", color: "rgba(255,255,255,.45)", cursor: "pointer", lineHeight: 1 });
+	ensureCSS(".theme-toggle-container button.theme-auto:hover, .theme-toggle-container button.theme-auto:hover:not(:disabled), .theme-toggle-container button.theme-auto.active, .theme-toggle-container button.theme-auto.active:hover", { color: "#fff", backgroundColor: "transparent", borderColor: "transparent" });
+	ensureCSS(".theme-auto .icon", { width: ".95rem", height: ".95rem" });
+	ensureCSS(".theme-auto:focus-visible", { outline: "2px solid #fff", outlineOffset: "2px" });
+	ensureCSS(".theme-toggle-container button.lang-choice, .theme-toggle-container button.lang-choice:hover, .theme-toggle-container button.lang-choice:hover:not(:disabled)", { display: "flex", alignItems: "center", justifyContent: "center", width: "1.61rem", minWidth: "1.61rem", height: "1.61rem", minHeight: "1.61rem", padding: 0, border: 0, borderRadius: "999px", backgroundColor: "transparent", boxShadow: "none", color: "rgba(255,255,255,.45)", cursor: "pointer", lineHeight: 1 });
+	ensureCSS(".theme-toggle-container button.lang-choice:hover, .theme-toggle-container button.lang-choice:hover:not(:disabled)", { color: "#fff", backgroundColor: "transparent", borderColor: "transparent" });
+	ensureCSS(".theme-toggle-container .lang-choice .icon", { width: ".95rem", height: ".95rem" });
+	ensureCSS(".theme-toggle-container .lang-choice:focus-visible", { outline: "2px solid #fff", outlineOffset: "2px" });
+	ensureCSS(".theme-switch-group", { display: "flex", alignItems: "center", gap: ".45rem", marginLeft: "14px", paddingLeft: "14px", borderLeft: "1px solid rgba(255,255,255,.15)" });
+	ensureCSS(".nav-account", { position: "relative" });
+	ensureCSS(".nav-account button.nav-account-toggle, .nav-account button.nav-account-toggle:hover:not(:disabled)", { display: "inline-flex", alignItems: "center", gap: ".5rem", padding: "8px 12px", border: 0, borderRadius: "8px", backgroundColor: "transparent", boxShadow: "none", color: "inherit", cursor: "pointer" });
+	ensureCSS(".nav-account button.nav-account-toggle:hover:not(:disabled)", { backgroundColor: "rgba(255,255,255,.08)", color: "#fff" });
+	ensureCSS(".nav-account-label", { maxWidth: "220px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+	ensureCSS(".nav-account .icon", { width: "1.15em", height: "1.15em", flex: "none" });
+	ensureCSS(".nav-account .icon.nav-account-caret", { width: "1em", height: "1em", opacity: ".7" });
+	ensureCSS(".nav-account-menu", { display: "none", flexDirection: "column", position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: "30", width: "max-content", padding: "6px 0", backgroundColor: "#353a40", color: "inherit", border: "1px solid rgba(255,255,255,.12)", borderRadius: "8px", boxShadow: "0 8px 24px rgba(0,0,0,.28)" });
+	ensureCSS(".nav-account.open .nav-account-menu", { display: "flex" });
+	ensureCSS(".nav-account button.nav-account-item, .nav-account button.nav-account-item:hover:not(:disabled), a.nav-account-item, a.nav-account-item:hover:not(:disabled)", { display: "flex", alignItems: "center", alignSelf: "stretch", gap: "10px", width: "auto", boxSizing: "border-box", textAlign: "left", textDecoration: "none", whiteSpace: "nowrap", padding: "9px 14px", border: 0, borderRadius: 0, backgroundColor: "transparent", boxShadow: "none", color: "inherit", fontSize: "13px", cursor: "pointer" });
+	ensureCSS(".nav-account button.nav-account-item:hover:not(:disabled), a.nav-account-item:hover:not(:disabled)", { backgroundColor: "rgba(255,255,255,.08)", color: "#fff" });
+	ensureCSS(".nav-account-item[hidden]", { display: "none" });
+	ensureCSS(".nav-account-divider", { height: "1px", margin: "6px 0", backgroundColor: "rgba(255,255,255,.12)" });
+	ensureCSS(".nav-account-layouts", { display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px 14px" });
+	ensureCSS(".nav-account button.nav-layout, .nav-account button.nav-layout:hover:not(:disabled)", { display: "inline-flex", alignItems: "center", justifyContent: "center", width: "2rem", height: "2rem", padding: 0, border: 0, borderRadius: "8px", backgroundColor: "transparent", boxShadow: "none", color: "rgba(255,255,255,.45)", cursor: "pointer" });
+	ensureCSS(".nav-account button.nav-layout:hover:not(:disabled)", { color: "#fff", backgroundColor: "rgba(255,255,255,.08)" });
+	ensureCSS(".nav-account button.nav-layout.isOn, .nav-account button.nav-layout.isOn:hover:not(:disabled)", { color: "#fff", backgroundColor: "rgba(255,255,255,.16)" });
+	ensureCSS(".nav-account button.nav-layout .icon", { width: "1.15em", height: "1.15em" });
+	ensureCSS(".msgActionRow", { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center", padding: ".45em .65em" });
+	ensureCSS(".msgActionRow button", { flex: "0 1 auto" });
+	ensureCSS(".msgActionRow button.msgActionBtn, .msgListActionBar button.msgActionBtn", { display: "inline-flex", alignItems: "center", gap: "6px" });
+	ensureCSS(".msgActionBtn svg", { width: "16px", height: "16px", flex: "none" });
+	ensureCSS(".msgListActionBar", { display: "none", flexWrap: "wrap", gap: "8px", alignItems: "center", padding: ".45em .65em", borderBottom: "1px solid", borderBottomColor: styles.borderColor, backgroundColor: styles.backgroundColorMild });
+	ensureCSS(".msgListActionBar.isOpen", { display: "flex" });
+	ensureCSS(".msgItemFlagBtn, .msgItemFlagBtn:hover:not(:disabled)", { flexShrink: "0", padding: "2px", lineHeight: "1", minWidth: "22px", backgroundColor: "transparent", borderColor: "transparent", boxShadow: "none", color: styles.colorMild });
+	ensureCSS(".msgItemFlagBtn.isOn, .msgItemFlagBtn.isOn:hover:not(:disabled)", { backgroundColor: "transparent", borderColor: "transparent", color: ["#d1242f", "#ff5c5c"] });
+	ensureCSS(".msgItemFlagBtn.isOn .msgItemFlagCloth", { fill: "currentColor" });
+	ensureCSS(".msgItemHoverActions", { display: "none", position: "absolute", right: "6px", top: "6px", gap: "4px", zIndex: "1", padding: "4px", backgroundColor: ["inherit", styles.popupBackgroundColor], border: "1px solid", borderColor: styles.popupBorderColor, borderRadius: styles.radius, boxShadow: styles.boxShadow });
+	ensureCSS("html:not(.mobile) .msgItem:hover .msgItemHoverActions", { display: "flex" });
+	ensureCSS(".msgItemHoverActions button", { padding: "2px 8px", lineHeight: "1.3", fontSize: "12px" });
+	ensureCSS(".msgItemHoverActions button.msgItemHoverIcon", { width: "28px", minWidth: "28px", height: "28px", padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", backgroundColor: "transparent", border: 0, boxShadow: "none", lineHeight: 1, color: "inherit" });
+	ensureCSS(".msgItemHoverActions button.msgItemHoverIcon:hover:not(:disabled)", { backgroundColor: "transparent", borderColor: "transparent", color: styles.accent });
+	ensureCSS(".msgItemHoverActions button.msgItemHoverIcon.msgItemHoverDanger, .msgItemHoverActions button.msgItemHoverIcon.msgItemHoverDanger:hover:not(:disabled)", { backgroundColor: "transparent", borderColor: "transparent", color: ["#d1242f", "#ff5c5c"] });
+	ensureCSS(".msgFromName", { fontSize: "16px", fontWeight: "600", lineHeight: "1.3" });
+	ensureCSS(".msgFromDetail", { fontSize: "12px", color: styles.colorMild });
+	ensureCSS(".moveUndoBar", { position: "absolute", right: "12px", bottom: "12px", zIndex: zindexes.popup, display: "flex", alignItems: "center", gap: "12px", padding: "8px 12px", backgroundColor: styles.popupBackgroundColor, color: styles.popupColor, border: "1px solid", borderColor: styles.popupBorderColor, borderRadius: styles.radius, boxShadow: styles.boxShadow, maxWidth: "calc(100% - 24px)" });
+	ensureCSS(".moveUndoBarFloating", { position: "fixed", right: "12px", bottom: "max(12px, env(safe-area-inset-bottom))" });
+	ensureCSS(".topBarMessageRow", { display: "none", alignItems: "center", gap: "6px", flex: "1 1 100%", minWidth: 0 });
+	ensureCSS(".topBarMobileOverflow", { minWidth: "44px", minHeight: "44px", padding: "0 10px", flexShrink: 0 });
+	ensureCSS(".topBarMobileOnly", { display: "none" });
+	ensureCSS(".mailboxesBackdrop", { display: "none" });
+	ensureCSS(".mobileMsgHeader", { display: "none" });
+	ensureCSS(".mobileMsgPane", { position: "absolute", left: 0, right: 0, top: 0, bottom: 0 });
+	ensureCSS("html.mobile .topBar", { flexWrap: "nowrap", alignItems: "stretch", paddingTop: "env(safe-area-inset-top, 0)" });
+	ensureCSS("html.mobile .topBar > .pad", { padding: ".4em .5em", boxSizing: "border-box" });
+	ensureCSS("html.mobile .topBarSearchRow, html.mobile.mobile-pane-message .topBarMessageRow", { flex: "1 1 100%", width: "100%", maxWidth: "100%" });
+	ensureCSS("html.mobile.mobile-pane-list .topBarMessageRow", { display: "none" });
+	ensureCSS("html.mobile .mailboxesListMsgBox", { backgroundColor: styles.backgroundColorMild });
+	ensureCSS("html.mobile .topBarComposeDesktop", { display: "none" });
+	ensureCSS("html.mobile .topBarMobileOnly", { display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 });
+	ensureCSS("html.mobile .topBarNavDesktop", { display: "none" });
+	ensureCSS("html.mobile .topBarStatusRow", { display: "none" });
+	ensureCSS("html.mobile .topBarSearchRow", { flex: "1 1 auto", minWidth: 0 });
+	ensureCSS("html.mobile.mobile-pane-message .topBarSearchRow", { display: "none" });
+	ensureCSS("html.mobile.mobile-pane-message .topBarMessageRow", { display: "flex" });
+	ensureCSS("html.mobile .topBarMessageTitle", { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: "600", color: styles.navTextHover });
+	ensureCSS("html.mobile .topBarSearchForm", { flex: 1, minWidth: 0 });
+	ensureCSS("html.mobile .searchbarBox", { flex: "1 1 0", minWidth: 0, display: "flex" });
+	ensureCSS("html.mobile .searchbarBox search", { display: "flex", flex: "1 1 0", minWidth: 0, width: "100%" });
+	ensureCSS("html.mobile .topBarSearchInput", { flex: 1, minWidth: 0, width: "100%", height: "38px" });
+	ensureCSS("html.mobile .topBarSearchClear", { width: "38px", minWidth: "38px", height: "38px" });
+	ensureCSS("html.mobile .topBarMenuBtn", { minWidth: "40px", minHeight: "40px", padding: "0", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" });
+	ensureCSS(".topBarMenuIcon", { display: "inline-flex", alignItems: "center", justifyContent: "center", width: "18px", height: "18px", flexShrink: 0 });
+	ensureCSS(".searchDatePresets", { display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" });
+	ensureCSS("html.mobile .topBarMobileCompose, html.mobile .topBarMessageBack, html.mobile .topBarMobileOverflow", { minWidth: "40px", minHeight: "40px", padding: "0 8px", flexShrink: 0, fontSize: "20px", lineHeight: 1, display: "inline-flex", alignItems: "center", justifyContent: "center" });
+	ensureCSS("html.mobile .topBarMessageTitle, html.mobile .topBarMessageTitle .scriptswitch", { textDecoration: "none" });
+	ensureCSS("html.mobile .mailboxesSidebar", { position: "fixed", left: 0, top: 0, bottom: 0, width: "min(280px, 85vw)", maxWidth: "85vw", zIndex: zindexes.mailboxesDrawer, transform: "translateX(-100%)", transition: "transform .2s ease", boxShadow: styles.boxShadow, visibility: "visible" });
+	ensureCSS("html.mobile.mailboxes-drawer-open .mailboxesSidebar", { transform: "translateX(0)" });
+	ensureCSS("html.mobile .mailboxesBackdrop", { display: "none", position: "fixed", left: 0, right: 0, top: 0, bottom: 0, zIndex: "7", backgroundColor: styles.overlayBackgroundColor });
+	ensureCSS("html.mobile.mailboxes-drawer-open .mailboxesBackdrop", { display: "block" });
+	ensureCSS("html.mobile .mailboxessplitElem, html.mobile .mailboxesListGrab", { display: "none" });
+	ensureCSS("html.mobile .listMsgBox", { left: "0", right: "0" });
+	ensureCSS("html.mobile .listMsgLeftRightGrab, html.mobile .listMsgTopBottomGrab", { display: "none" });
+	ensureCSS("html.mobile .msgItemFlagsOffset, html.mobile .msgItemMainOffset", { display: "none" });
+	ensureCSS("html.mobile.mobile-pane-list .layoutRight, html.mobile.mobile-pane-list .layoutBottom", { display: "none" });
+	ensureCSS("html.mobile.mobile-pane-list .layoutLeft, html.mobile.mobile-pane-list .layoutTop", { left: "0", right: "0", width: "auto", height: "auto", bottom: "0", top: "0" });
+	ensureCSS("html.mobile.mobile-pane-message .layoutLeft, html.mobile.mobile-pane-message .layoutTop", { display: "none" });
+	ensureCSS("html.mobile.mobile-pane-message .layoutRight, html.mobile.mobile-pane-message .layoutBottom", { left: "0", right: "0", top: "0", bottom: "0", width: "auto", height: "auto" });
+	ensureCSS("html.mobile .mobileMsgPane", { display: "flex", flexDirection: "column", position: "absolute", left: 0, right: 0, top: 0, bottom: 0 });
+	ensureCSS("html.mobile .mobileMsgPane .msgElem", { position: "relative", flex: "1 1 auto", minHeight: 0, borderLeftWidth: 0, display: "flex", flexDirection: "column" });
+	ensureCSS("html.mobile .msgViewRoot", { position: "relative", flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" });
+	ensureCSS("html.mobile .msgmeta", { maxHeight: "none", flexShrink: 0, overflowY: "visible", borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html.mobile .scrollparent", { flex: "1 1 auto", minHeight: 0 });
+	ensureCSS("html.mobile .msgListFilterSorting", { padding: ".5em .65em" });
+	ensureCSS("html.mobile .refineBar", { flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", gap: "6px" });
+	ensureCSS("html.mobile .refineBar .btngroup", { flexWrap: "nowrap", flexShrink: 0 });
+	ensureCSS("html.mobile .refineBar .btngroup button", { minHeight: "36px", padding: "6px 10px" });
+	ensureCSS("html.mobile .msgListFilterSortingControls", { marginLeft: "auto", flexShrink: 0 });
+	ensureCSS("html.mobile .msgListFilterSortingControls select, html.mobile .msgListFilterSortingControls button", { minHeight: "36px", padding: "6px 10px", boxSizing: "border-box", fontSize: "13px" });
+	ensureCSS("html.mobile .msgListFilterSortingControls .threadModeSelect", { width: "6.6em", minWidth: 0, maxWidth: "6.6em" });
+	ensureCSS("html.mobile .msgListFilterSortingControls .threadSortBtn", { minWidth: "36px", padding: "6px 8px" });
+	ensureCSS("html.mobile .msgItemCell", { padding: "8px 6px", minHeight: "44px" });
+	ensureCSS("html.mobile .msgItemAge", { overflow: "visible", paddingRight: "2px" });
+	ensureCSS(".msgMobileSummary", { display: "none" });
+	ensureCSS(".msgMobileSummaryTop", { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px" });
+	ensureCSS(".msgMobileSummaryFrom", { flex: "1 1 auto", minWidth: 0, fontWeight: "600", fontSize: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+	ensureCSS(".msgMobileSummaryDate", { flexShrink: 0, fontSize: "12px", color: styles.colorMild, whiteSpace: "nowrap" });
+	ensureCSS(".msgMobileSummaryMeta", { display: "flex", alignItems: "center", gap: "8px", marginTop: "2px", minWidth: 0 });
+	ensureCSS(".msgMobileSummaryTo", { flex: "1 1 auto", minWidth: 0, fontSize: "12px", color: styles.colorMild, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+	ensureCSS(".msgMobileDetailsToggle", { flexShrink: 0, padding: "2px 6px", fontSize: "12px", lineHeight: 1.3, minHeight: "auto", color: styles.accent });
+	ensureCSS(".msgMobileSummaryChips", { display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px" });
+	ensureCSS(".msgMobileSummaryChip", { fontSize: "10px", padding: "1px 5px", borderRadius: "3px", backgroundColor: styles.accentSoft, color: styles.colorMild });
+	ensureCSS("button.msgMobileSummaryChip", { border: "none", minHeight: "auto", lineHeight: 1.4, cursor: "pointer" });
+	ensureCSS("button.msgMobileSummaryChip:hover:not(:disabled)", { backgroundColor: styles.highlightBackground });
+	ensureCSS("html.mobile .msgbuttonMobile", { padding: "6px 10px", borderBottom: "1px solid", borderBottomColor: styles.borderColor, flexShrink: 0 });
+	ensureCSS("html.mobile .msgbuttonMobile .msgActionRow", { flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", gap: "6px", padding: 0 });
+	ensureCSS("html.mobile .msgbuttonMobile .msgActionRow button", { flexShrink: 0, minHeight: "32px", padding: "5px 12px", fontSize: "13px" });
+	ensureCSS(".menuList", { backgroundColor: styles.popupBackgroundColor, border: "1px solid", borderColor: styles.popupBorderColor, borderRadius: styles.radius, boxShadow: styles.boxShadow, overflow: "hidden", minWidth: "12em", color: styles.popupColor });
+	ensureCSS(".menuList.menuListFit", { display: "inline-grid", minWidth: 0, width: "max-content", verticalAlign: "top" });
+	ensureCSS(".menuList.menuListFit .menuItem", { display: "grid" });
+	ensureCSS(".menuList.menuListFit .menuItem button", { width: "auto", justifySelf: "stretch", whiteSpace: "nowrap", boxSizing: "border-box" });
+	ensureCSS(".menuItem", { borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS(".menuItem:last-child", { borderBottom: "none" });
+	ensureCSS(".menuItem button", { display: "block", width: "100%", boxSizing: "border-box", textAlign: "left", border: "none", borderRadius: 0, backgroundColor: "transparent", padding: "10px 14px", minHeight: "40px", fontSize: "13px", color: styles.color });
+	ensureCSS(".menuItem button:hover:not(:disabled)", { backgroundColor: styles.buttonHoverBackground });
+	ensureCSS(".menuList.langMenu", { padding: "4px", minWidth: "168px" });
+	ensureCSS(".menuList.langMenu .menuItem", { borderBottom: "none" });
+	ensureCSS(".menuList.langMenu .menuItem button", { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", width: "100%", minHeight: "36px", margin: 0, padding: "0 10px", border: 0, borderRadius: styles.radius, backgroundColor: "transparent", fontSize: ".875rem", textAlign: "start" });
+	ensureCSS(".menuList.langMenu .menuItem button:hover:not(:disabled), .menuList.langMenu .menuItem button:focus-visible", { backgroundColor: styles.accentSoft, color: styles.color });
+	ensureCSS('.menuList.langMenu .menuItem button[aria-current="true"]', { fontWeight: "600" });
+	ensureCSS('.menuList.langMenu .menuItem button[aria-current="true"]::after', { content: '""', width: "5px", height: "9px", marginTop: "-2px", flex: "none", borderStyle: "solid", borderColor: styles.accent, borderWidth: "0 2px 2px 0", transform: "rotate(45deg)" });
+	ensureCSS(".menuList.langMenu .langRule", { height: "1px", margin: "4px 6px", backgroundColor: styles.borderColor });
+	ensureCSS(".menuItem button.active, .menuItem button.active:hover:not(:disabled)", { display: "flex", alignItems: "center", gap: "8px", backgroundColor: styles.accentSoft, color: styles.accent });
+	ensureCSS(".menuItem button .icon", { width: "1em", height: "1em", flex: "none" });
+	ensureCSS(".menuItem > label", { display: "flex", alignItems: "center", gap: "8px", width: "100%", boxSizing: "border-box", padding: "10px 14px", fontWeight: 400, cursor: "pointer" });
+	ensureCSS(".menuItemForm", { padding: "10px 14px" });
+	ensureCSS(".popupContent", { padding: "0", display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0, backgroundColor: styles.popupBackgroundColor, boxShadow: styles.floatShadow, border: "1px solid", borderColor: styles.floatBorderColor, borderRadius: styles.radius, maxWidth: "95vw", maxHeight: "min(90dvh, calc(100dvh - 2em))", boxSizing: "border-box" });
+	ensureCSS(".popupOverlay > .popupContent", { minHeight: 0, flexShrink: 0, margin: "auto" });
+	ensureCSS(".popupContent > .dialogPanel, .popupContent > .dialogForm.dialogPanel", { flex: "1 1 auto", minHeight: 0, maxHeight: "100%", overflow: "hidden" });
+	ensureCSS(".dialogPanel", { display: "grid", gridTemplateRows: "auto minmax(0, 1fr) auto", overflow: "hidden", width: "min(50em, calc(100vw - 2em))", minWidth: "0", maxWidth: "100%", maxHeight: "min(90dvh, calc(100dvh - 2em))", boxSizing: "border-box", backgroundColor: styles.popupBackgroundColor });
+	ensureCSS(".dialogForm", { margin: 0, padding: 0, border: "none" });
+	ensureCSS(".helpPanel", { width: "min(84em, calc(100vw - 2em))", minWidth: "0", maxWidth: "100%" });
+	ensureCSS(".helpColumns", { display: "flex", flexWrap: "wrap", gap: "1.5em", alignItems: "flex-start", minWidth: 0 });
+	ensureCSS(".helpColumns > div", { flex: "1 1 22em", minWidth: "min(100%, 22em)", maxWidth: "100%", boxSizing: "border-box" });
+	ensureCSS(".helpPanel table", { width: "100%", borderCollapse: "collapse" });
+	ensureCSS(".helpPanel h2", { margin: "0 0 .5em 0", fontSize: "1rem", fontWeight: 600 });
+	ensureCSS(".helpPanel td", { padding: ".2em .5em .2em 0", verticalAlign: "top" });
+	ensureCSS(".helpPanel td:first-child", { whiteSpace: "nowrap", fontFamily: "monospace", fontSize: "12px", color: styles.colorMild });
+	ensureCSS(".internalsPanel", { width: "min(90em, calc(100vw - 2em))", minWidth: "min(32em, calc(100vw - 2em))" });
+	ensureCSS(".internalsColumns", { display: "flex", flexWrap: "wrap", gap: "1.25em", alignItems: "flex-start" });
+	ensureCSS(".internalsColumns > div", { flex: "1 1 18em", minWidth: "min(100%, 18em)" });
+	ensureCSS(".internalsColumns h2", { margin: "0 0 .5em 0", fontSize: "1rem", fontWeight: 600 });
+	ensureCSS(".internalsList", { listStyle: "disc", margin: "0 0 0 1em", padding: 0 });
+	ensureCSS(".internalsPre", { whiteSpace: "pre-wrap", tabSize: 4, fontFamily: "monospace", fontSize: "12px", lineHeight: 1.45, backgroundColor: styles.backgroundColorMild, padding: "12px", borderRadius: styles.radius, border: "1px solid", borderColor: styles.borderColor, overflowX: "auto", margin: 0 });
+	ensureCSS(".errorPanel", { width: "min(60em, calc(100vw - 2em))", minWidth: "min(32em, calc(100vw - 2em))" });
+	ensureCSS(".errorPre", { whiteSpace: "pre-wrap", fontFamily: "monospace", fontSize: "12px", lineHeight: 1.45, backgroundColor: styles.backgroundColorMild, padding: "12px", borderRadius: styles.radius, border: "1px solid", borderColor: styles.borderColor, overflowX: "auto", margin: "0 0 1em 0" });
+	ensureCSS(".errorPanel p", { margin: "0 0 .75em 0", lineHeight: 1.45 });
+	ensureCSS(".dialogHeader", { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "14px 16px", borderBottom: "1px solid", borderBottomColor: styles.borderColor, gridRow: "1", minWidth: 0, flexShrink: 0 });
+	ensureCSS(".dialogHeader h1", { margin: 0, fontSize: "1.1rem", fontWeight: 600, color: styles.color, flex: "1 1 auto", minWidth: 0, lineHeight: 1.3 });
+	ensureCSS(".dialogHeader .btnIcon", { flexShrink: 0 });
+	ensureCSS(".dialogBody", { gridRow: "2", padding: "16px", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", minHeight: 0, maxHeight: "100%" });
+	ensureCSS(".dialogBody > fieldset", { display: "flex", flexDirection: "column", gap: "14px", border: "none", margin: 0, padding: 0, minWidth: 0 });
+	ensureCSS(".dialogField", { display: "flex", flexDirection: "column", gap: "6px" });
+	ensureCSS(".dialogFieldLabel", { fontSize: "12px", fontWeight: 600, color: styles.colorMild });
+	ensureCSS(".dialogFieldHint", { fontSize: "12px", color: styles.colorMilder, fontStyle: "italic", lineHeight: 1.4, margin: 0 });
+	ensureCSS(".dialogField input:not([type=checkbox]):not([type=radio]), .dialogField select, .dialogField textarea", { width: "100%", boxSizing: "border-box" });
+	ensureCSS(".dialogField textarea", { minHeight: "5em", resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 });
+	ensureCSS(".dialogField select", { minHeight: "34px" });
+	ensureCSS(".dialogCheckField", { display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "13px", lineHeight: 1.4, fontWeight: 400, color: styles.color, cursor: "pointer" });
+	ensureCSS(".dialogCheckField input[type=checkbox]", { width: "auto", flexShrink: 0, marginTop: "3px" });
+	ensureCSS(".dialogSection", { paddingTop: "12px", borderTop: "1px solid", borderTopColor: styles.borderColor, display: "flex", flexDirection: "column", gap: "10px" });
+	ensureCSS(".dialogSectionTitle", { fontSize: "12px", fontWeight: 600, color: styles.colorMild, textTransform: "uppercase", letterSpacing: ".04em" });
+	ensureCSS(".dialogSectionText", { fontSize: "13px", lineHeight: 1.45, color: styles.color, margin: 0 });
+	ensureCSS(".dialogActions", { display: "flex", flexWrap: "wrap", gap: "8px" });
+	ensureCSS(".dialogActionsStack", { display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" });
+	ensureCSS(".dialogActionsStack button", { width: "100%", textAlign: "left", boxSizing: "border-box" });
+	ensureCSS(".confirmPanel p", { margin: "0", lineHeight: 1.45, maxWidth: "36em" });
+	ensureCSS(".dialogFooter", { gridRow: "3", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", padding: "12px 16px", borderTop: "1px solid", borderTopColor: styles.borderColor, backgroundColor: styles.backgroundColorMild, flexShrink: 0 });
+	ensureCSS(".dialogFooter button", { minWidth: "6em", padding: "8px 20px", boxSizing: "border-box" });
+	ensureCSS(".dialogFooter .btnPrimary, .dialogFooter button[type=submit]", { fontWeight: 600 });
+	ensureCSS("html:not(.mobile) .popupOverlay", { padding: "1em", boxSizing: "border-box", overflowY: "auto", alignItems: "flex-start" });
+	ensureCSS("html.mobile .popupOverlay", { alignItems: "flex-end", padding: 0, overflowY: "hidden" });
+	ensureCSS("html.mobile .popupContent", { width: "100%", maxWidth: "100%", borderRadius: "12px 12px 0 0", maxHeight: "min(90dvh, calc(100dvh - 2em))" });
+	ensureCSS("html.mobile .dialogPanel", { width: "100%", minWidth: "0", maxHeight: "min(90dvh, calc(100dvh - 2em))" });
+	ensureCSS("html.mobile .helpPanel, html.mobile .internalsPanel, html.mobile .errorPanel", { width: "100%" });
+	ensureCSS("html.mobile .dialogFooter", { padding: "12px 16px calc(12px + env(safe-area-inset-bottom, 0))" });
+	ensureCSS("html.mobile .dialogFooter button", { flex: "1 1 auto", minHeight: "44px" });
+	ensureCSS("html.mobile .dialogField input:not([type=checkbox]):not([type=radio]), html.mobile .dialogField select, html.mobile .dialogField textarea", { minHeight: "44px" });
+	ensureCSS("html.mobile .dialogField textarea", { minHeight: "6em" });
+	ensureCSS("html.mobile .msgmeta", { borderBottomWidth: "1px", borderBottomColor: styles.borderColor, flexShrink: 0 });
+	ensureCSS("html.mobile .msgMobileSummary", { display: "block", padding: "8px 12px 6px", borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html.mobile .msgHeaderDetails:not(.expanded) .msgHeaders, html.mobile .msgHeaderDetails:not(.expanded) .msgHeaderExtra", { display: "none" });
+	ensureCSS("html.mobile .msgHeaderDetails.expanded .msgHeaders", { fontSize: "13px", padding: "8px 12px 4px" });
+	ensureCSS("html.mobile .msgHeaderDetails.expanded .msgHeaders tr", { display: "block", marginBottom: ".35em" });
+	ensureCSS("html.mobile .msgHeaderDetails.expanded .msgHeaders td", { display: "block", textAlign: "left", padding: "0" });
+	ensureCSS("html.mobile .msgHeaderDetails.expanded .msgHeaders td:first-child", { fontWeight: "600", color: styles.colorMild, marginBottom: "1px", fontSize: "11px" });
+	ensureCSS("html.mobile .msgHeaderDetails.expanded .msgFromReceivedSpread", { flexDirection: "column", alignItems: "flex-start", gap: "2px" });
+	ensureCSS("html.mobile .msgmeta .pad", { padding: "6px 10px" });
+	ensureCSS("html.mobile .msgModeBar", { flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", gap: "6px", alignItems: "center" });
+	ensureCSS("html.mobile .msgModeBar .btngroup", { flexShrink: 0 });
+	ensureCSS("html.mobile .msgModeBar .btngroup button", { padding: "5px 10px", fontSize: "12px", whiteSpace: "nowrap" });
+	ensureCSS("html.mobile .inlineAttachmentsLine", { fontSize: "12px" });
+	ensureCSS("html.mobile .headerBodySeparator", { display: "none" });
+	ensureCSS("html:not(.mobile) .composePopup", { padding: "0", width: "min(42em, calc(100vw - 2rem))", minWidth: "0", maxWidth: "calc(100vw - 2rem)", overflow: "hidden", border: "1px solid", borderColor: styles.floatBorderColor, boxShadow: styles.floatShadow });
+	ensureCSS("html:not(.mobile) .composeForm", { minHeight: 0, overflow: "hidden" });
+	ensureCSS("html:not(.mobile) .composeFields", { flex: "1 1 auto", minHeight: 0, overflowY: "auto", gap: "0", border: "none", margin: 0, padding: 0 });
+	ensureCSS("html:not(.mobile) .composeFields table", { borderCollapse: "separate", borderSpacing: "0" });
+	ensureCSS("html:not(.mobile) .composeFields table tr td", { padding: "7px 16px", verticalAlign: "middle" });
+	ensureCSS("html:not(.mobile) .composeFields table tr td:first-child", { width: "5.5em", paddingRight: "10px", whiteSpace: "nowrap" });
+	ensureCSS("html:not(.mobile) .composeTextMild", { textAlign: "right", fontSize: "13px", fontWeight: 500, color: styles.colorMild });
+	ensureCSS("html:not(.mobile) .composeHeaderRow td", { paddingTop: "12px", paddingBottom: "12px", borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html:not(.mobile) .composeFromBar", { display: "flex", alignItems: "center", gap: "12px", width: "100%", minWidth: 0 });
+	ensureCSS("html:not(.mobile) .composeFromLabel", { display: "flex", alignItems: "center", gap: "8px", flex: "1 1 auto", minWidth: 0, margin: 0, fontSize: "13px", fontWeight: 500, color: styles.colorMild });
+	ensureCSS("html:not(.mobile) .composeFromLabel select", { flex: "1 1 auto", minWidth: "10em", minHeight: "34px", maxWidth: "100%" });
+	ensureCSS("html:not(.mobile) .composeHeaderActions", { display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, marginLeft: "auto" });
+	ensureCSS("html:not(.mobile) .composeToolbarRow td", { paddingTop: "8px", paddingBottom: "10px", borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html:not(.mobile) .composeToolbarBtns", { display: "flex", flexWrap: "wrap", gap: "6px" });
+	ensureCSS("html:not(.mobile) .composeToolbarBtns button", { padding: "4px 10px", fontSize: "12px", lineHeight: 1.3, height: "auto", minHeight: "28px" });
+	ensureCSS("html:not(.mobile) .composeAddrRow td", { borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html:not(.mobile) .composeFields table tr.composeSubjectRow td", { borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html:not(.mobile) .composeCell > span", { display: "flex", alignItems: "stretch", gap: "6px", width: "100%", marginBottom: "4px" });
+	ensureCSS("html:not(.mobile) .composeCell > span:last-child", { marginBottom: 0 });
+	ensureCSS("html:not(.mobile) .composeCell .autosize", { flex: "1 1 0", minWidth: 0, display: "grid", width: "100%", maxWidth: "100%" });
+	ensureCSS("html:not(.mobile) .composeCell input, html:not(.mobile) .composeFields table tr.composeSubjectRow input", { width: "100%", boxSizing: "border-box", height: "34px", minHeight: "34px", padding: "0 10px" });
+	ensureCSS("html:not(.mobile) .composeCell .btnIcon", { width: "34px", minWidth: "34px", height: "34px", minHeight: "34px", flexShrink: 0, alignSelf: "auto", boxSizing: "border-box" });
+	ensureCSS("html:not(.mobile) .composeFields textarea.mono", { display: "block", flex: "1 1 auto", minHeight: "14em", margin: "0", padding: "12px 16px", width: "100%", boxSizing: "border-box", border: "none", borderTop: "1px solid", borderBottom: "1px solid", borderColor: styles.borderColor, borderRadius: 0, resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 });
+	ensureCSS("html:not(.mobile) .composeMeta", { padding: "12px 16px", borderBottom: "1px solid", borderBottomColor: styles.borderColor, display: "flex", flexDirection: "column", gap: "10px", backgroundColor: styles.backgroundColor });
+	ensureCSS("html:not(.mobile) .composeMeta label", { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", margin: 0, fontSize: "13px", fontWeight: 500, color: styles.colorMild });
+	ensureCSS("html:not(.mobile) .composeMeta label select, html:not(.mobile) .composeMeta input[type=file]", { flex: "1 1 12em", minWidth: 0, maxWidth: "100%" });
+	ensureCSS("html:not(.mobile) .composeSchedulePresets", { display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" });
+	ensureCSS("html:not(.mobile) .composeFooter", { display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", padding: "12px 16px", borderTop: "1px solid", borderTopColor: styles.borderColor, backgroundColor: styles.backgroundColorMild, flexShrink: 0 });
+	ensureCSS("html:not(.mobile) .composeFooter button[type=submit]", { minWidth: "6em", padding: "8px 20px", fontWeight: 600 });
+	ensureCSS("html.mobile .composePopupMobile", { position: "fixed", inset: "0", width: "100%", height: "100%", maxWidth: "none", minWidth: "0", borderRadius: "0", border: "none", boxShadow: "none", margin: "0", padding: "0", paddingTop: "env(safe-area-inset-top, 0)", paddingBottom: "env(safe-area-inset-bottom, 0)", boxSizing: "border-box", display: "flex", flexDirection: "column" });
+	ensureCSS("html.mobile .composePopupMobile .composeResizeGrab", { display: "none" });
+	ensureCSS("html.mobile .composePopupMobile .composeForm", { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0" });
+	ensureCSS("html.mobile .composePopupMobile .composeFields", { flex: "1 1 auto", minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0", border: "none", margin: 0, padding: 0 });
+	ensureCSS("html.mobile .composePopupMobile table, html.mobile .composePopupMobile tr, html.mobile .composePopupMobile td", { display: "block", width: "100%", boxSizing: "border-box" });
+	ensureCSS("html.mobile .composePopupMobile .composeFields table tr", { marginBottom: "0" });
+	ensureCSS("html.mobile .composePopupMobile .composeTextMild", { textAlign: "left", display: "block", marginBottom: "4px", fontWeight: 600, fontSize: "12px", color: styles.colorMild });
+	ensureCSS("html.mobile .composePopupMobile .composeHeaderRow", { padding: "12px 16px", borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html.mobile .composePopupMobile .composeHeaderRow td", { padding: "0" });
+	ensureCSS("html.mobile .composePopupMobile .composeFromBar", { display: "flex", flexDirection: "column", alignItems: "stretch", gap: "10px" });
+	ensureCSS("html.mobile .composePopupMobile .composeFromLabel", { display: "flex", flexDirection: "column", alignItems: "stretch", gap: "6px", margin: 0, fontSize: "12px", fontWeight: 600, color: styles.colorMild });
+	ensureCSS("html.mobile .composePopupMobile .composeFromLabel select", { width: "100%", maxWidth: "100%", minHeight: "44px", height: "44px", boxSizing: "border-box" });
+	ensureCSS("html.mobile .composePopupMobile .composeHeaderActions", { display: "flex", gap: "8px" });
+	ensureCSS("html.mobile .composePopupMobile .composeHeaderActions button", { flex: "1 1 0", minHeight: "44px" });
+	ensureCSS("html.mobile .composePopupMobile .composeToolbarRow", { padding: "10px 16px", borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html.mobile .composePopupMobile .composeToolbarRow td", { padding: "0" });
+	ensureCSS("html.mobile .composePopupMobile .composeToolbarBtns", { display: "flex", flexWrap: "wrap", gap: "6px" });
+	ensureCSS("html.mobile .composePopupMobile .composeToolbarBtns button", { padding: "6px 12px", fontSize: "13px", minHeight: "36px", height: "auto" });
+	ensureCSS("html.mobile .composePopupMobile .composeAddrRow", { padding: "10px 16px", borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html.mobile .composePopupMobile .composeAddrRow td", { padding: "0" });
+	ensureCSS("html.mobile .composePopupMobile .composeSubjectRow", { padding: "10px 16px", borderBottom: "1px solid", borderBottomColor: styles.borderColor });
+	ensureCSS("html.mobile .composePopupMobile .composeSubjectRow td", { padding: "0" });
+	ensureCSS("html.mobile .composePopupMobile .composeCell > span", { display: "flex", alignItems: "stretch", gap: "8px", width: "100%", marginBottom: "6px" });
+	ensureCSS("html.mobile .composePopupMobile .composeCell > span:last-child", { marginBottom: 0 });
+	ensureCSS("html.mobile .composePopupMobile .composeCell .autosize", { flex: "1 1 0", minWidth: 0, display: "grid", width: "100%", maxWidth: "100%" });
+	ensureCSS("html.mobile .composePopupMobile td .autosize", { display: "grid", width: "100%", maxWidth: "100%", boxSizing: "border-box" });
+	ensureCSS("html.mobile .composePopupMobile .composeCell input, html.mobile .composePopupMobile .composeSubjectRow input", { width: "100%", boxSizing: "border-box", height: "44px", minHeight: "44px", padding: "0 10px" });
+	ensureCSS("html.mobile .composePopupMobile .autosize.input", { width: "100%" });
+	ensureCSS("html.mobile .composePopupMobile .composeCell .btnIcon", { width: "44px", minWidth: "44px", height: "44px", minHeight: "44px", flexShrink: 0, alignSelf: "auto", boxSizing: "border-box" });
+	ensureCSS("html.mobile .composePopupMobile textarea.mono", { fontFamily: "inherit", minHeight: "12em", flex: "1 1 auto", width: "100%", boxSizing: "border-box", border: "none", borderTop: "1px solid", borderBottom: "1px solid", borderColor: styles.borderColor, borderRadius: 0, padding: "12px 16px", lineHeight: 1.5 });
+	ensureCSS("html.mobile .composePopupMobile .composeMeta", { padding: "12px 16px", borderBottom: "1px solid", borderBottomColor: styles.borderColor, display: "flex", flexDirection: "column", gap: "12px", backgroundColor: styles.backgroundColor });
+	ensureCSS("html.mobile .composePopupMobile .composeMeta label", { display: "flex", flexDirection: "column", alignItems: "stretch", gap: "6px", margin: 0, fontSize: "12px", fontWeight: 600, color: styles.colorMild });
+	ensureCSS("html.mobile .composePopupMobile .composeMeta label select, html.mobile .composePopupMobile .composeMeta input[type=file], html.mobile .composePopupMobile .composeMeta input[type=datetime-local]", { width: "100%", maxWidth: "100%", minHeight: "44px", boxSizing: "border-box" });
+	ensureCSS("html.mobile .composePopupMobile .composeSchedulePresets", { display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" });
+	ensureCSS("html.mobile .composePopupMobile .composeFooter", { display: "flex", flexDirection: "column", gap: "8px", flexShrink: 0, padding: "12px 16px calc(12px + env(safe-area-inset-bottom, 0))", borderTop: "1px solid", borderTopColor: styles.borderColor, backgroundColor: styles.backgroundColorMild, marginTop: "0" });
+	ensureCSS("html.mobile .composePopupMobile .composeFooter button", { width: "100%", minHeight: "44px" });
+	ensureCSS("html.mobile .composePopupMobile .composeFooter button[type=submit]", { fontWeight: 600 });
+	ensureCSS(".searchHeaderRow", { display: "flex", alignItems: "stretch", gap: "8px", width: "100%" });
+	ensureCSS(".searchHeaderRow input", { flex: "1 1 0", minWidth: 0, boxSizing: "border-box", minHeight: "38px", height: "38px" });
+	ensureCSS(".searchHeaderActions", { display: "flex", gap: "6px", flexShrink: 0, alignItems: "stretch" });
+	ensureCSS(".searchHeaderRow .btnIcon", { width: "38px", minWidth: "38px", height: "38px", minHeight: "38px", boxSizing: "border-box" });
+	ensureCSS("html.mobile .webmailRoot", { paddingBottom: "env(safe-area-inset-bottom, 0)" });
+	ensureCSS("html.mobile .yscroll, html.mobile .yscrollAuto", { touchAction: "pan-y" });
 	var yscrollStyle = css("yscroll", { overflowY: "scroll", position: "absolute", top: 0, bottom: 0, left: 0, right: 0 });
 	var yscrollAutoStyle = css("yscrollAuto", { overflowY: "auto", position: "absolute", top: 0, bottom: 0, left: 0, right: 0 });
 	css("autosize", { display: "inline-grid", maxWidth: "90vw" });
 	ensureCSS(".autosize.input", { gridArea: "1 / 2" });
-	ensureCSS(".autosize::after", { content: "attr(data-value)", marginRight: "1em", lineHeight: 0, visibility: "hidden", whiteSpace: "pre-wrap", overflowX: "hidden" });
+	ensureCSS(".autosize::after", { content: "attr(data-value)", marginRight: "1em", lineHeight: 0, visibility: "hidden", whiteSpace: "pre-wrap", overflowWrap: "anywhere", overflowX: "hidden" });
 	var moxversion;
 	var moxgoos;
 	var moxgoarch;
@@ -1473,8 +2694,8 @@
 	var introboxMailbox = "";
 	var defaultSettings = {
 		mailboxesWidth: 240,
-		layout: "auto",
-		// Automatic switching between left/right and top/bottom layout, based on screen width.
+		layout: "leftright",
+		// leftright, topbottom, or auto. Auto still follows the window width.
 		leftWidthPct: 50,
 		// Split in percentage of remaining width for left/right layout.
 		topHeightPct: 40,
@@ -1581,11 +2802,11 @@
 			let password;
 			const root = dom.div(css("loginOverlay", { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: styles.overlayOpaqueBackgroundColor, display: "flex", alignItems: "center", justifyContent: "center", zIndex: zindexes.login, animation: "fadein .15s ease-in" }), dom.div(style({ display: "flex", flexDirection: "column", alignItems: "center" }), reasonElem = reason ? dom.div(css("sessionError", { marginBottom: "2ex", textAlign: "center" }), reason) : dom.div(), dom.div(css("loginPopup", {
 				backgroundColor: styles.popupBackgroundColor,
-				boxShadow: styles.boxShadow,
+				boxShadow: styles.floatShadow,
 				border: "1px solid",
-				borderColor: styles.popupBorderColor,
-				borderRadius: ".25em",
-				padding: "1em",
+				borderColor: styles.floatBorderColor,
+				borderRadius: styles.radius,
+				padding: "1.5em",
 				maxWidth: "95vw",
 				overflowX: "auto",
 				maxHeight: "95vh",
@@ -1611,16 +2832,16 @@
 					popupOpen = false;
 					resolve(token);
 				} catch (err) {
-					console.log("login error", err);
-					window.alert("Error: " + errmsg(err));
+					console.log(ui("login error"), err);
+					window.alert(ui("Error: ") + errmsg(err));
 				} finally {
 					fieldset.disabled = false;
 				}
-			}, "submit"), fieldset = dom.fieldset(dom.h1("Mail"), dom.label(style({ display: "block", marginBottom: "2ex" }), dom.div("Email address", style({ marginBottom: ".5ex" })), autosize = dom.span(dom._class("autosize"), username = dom.input(attr.required(""), attr.autocomplete("email"), attr.placeholder("jane@example.org"), /* @__PURE__ */ __name(function change() {
+			}, "submit"), fieldset = dom.fieldset(dom.h1(ui("Mail")), dom.label(style({ display: "block", marginBottom: "2ex" }), dom.div(ui("Email address"), style({ marginBottom: ".5ex" })), autosize = dom.span(dom._class("autosize"), username = dom.input(attr.required(""), attr.autocomplete("email"), attr.placeholder(ui("jane@example.org")), /* @__PURE__ */ __name(function change() {
 				autosize.dataset.value = username.value;
 			}, "change"), /* @__PURE__ */ __name(function input() {
 				autosize.dataset.value = username.value;
-			}, "input")))), dom.label(style({ display: "block", marginBottom: "2ex" }), dom.div("Password", style({ marginBottom: ".5ex" })), password = dom.input(attr.type("password"), attr.autocomplete("current-password"), attr.required(""))), dom.div(style({ textAlign: "center" }), dom.submitbutton("Login")))))));
+			}, "input")))), dom.label(style({ display: "block", marginBottom: "2ex" }), dom.div(ui("Password"), style({ marginBottom: ".5ex" })), password = dom.input(attr.type("password"), attr.autocomplete("current-password"), attr.required(""))), dom.div(style({ textAlign: "center" }), dom.submitbutton(ui("Login"))))))));
 			document.body.appendChild(root);
 			username.focus();
 		});
@@ -1649,7 +2870,7 @@
 		}
 		return null;
 	}, "envelopeIdentity");
-	var shortcutElem = dom.div(css("shortcutFlash", { fontSize: "2em", position: "absolute", left: ".25em", bottom: ".25em", backgroundColor: "#888", padding: "0.25em .5em", color: "white", borderRadius: ".15em" }));
+	var shortcutElem = dom.div(css("shortcutFlash", { fontSize: "2em", position: "absolute", left: ".25em", bottom: ".25em", backgroundColor: styles.accent, padding: "0.25em .5em", color: "white", borderRadius: styles.radius, boxShadow: styles.shadowSm }));
 	var shortcutTimer = 0;
 	var showShortcut = /* @__PURE__ */ __name((c) => {
 		if (accountSettings?.NoShowShortcuts) {
@@ -1975,26 +3196,28 @@
 				seen.add(name);
 			}
 		}, "flag");
-		const addFlags = /* @__PURE__ */ __name((mi) => {
+		const addFlags = /* @__PURE__ */ __name((mi, ownRow) => {
 			const m = mi.Message;
-			flag2(!m.Junk && !m.Notjunk, "?", "Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages");
-			flag2(m.Answered, "r", "Replied/answered");
-			flag2(m.Flagged, "!", "Flagged");
-			flag2(m.Forwarded, "f", "Forwarded");
-			flag2(m.Junk, "j", "Junk");
-			flag2(m.Deleted, "D", "Deleted, used in IMAP, message will likely be removed soon.");
-			flag2(m.Draft, "d", "Draft");
-			flag2(m.Phishing, "p", "Phishing");
-			flag2(mi.Attachments && mi.Attachments.length > 0 ? true : false, "a", "Has at least one attachment");
+			flag2(!m.Junk && !m.Notjunk, "?", ui("Unclassified, neither junk nor not junk: message does not contribute to spam classification of new incoming messages"));
+			flag2(m.Answered, "r", ui("Replied/answered"));
+			if (!ownRow) {
+				flag2(m.Flagged, "!", ui("Flagged"));
+			}
+			flag2(m.Forwarded, "f", ui("Forwarded"));
+			flag2(m.Junk, "j", ui("Junk"));
+			flag2(m.Deleted, "D", ui("Deleted, used in IMAP, message will likely be removed soon."));
+			flag2(m.Draft, "d", ui("Draft"));
+			flag2(m.Phishing, "p", ui("Phishing"));
+			flag2(mi.Attachments && mi.Attachments.length > 0 ? true : false, "a", ui("Has at least one attachment"));
 			if (m.ThreadMuted) {
-				flag2(true, "m", "Muted, new messages are automatically marked as read.");
+				flag2(true, "m", ui("Muted, new messages are automatically marked as read."));
 			}
 		}, "addFlags");
-		addFlags(miv.messageitem);
+		addFlags(miv.messageitem, true);
 		if (miv.isCollapsedThreadRoot()) {
 			l = othermsgflags;
 			for (miv of miv.descendants()) {
-				addFlags(miv.messageitem);
+				addFlags(miv.messageitem, false);
 			}
 		}
 		const flagCharIcons = {
@@ -2132,7 +3355,7 @@
 				throw err;
 			}
 			if (!noAlert) {
-				window.alert("Error: " + action + ": " + errmsg(err));
+				window.alert(ui("Error: ") + action + ": " + errmsg(err));
 			}
 			throw err;
 		} finally {
@@ -2150,19 +3373,83 @@
 			}
 		}
 	}, "withStatus");
+	var moveUndo = null;
+	var moveUndoBar = null;
+	var moveUndoHost = null;
+	var clearMoveUndo = /* @__PURE__ */ __name(() => {
+		moveUndo = null;
+		if (moveUndoBar) {
+			moveUndoBar.remove();
+			moveUndoBar = null;
+		}
+	}, "clearMoveUndo");
+	var groupMoveSources = /* @__PURE__ */ __name((sources) => {
+		const byBox = /* @__PURE__ */ new Map();
+		for (const source of sources) {
+			const ids = byBox.get(source.mailboxID);
+			if (ids) {
+				ids.push(source.id);
+			} else {
+				byBox.set(source.mailboxID, [source.id]);
+			}
+		}
+		return [...byBox].map(([mailboxID, ids]) => ({ mailboxID, ids }));
+	}, "groupMoveSources");
+	var offerMoveUndo = /* @__PURE__ */ __name((sources) => {
+		const groups = groupMoveSources(sources);
+		if (groups.length === 0) {
+			return;
+		}
+		clearMoveUndo();
+		const pending = { groups };
+		moveUndo = pending;
+		moveUndoBar = dom.div(dom._class("moveUndoBar"), attr.role("status"), ui("Moved"), dom.clickbutton(ui("Undo"), /* @__PURE__ */ __name(async function click() {
+			if (moveUndo !== pending) {
+				return;
+			}
+			clearMoveUndo();
+			for (let i = 0; i < groups.length; i++) {
+				try {
+					await withStatus(ui("Moving back"), client.MessageMove(groups[i].ids, groups[i].mailboxID, false));
+				} catch (err) {
+					log({ err });
+					offerMoveUndo(groups.slice(i).flatMap((g) => g.ids.map((id) => ({ id, mailboxID: g.mailboxID }))));
+					return;
+				}
+			}
+		}, "click")));
+		const onOpenMessage = document.documentElement.classList.contains("mobile") && document.documentElement.classList.contains("mobile-pane-message");
+		const host = !onOpenMessage && moveUndoHost ? moveUndoHost : document.body;
+		if (host === document.body) {
+			moveUndoBar.classList.add("moveUndoBarFloating");
+		}
+		host.appendChild(moveUndoBar);
+	}, "offerMoveUndo");
+	var dismissMoveUndoUnless = /* @__PURE__ */ __name((id) => {
+		if (!moveUndo || moveUndo.groups.some((g) => g.ids.includes(id))) {
+			return;
+		}
+		clearMoveUndo();
+	}, "dismissMoveUndoUnless");
+	var forgetMovedMessages = /* @__PURE__ */ __name((ids) => {
+		if (moveUndo && ids.some((id) => moveUndo.groups.some((g) => g.ids.includes(id)))) {
+			clearMoveUndo();
+		}
+	}, "forgetMovedMessages");
 	var withDisabled = /* @__PURE__ */ __name(async (elem, p) => {
 		try {
 			elem.disabled = true;
 			return await p;
 		} catch (err) {
 			log({ err });
-			window.alert("Error: " + errmsg(err));
+			window.alert(ui("Error: ") + errmsg(err));
 			throw err;
 		} finally {
 			elem.disabled = false;
 		}
 	}, "withDisabled");
 	var popover = /* @__PURE__ */ __name((target, opts, ...kids) => {
+		clearMoveUndo();
 		const origFocus = document.activeElement;
 		const pos = target.getBoundingClientRect();
 		const close = /* @__PURE__ */ __name(() => {
@@ -2188,19 +3475,18 @@
 		}, "keydown"), content = dom.div(attr.tabindex("0"), css("popoverContent", {
 			position: "absolute",
 			overflowY: "auto"
-		}), posx, posy, opts.transparent ? [] : [
+		}), posx, posy, /* @__PURE__ */ __name(function click(e) {
+			e.stopPropagation();
+		}, "click"), opts.transparent ? [] : [
 			css("popoverContentOpaque", {
 				backgroundColor: styles.popupBackgroundColor,
 				padding: "1em",
-				borderRadius: ".15em",
-				boxShadow: styles.boxShadow,
+				borderRadius: styles.radius,
+				boxShadow: styles.floatShadow,
 				border: "1px solid",
-				borderColor: styles.popupBorderColor,
+				borderColor: styles.floatBorderColor,
 				color: styles.popupColor
-			}),
-			/* @__PURE__ */ __name(function click(e) {
-				e.stopPropagation();
-			}, "click")
+			})
 		], ...kids));
 		document.body.appendChild(root);
 		const first = root.querySelector("input, select, textarea, button");
@@ -2211,8 +3497,13 @@
 		}
 		return close;
 	}, "popover");
+	var menuPopover = /* @__PURE__ */ __name((target, items, fit = false, listClass) => {
+		const flat = items.flat().filter((b) => b instanceof HTMLElement);
+		return popover(target, { transparent: true }, dom.div(dom._class("menuList", ...fit ? ["menuListFit"] : [], ...listClass ? [listClass] : []), ...flat.map((item) => dom.div(dom._class("menuItem"), item))));
+	}, "menuPopover");
 	var popupOpen = false;
 	var popup = /* @__PURE__ */ __name((...kids) => {
+		clearMoveUndo();
 		const origFocus = document.activeElement;
 		const close = /* @__PURE__ */ __name(() => {
 			if (!root.parentNode) {
@@ -2225,7 +3516,7 @@
 			}
 		}, "close");
 		let content;
-		const root = dom.div(css("popupOverlay", { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: styles.overlayBackgroundColor, display: "flex", alignItems: "center", justifyContent: "center", zIndex: zindexes.popup }), /* @__PURE__ */ __name(function keydown(e) {
+		const root = dom.div(css("popupOverlay", { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: styles.overlayBackgroundColor, display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: zindexes.popup }), /* @__PURE__ */ __name(function keydown(e) {
 			if (e.key === "Escape") {
 				e.stopPropagation();
 				close();
@@ -2233,7 +3524,7 @@
 		}, "keydown"), /* @__PURE__ */ __name(function click(e) {
 			e.stopPropagation();
 			close();
-		}, "click"), content = dom.div(attr.tabindex("0"), css("popupContent", { backgroundColor: styles.popupBackgroundColor, boxShadow: styles.boxShadow, border: "1px solid", borderColor: styles.popupBorderColor, borderRadius: ".25em", padding: "1em", maxWidth: "95vw", overflowX: "auto", maxHeight: "95vh", overflowY: "auto" }), /* @__PURE__ */ __name(function click(e) {
+		}, "click"), content = dom.div(attr.tabindex("0"), dom._class("popupContent"), /* @__PURE__ */ __name(function click(e) {
 			e.stopPropagation();
 		}, "click"), kids));
 		popupOpen = true;
@@ -2252,7 +3543,7 @@
 		if (!accountSettings) {
 			throw new Error("No account settings fetched yet.");
 		}
-		const remove = popup(css("popupSettings", { minWidth: "30em" }), style({ maxWidth: "50em" }), dom.h1("Settings"), dom.form(/* @__PURE__ */ __name(async function submit(e) {
+		const remove = popup(dom.form(dom._class("dialogForm"), dom._class("dialogPanel"), /* @__PURE__ */ __name(async function submit(e) {
 			e.preventDefault();
 			e.stopPropagation();
 			const accSet = {
@@ -2267,51 +3558,57 @@
 			await withDisabled(fieldset, client.SettingsSave(accSet));
 			accountSettings = accSet;
 			remove();
-		}, "submit"), fieldset = dom.fieldset(dom.label(style({ margin: "1ex 0", display: "block" }), dom.div("Signature"), signature = dom.textarea(new String(accountSettings.Signature), style({ width: "100%" }), attr.rows("" + Math.max(3, 1 + accountSettings.Signature.split("\n").length)))), dom.label(style({ margin: "1ex 0", display: "block" }), dom.div("Reply above/below original"), attr.title("Auto: If text is selected, only the replied text is quoted and editing starts below. Otherwise, the full message is quoted and editing starts at the top."), quoting = dom.select(dom.option(attr.value(""), "Auto"), dom.option(attr.value("bottom"), "Bottom", accountSettings.Quoting === Quoting.Bottom ? attr.selected("") : []), dom.option(attr.value("top"), "Top", accountSettings.Quoting === Quoting.Top ? attr.selected("") : []))), dom.label(style({ margin: "1ex 0", display: "block" }), showAddressSecurity = dom.input(attr.type("checkbox"), accountSettings.ShowAddressSecurity ? attr.checked("") : []), " Show address security indications", attr.title("Show bars underneath address input fields, indicating support for STARTTLS/DNSSEC/DANE/MTA-STS/RequireTLS.")), dom.label(style({ margin: "1ex 0", display: "block" }), showHTML = dom.input(attr.type("checkbox"), accountSettings.ShowHTML ? attr.checked("") : []), " Show email as HTML instead of text by default for first-time senders", attr.title("Whether to show HTML or text is remembered per sender. This sets the default for unknown correspondents.")), dom.label(style({ margin: "1ex 0", display: "block" }), showShortcuts = dom.input(attr.type("checkbox"), accountSettings.NoShowShortcuts ? [] : attr.checked("")), " Show shortcut keys in bottom left after interaction with mouse"), dom.label(style({ margin: "1ex 0", display: "block" }), dom.div("Show additional headers"), showHeaders = dom.textarea(new String((accountSettings.ShowHeaders || []).join("\n")), style({ width: "100%" }), attr.rows("" + Math.max(3, 1 + (accountSettings.ShowHeaders || []).length))), dom.div(style({ fontStyle: "italic" }), "One header name per line, for example Delivered-To, X-Mox-Reason, User-Agent, ...; Refresh mailbox view for changes to take effect.")), dom.div(style({ marginTop: "2ex" }), 'Register "mailto:" links with the browser/operating system to compose a message in webmail.', dom.br(), dom.clickbutton("Register", attr.title("In most browsers, registering is only allowed on HTTPS URLs. Your browser may ask for confirmation. If nothing appears to happen, the registration may already have been present."), /* @__PURE__ */ __name(function click() {
+		}, "submit"), dom.div(dom._class("dialogHeader"), dom.h1(ui("Settings")), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close without saving.")), /* @__PURE__ */ __name(function click() {
+			remove();
+		}, "click"))), dom.div(dom._class("dialogBody"), fieldset = dom.fieldset(dom.div(dom._class("dialogField"), dom.label(dom._class("dialogFieldLabel"), ui("Signature")), signature = dom.textarea(new String(accountSettings.Signature), attr.rows("" + Math.max(3, 1 + accountSettings.Signature.split("\n").length)))), dom.div(dom._class("dialogField"), dom.label(dom._class("dialogFieldLabel"), ui("Reply above/below original"), attr.title(ui("Auto: If text is selected, only the replied text is quoted and editing starts below. Otherwise, the full message is quoted and editing starts at the top."))), quoting = dom.select(dom.option(attr.value(""), ui("Auto")), dom.option(attr.value("bottom"), ui("Bottom"), accountSettings.Quoting === Quoting.Bottom ? attr.selected("") : []), dom.option(attr.value("top"), ui("Top"), accountSettings.Quoting === Quoting.Top ? attr.selected("") : []))), dom.label(dom._class("dialogCheckField"), showAddressSecurity = dom.input(attr.type("checkbox"), accountSettings.ShowAddressSecurity ? attr.checked("") : []), dom.span(ui("Show address security indications"), attr.title(ui("Show bars underneath address input fields, indicating support for STARTTLS/DNSSEC/DANE/MTA-STS/RequireTLS.")))), dom.label(dom._class("dialogCheckField"), showHTML = dom.input(attr.type("checkbox"), accountSettings.ShowHTML ? attr.checked("") : []), dom.span(ui("Show email as HTML instead of text by default for first-time senders"), attr.title(ui("Whether to show HTML or text is remembered per sender. This sets the default for unknown correspondents.")))), dom.label(dom._class("dialogCheckField"), showShortcuts = dom.input(attr.type("checkbox"), accountSettings.NoShowShortcuts ? [] : attr.checked("")), dom.span(ui("Show shortcut keys in bottom left after interaction with mouse"))), dom.div(dom._class("dialogField"), dom.label(dom._class("dialogFieldLabel"), ui("Show additional headers")), showHeaders = dom.textarea(new String((accountSettings.ShowHeaders || []).join("\n")), attr.rows("" + Math.max(3, 1 + (accountSettings.ShowHeaders || []).length))), dom.p(dom._class("dialogFieldHint"), ui("One header name per line, for example Delivered-To, X-Mox-Reason, User-Agent, \u2026 Refresh mailbox view for changes to take effect."))), dom.div(dom._class("dialogSection"), dom.div(dom._class("dialogSectionTitle"), ui("Mailto links")), dom.p(dom._class("dialogSectionText"), ui('Register "mailto:" links with the browser or operating system to compose a message in webmail.')), dom.div(dom._class("dialogActions"), dom.clickbutton(ui("Register"), attr.title(ui("In most browsers, registering is only allowed on HTTPS URLs. Your browser may ask for confirmation. If nothing appears to happen, the registration may already have been present.")), /* @__PURE__ */ __name(function click() {
 			if (!window.navigator.registerProtocolHandler) {
-				window.alert('Registering a protocol handler ("mailto:") is not supported by your browser.');
+				window.alert(ui('Registering a protocol handler ("mailto:") is not supported by your browser.'));
 				return;
 			}
 			try {
 				window.navigator.registerProtocolHandler("mailto", "#compose %s");
-				window.alert('"mailto:"-links have been registered');
+				window.alert(ui('"mailto:"-links have been registered'));
 			} catch (err) {
-				window.alert('Error registering "mailto:" protocol handler: ' + errmsg(err));
+				window.alert(ui('Error registering "mailto:" protocol handler: ') + errmsg(err));
 			}
-		}, "click")), " ", dom.clickbutton("Unregister", attr.title("Not all browsers implement unregistering via JavaScript."), /* @__PURE__ */ __name(function click() {
+		}, "click")), dom.clickbutton(ui("Unregister"), attr.title(ui("Not all browsers implement unregistering via JavaScript.")), /* @__PURE__ */ __name(function click() {
 			if (!window.navigator.unregisterProtocolHandler) {
-				window.alert('Unregistering a protocol handler ("mailto:") via JavaScript is not supported by your browser. See your browser settings to unregister.');
+				window.alert(ui('Unregistering a protocol handler ("mailto:") via JavaScript is not supported by your browser. See your browser settings to unregister.'));
 				return;
 			}
 			try {
 				window.navigator.unregisterProtocolHandler("mailto", "#compose %s");
 			} catch (err) {
-				window.alert('Error unregistering "mailto:" protocol handler: ' + errmsg(err));
+				window.alert(ui('Error unregistering "mailto:" protocol handler: ') + errmsg(err));
 				return;
 			}
-			window.alert('"mailto:" protocol handler unregistered.');
-		}, "click"))), dom.br(), dom.div(dom.submitbutton("Save")))));
+			window.alert(ui('"mailto:" protocol handler unregistered.'));
+		}, "click")))))), dom.div(dom._class("dialogFooter"), dom.clickbutton(ui("Cancel"), /* @__PURE__ */ __name(function click(e) {
+			e.preventDefault();
+			remove();
+		}, "click")), dom.submitbutton(dom._class("btnPrimary"), ui("Save")))));
 	}, "cmdSettings");
 	var cmdHelp = /* @__PURE__ */ __name(async () => {
-		popup(css("popupHelp", { padding: "1em 1em 2em 1em" }), dom.h1("Help and keyboard shortcuts"), dom.div(style({ display: "flex" }), dom.div(style({ width: "40em" }), dom.table(dom.tr(dom.td(attr.colspan("2"), dom.h2("Global", style({ margin: "0" })))), [
+		const remove = popup(dom.div(dom._class("dialogPanel"), dom._class("helpPanel"), dom.div(dom._class("dialogHeader"), dom.h1(ui("Help and keyboard shortcuts")), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close help.")), /* @__PURE__ */ __name(function click() {
+			remove();
+		}, "click"))), dom.div(dom._class("dialogBody"), dom.div(dom._class("helpColumns"), dom.div(dom.table(dom.tr(dom.td(attr.colspan("2"), dom.h2(ui("Global"), style({ margin: "0" })))), [
 			["c", "compose new message"],
 			["/", "search"],
 			["i", "open inbox"],
 			["?", "help"],
 			["ctrl ?", "tooltip for focused element"],
 			["ctrl m", "focus message"]
-		].map((t) => dom.tr(dom.td(t[0]), dom.td(t[1]))), dom.tr(dom.td(attr.colspan("2"), dom.h2("Mailbox", style({ margin: "0" })))), [
+		].map((t) => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))), dom.tr(dom.td(attr.colspan("2"), dom.h2(ui("Mailbox"), style({ margin: "0" })))), [
 			["\u2190", "collapse"],
 			["\u2192", "expand"],
 			["b", "show more actions"]
-		].map((t) => dom.tr(dom.td(t[0]), dom.td(t[1]))), dom.tr(dom.td(attr.colspan("2"), dom.h2("Message list", style({ margin: "1ex 0 0 0" })))), dom.tr(dom.td("\u2193", ", j"), dom.td("down one message"), dom.td(attr.rowspan("6"), css("helpSideNote", { color: "#888", borderLeft: "2px solid", borderLeftColor: "#888", paddingLeft: ".5em" }), dom.div("hold ctrl to only move focus", attr.title("ctrl-l and ctrl-u are left for the browser the handle")), dom.div("hold shift to expand selection"))), [
-			[["\u2191", ", k"], "up one message"],
+		].map((t) => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))), dom.tr(dom.td(attr.colspan("2"), dom.h2(ui("Message list"), style({ margin: "1ex 0 0 0" })))), dom.tr(dom.td("\u2193", ", j"), dom.td(ui("down one message")), dom.td(attr.rowspan("6"), css("helpSideNote", { color: styles.colorMilder, borderLeft: "2px solid", borderLeftColor: styles.accent, paddingLeft: ".5em" }), dom.div(ui("hold ctrl to only move focus"), attr.title(ui("ctrl-l and ctrl-u are left for the browser the handle"))), dom.div(ui("hold shift to expand selection")))), dom.tr(dom.td("\u2191", ", k"), dom.td(ui("up one message"))), [
 			["PageDown, l", "down one screen"],
 			["PageUp, h", "up one screen"],
 			["End, .", "to last message"],
 			["Home, ,", "to first message"],
 			["Space", "toggle selection of message"]
-		].map((t) => dom.tr(dom.td(t[0]), dom.td(t[1]))), [
+		].map((t) => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))), [
 			["", ""],
 			["d, Delete", "move to trash folder"],
 			["D", "delete permanently"],
@@ -2328,7 +3625,7 @@
 			["X", "toggle thread mute, automatically marking new messages as read"],
 			["\u2190", "collapse thread"],
 			["\u2192", "expand thread"]
-		].map((t) => dom.tr(dom.td(t[0]), dom.td(t[1]))))), dom.div(style({ width: "40em" }), dom.table(dom.tr(dom.td(attr.colspan("2"), dom.h2("Compose", style({ margin: "0" })))), [
+		].map((t) => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))))), dom.div(dom.table(dom.tr(dom.td(attr.colspan("2"), dom.h2(ui("Compose"), style({ margin: "0" })))), [
 			["ctrl Enter", "send message"],
 			["ctrl shift Enter", "send message and archive thread"],
 			["ctrl w", "close message"],
@@ -2338,7 +3635,7 @@
 			["ctrl Y", "add Reply-To"],
 			["ctrl Backspace", "remove current address if empty"],
 			["ctrl +", "add address of same type"]
-		].map((t) => dom.tr(dom.td(t[0]), dom.td(t[1]))), dom.tr(dom.td(attr.colspan("2"), dom.h2("Message", style({ margin: "1ex 0 0 0" })))), [
+		].map((t) => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))), dom.tr(dom.td(attr.colspan("2"), dom.h2(ui("Message"), style({ margin: "1ex 0 0 0" })))), [
 			["r", "reply or list reply"],
 			["R", "reply all"],
 			["f", "forward message"],
@@ -2355,13 +3652,15 @@
 			["alt j, alt ArrowDown", "scroll down"],
 			["alt K", "scroll to top"],
 			["alt J", "scroll to end"]
-		].map((t) => dom.tr(dom.td(t[0]), dom.td(t[1]))), dom.tr(dom.td(dom.h2("Attachments", style({ margin: "1ex 0 0 0" })))), [
+		].map((t) => dom.tr(dom.td(t[0]), dom.td(ui(t[1])))), dom.tr(dom.td(dom.h2(ui("Attachments"), style({ margin: "1ex 0 0 0" })))), [
 			["left, h", "previous attachment"],
 			["right, l", "next attachment"],
 			["0", "first attachment"],
 			["$", "next attachment"],
 			["d", "download"]
-		].map((t) => dom.tr(dom.td(t[0]), dom.td(t[1])))), dom.div(style({ marginTop: "2ex", marginBottom: "1ex" }), dom.span("Underdotted text", attr.title("Underdotted text shows additional information on hover.")), " show an explanation or additional information when hovered."), dom.div(style({ marginBottom: "1ex" }), "Multiple messages can be selected by clicking messages while holding the control and/or shift keys. Dragging messages and dropping them on a mailbox moves the messages to that mailbox."), dom.div(style({ marginBottom: "1ex" }), "Text that changes ", dom.span(attr.title("Unicode blocks, e.g. from basic latin to cyrillic, or to emoticons."), '"character groups"'), " without whitespace has an ", dom.span(dom._class("scriptswitch"), "orange underline"), ", which can be a sign of an intent to mislead (e.g. phishing)."), dom.div(style({ marginTop: "2ex" }), "Mox is open source email server software, this is version ", moxversion, ", see ", dom.a(attr.href("licenses.txt"), "licenses"), ".", dom.br(), "Feedback, including bug reports, is appreciated! ", link("https://github.com/mjl-/mox/issues/new")))));
+		].map((t) => dom.tr(dom.td(t[0]), dom.td(ui(t[1]))))), dom.div(style({ marginTop: "2ex", marginBottom: "1ex" }), dom.span(ui("Underdotted text"), attr.title(ui("Underdotted text shows additional information on hover."))), ui(" show an explanation or additional information when hovered.")), dom.div(style({ marginBottom: "1ex" }), ui("Multiple messages can be selected by clicking messages while holding the control and/or shift keys. Dragging messages and dropping them on a mailbox moves the messages to that mailbox.")), dom.div(style({ marginBottom: "1ex" }), ui("A word that mixes scripts, such as Latin and Cyrillic, with no space between them has an "), dom.span(dom._class("scriptswitch"), ui("orange underline")), ui(". That can be a sign of an intent to mislead (e.g. phishing).")), dom.div(style({ marginTop: "2ex" }), ui("Mox is open source email server software, this is version "), moxversion, ", see ", dom.a(attr.href("licenses.txt"), ui("licenses")), ".", dom.br(), ui("Feedback, including bug reports, is appreciated! "), link("https://github.com/mjl-/mox/issues/new"))))), dom.div(dom._class("dialogFooter"), dom.clickbutton(ui("Close"), /* @__PURE__ */ __name(function click() {
+			remove();
+		}, "click")))));
 	}, "cmdHelp");
 	var cmdTooltip = /* @__PURE__ */ __name(async () => {
 		let elems = [];
@@ -2383,20 +3682,25 @@
 			});
 		}
 		if (elems.length === 0) {
-			window.alert("No active elements with tooltips found.");
+			window.alert(ui("No active elements with tooltips found."));
 			return;
 		}
 		popover(document.body, { transparent: true, fullscreen: true }, ...elems.map((e) => {
 			const title = e.getAttribute("title") || "";
 			const pos = e.getBoundingClientRect();
-			return dom.div(css("tooltipContent", { position: "absolute", backgroundColor: ["black", "white"], color: ["white", "black"], borderRadius: ".15em", padding: ".15em .25em", maxWidth: "50em" }), pos.x < window.innerWidth / 3 ? style({ left: "" + pos.x + "px" }) : style({ right: "" + (window.innerWidth - pos.x - pos.width) + "px" }), pos.y + pos.height > window.innerHeight * 2 / 3 ? style({ bottom: "" + (window.innerHeight - (pos.y - 2)) + "px", maxHeight: "" + (pos.y - 2) + "px" }) : style({ top: "" + (pos.y + pos.height + 2) + "px", maxHeight: "" + (window.innerHeight - (pos.y + pos.height + 2)) + "px" }), title);
+			const hidden = pos.width === 0 && pos.height === 0;
+			if (hidden) {
+				const bar = document.querySelector(".topBar")?.getBoundingClientRect();
+				return dom.div(css("tooltipContent", { position: "absolute", backgroundColor: [styles.mailboxesTopBackgroundColor, styles.backgroundColorMild], color: [styles.navTextHover, styles.color], borderRadius: styles.radius, padding: ".35em .5em", maxWidth: "50em", boxShadow: styles.shadowSm }), style({ left: "50%", transform: "translateX(-50%)", top: (bar ? bar.bottom : 48) + 8 + "px" }), title);
+			}
+			return dom.div(css("tooltipContent", { position: "absolute", backgroundColor: [styles.mailboxesTopBackgroundColor, styles.backgroundColorMild], color: [styles.navTextHover, styles.color], borderRadius: styles.radius, padding: ".35em .5em", maxWidth: "50em", boxShadow: styles.shadowSm }), pos.x < window.innerWidth / 3 ? style({ left: "" + pos.x + "px" }) : style({ right: "" + (window.innerWidth - pos.x - pos.width) + "px" }), pos.y + pos.height > window.innerHeight * 2 / 3 ? style({ bottom: "" + (window.innerHeight - (pos.y - 2)) + "px", maxHeight: "" + (pos.y - 2) + "px" }) : style({ top: "" + (pos.y + pos.height + 2) + "px", maxHeight: "" + (window.innerHeight - (pos.y + pos.height + 2)) + "px" }), title);
 		}));
 	}, "cmdTooltip");
 	var composeView = null;
 	var compose = /* @__PURE__ */ __name((opts, listMailboxes, setLocationHash) => {
 		log("compose", opts);
 		if (composeView) {
-			window.alert("Can only compose one message at a time.");
+			window.alert(ui("Can only compose one message at a time."));
 			return;
 		}
 		let fieldset;
@@ -2428,7 +3732,7 @@
 			}
 			draftSaveTimer = window.setTimeout(async () => {
 				draftSaveTimer = 0;
-				await withStatus("Saving draft", draftSave());
+				await withStatus(ui("Saving draft"), draftSave());
 				draftScheduleSave();
 			}, 60 * 1e3);
 		}, "draftScheduleSave");
@@ -2451,7 +3755,7 @@
 			};
 			const mbdrafts = listMailboxes().find((mb) => mb.Draft);
 			if (!mbdrafts) {
-				throw new Error("no designated drafts mailbox");
+				throw new Error(ui("no designated drafts mailbox"));
 			}
 			draftSavePromise = client.MessageCompose(cm, mbdrafts.ID);
 			try {
@@ -2469,25 +3773,28 @@
 			await draftSavePromise;
 			if (unsavedChanges()) {
 				const action = await new Promise((resolve) => {
-					const remove = popup(dom.p(dom.b("Message has unsaved changes")), dom.br(), dom.div(dom.clickbutton("Save draft", /* @__PURE__ */ __name(function click() {
-						resolve("save");
+					const close = /* @__PURE__ */ __name((choice) => {
+						resolve(choice);
 						remove();
-					}, "click")), " ", draftMessageID ? dom.clickbutton("Remove draft", /* @__PURE__ */ __name(function click() {
-						resolve("remove");
-						remove();
-					}, "click")) : [], " ", dom.clickbutton("Discard changes", /* @__PURE__ */ __name(function click() {
-						resolve("discard");
-						remove();
-					}, "click")), " ", dom.clickbutton("Cancel", /* @__PURE__ */ __name(function click() {
-						resolve("cancel");
-						remove();
-					}, "click"))));
+					}, "close");
+					const remove = popup(dom.div(dom._class("dialogPanel"), dom._class("confirmPanel"), dom.div(dom._class("dialogHeader"), dom.h1(ui("Unsaved changes")), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Keep editing.")), /* @__PURE__ */ __name(function click() {
+						close("cancel");
+					}, "click"))), dom.div(dom._class("dialogBody"), dom.p(ui("The message has unsaved changes. What would you like to do?"))), dom.div(dom._class("dialogFooter"), dom.clickbutton(ui("Cancel"), /* @__PURE__ */ __name(function click() {
+						close("cancel");
+					}, "click")), dom.clickbutton(ui("Discard changes"), /* @__PURE__ */ __name(function click() {
+						close("discard");
+					}, "click")), draftMessageID ? dom.clickbutton(ui("Remove draft"), /* @__PURE__ */ __name(function click() {
+						close("remove");
+					}, "click")) : [], dom.clickbutton(dom._class("btnPrimary"), ui("Save draft"), /* @__PURE__ */ __name(function click() {
+						close("save");
+					}, "click")))));
 				});
 				if (action === "save") {
-					await withStatus("Saving draft", draftSave());
+					await withStatus(ui("Saving draft"), draftSave());
 				} else if (action === "remove") {
 					if (draftMessageID) {
-						await withStatus("Removing draft", client.MessageDelete([draftMessageID]));
+						forgetMovedMessages([draftMessageID]);
+						await withStatus(ui("Removing draft"), client.MessageDelete([draftMessageID]));
 					}
 				} else if (action === "cancel") {
 					return;
@@ -2500,9 +3807,9 @@
 		const cmdSave = /* @__PURE__ */ __name(async () => {
 			draftCancelSaveTimer();
 			await draftSavePromise;
-			await withStatus("Saving draft", draftSave());
+			await withStatus(ui("Saving draft"), draftSave());
 		}, "cmdSave");
-		const submit = /* @__PURE__ */ __name(async (archive2) => {
+		const submit = /* @__PURE__ */ __name(async (archive) => {
 			draftCancelSaveTimer();
 			await draftSavePromise;
 			const files = await new Promise((resolve, reject) => {
@@ -2545,7 +3852,7 @@
 				ResponseMessageID: opts.responseMessageID || 0,
 				RequireTLS: requiretls.value === "" ? null : requiretls.value === "yes",
 				FutureRelease: scheduleTime.value ? new Date(scheduleTime.value) : null,
-				ArchiveThread: archive2,
+				ArchiveThread: archive,
 				ArchiveReferenceMailboxID: opts.archiveReferenceMailboxID || 0,
 				DraftMessageID: draftMessageID
 			};
@@ -2555,10 +3862,10 @@
 			setLocationHash();
 		}, "submit");
 		const cmdSend = /* @__PURE__ */ __name(async () => {
-			await withStatus("Sending email", submit(false), fieldset);
+			await withStatus(ui("Sending email"), submit(false), fieldset);
 		}, "cmdSend");
 		const cmdSendArchive = /* @__PURE__ */ __name(async () => {
-			await withStatus("Sending email and archive", submit(true), fieldset);
+			await withStatus(ui("Sending email and archive"), submit(true), fieldset);
 		}, "cmdSendArchive");
 		const cmdAddTo = /* @__PURE__ */ __name(async () => {
 			newAddrView("", true, true, toViews, toBtn, toCell, toRow);
@@ -2576,7 +3883,7 @@
 			if (customFrom) {
 				return;
 			}
-			customFrom = dom.input(attr.value(from.value), attr.required(""), focusPlaceholder("Jane <jane@example.org>"));
+			customFrom = dom.input(attr.value(from.value), attr.required(""), focusPlaceholder(ui("Jane <jane@example.org>")));
 			from.replaceWith(customFrom);
 			customFromBtn.remove();
 		}, "cmdCustomFrom");
@@ -2665,7 +3972,7 @@
 					check(rs.DNSSEC === SecurityResult.SecurityResultYes, "DNSSEC");
 					check(rs.DANE === SecurityResult.SecurityResultYes, "DANE");
 					check(rs.RequireTLS === SecurityResult.SecurityResultYes, "RequireTLS");
-					const status = "Security mechanisms known to be implemented by the recipient domain: " + (implemented.length === 0 ? "(none)" : implemented.join(", ")) + ".";
+					const status = ui("Security mechanisms known to be implemented by the recipient domain: ") + (implemented.length === 0 ? ui("(none)") : implemented.join(", ")) + ".";
 					inputElem.setAttribute("title", status + "\n\n" + recipientSecurityTitle);
 					aborter.abort = void 0;
 					v.recipientSecurity = rs;
@@ -2688,15 +3995,15 @@
 					}
 				}, () => {
 					setBar("#888", "#888", "#888", "#888", "#888");
-					inputElem.setAttribute("title", "Error fetching security mechanisms known to be implemented by the recipient domain...\n\n" + recipientSecurityTitle);
+					inputElem.setAttribute("title", ui("Error fetching security mechanisms known to be implemented by the recipient domain...\n\n") + recipientSecurityTitle);
 					aborter.abort = void 0;
 					if (requiretls.value === "yes") {
 						requiretls.value = "";
 					}
 				});
 			}, "fetchRecipientSecurity");
-			const recipientSecurityTitle = "Description of security mechanisms recipient domains may implement:\n1. STARTTLS: Opportunistic (unverified) TLS with STARTTLS, successfully negotiated during the most recent delivery attempt.\n2. MTA-STS: For PKIX/WebPKI-verified TLS.\n3. DNSSEC: MX DNS records are DNSSEC-signed.\n4. DANE: First delivery destination host implements DANE for verified TLS.\n5. RequireTLS: SMTP extension for verified TLS delivery into recipient mailbox, support detected during the most recent delivery attempt.\n\nChecks STARTTLS, DANE and RequireTLS cover the most recently used delivery path, not necessarily all possible delivery paths.\n\nThe bars below the input field indicate implementation status by the recipient domain:\n- Red, not implemented/unsupported\n- Green, implemented/supported\n- Gray, error while determining\n- Absent/white, unknown or skipped (e.g. no previous delivery attempt, or DANE check skipped due to DNSSEC-lookup error)";
-			const root = dom.span(autosizeElem = dom.span(dom._class("autosize"), inputElem = dom.input(focusPlaceholder("Jane <jane@example.org>"), style({ width: "auto" }), attr.value(addr), newAddressComplete(), accountSettings?.ShowAddressSecurity ? attr.title(recipientSecurityTitle) : [], /* @__PURE__ */ __name(function keydown(e) {
+			const recipientSecurityTitle = ui("Description of security mechanisms recipient domains may implement:\n1. STARTTLS: Opportunistic (unverified) TLS with STARTTLS, successfully negotiated during the most recent delivery attempt.\n2. MTA-STS: For PKIX/WebPKI-verified TLS.\n3. DNSSEC: MX DNS records are DNSSEC-signed.\n4. DANE: First delivery destination host implements DANE for verified TLS.\n5. RequireTLS: SMTP extension for verified TLS delivery into recipient mailbox, support detected during the most recent delivery attempt.\n\nChecks STARTTLS, DANE and RequireTLS cover the most recently used delivery path, not necessarily all possible delivery paths.\n\nThe bars below the input field indicate implementation status by the recipient domain:\n- Red, not implemented/unsupported\n- Green, implemented/supported\n- Gray, error while determining\n- Absent/white, unknown or skipped (e.g. no previous delivery attempt, or DANE check skipped due to DNSSEC-lookup error)");
+			const root = dom.span(autosizeElem = dom.span(dom._class("autosize"), inputElem = dom.input(focusPlaceholder(ui("Jane <jane@example.org>")), style({ width: "100%" }), attr.value(addr), newAddressComplete(), accountSettings?.ShowAddressSecurity ? attr.title(recipientSecurityTitle) : [], /* @__PURE__ */ __name(function keydown(e) {
 				if (e.key === "Backspace" && e.ctrlKey && inputElem.value === "" && !(isTo && views.length === 1)) {
 					remove();
 				} else if (e.key === "=" && e.ctrlKey) {
@@ -2732,12 +4039,12 @@
 				margin: "0 1px",
 				borderBottom: "1.5px solid",
 				borderBottomColor: "transparent"
-			}))), " ", dom.clickbutton("-", style({ padding: "0 .25em" }), attr.arialabel("Remove address."), attr.title("Remove address."), /* @__PURE__ */ __name(function click() {
+			}))), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.minus), attr.arialabel(ui("Remove address.")), attr.title(ui("Remove address.")), /* @__PURE__ */ __name(function click() {
 				remove();
 				if (single && views.length === 0) {
 					btn.style.display = "";
 				}
-			}, "click")), " ");
+			}, "click")));
 			autosizeElem.dataset.value = inputElem.value;
 			const remove = /* @__PURE__ */ __name(() => {
 				const i = views.indexOf(v);
@@ -2820,10 +4127,10 @@
 		const pad0 = /* @__PURE__ */ __name((v) => v >= 10 ? "" + v : "0" + v, "pad0");
 		const localdate = /* @__PURE__ */ __name((d) => [d.getFullYear(), pad0(d.getMonth() + 1), pad0(d.getDate())].join("-"), "localdate");
 		const localdatetime = /* @__PURE__ */ __name((d) => localdate(d) + "T" + pad0(d.getHours()) + ":" + pad0(d.getMinutes()) + ":00", "localdatetime");
-		const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 		const scheduleTimeChanged = /* @__PURE__ */ __name(() => {
 			log("datetime change", scheduleTime.value);
-			dom._kids(scheduleWeekday, weekdays[new Date(scheduleTime.value).getDay()]);
+			const d = new Date(scheduleTime.value);
+			dom._kids(scheduleWeekday, Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(uiLocale(), { weekday: "long" }));
 		}, "scheduleTimeChanged");
 		let resizeLast = null;
 		let resizeTimer = 0;
@@ -2837,16 +4144,16 @@
 			right: "1ex",
 			zIndex: zindexes.compose,
 			backgroundColor: styles.popupBackgroundColor,
-			boxShadow: styles.boxShadow,
+			boxShadow: styles.floatShadow,
 			border: "1px solid",
-			borderColor: styles.popupBorderColor,
-			padding: "1em",
-			minWidth: "40em",
-			maxWidth: "95vw",
-			borderRadius: ".25em",
+			borderColor: styles.floatBorderColor,
+			width: "min(42em, calc(100vw - 2rem))",
+			minWidth: "0",
+			maxWidth: "calc(100vw - 2rem)",
+			borderRadius: styles.radius,
 			display: "flex",
 			flexDirection: "column"
-		}), initWidth ? style({ width: initWidth + "px" }) : [], initHeight ? style({ height: initHeight + "px" }) : [], dom.div(css("composeResizeGrab", { position: "absolute", marginTop: "-1em", marginLeft: "-1em", width: "1em", height: "1em", cursor: "nw-resize" }), /* @__PURE__ */ __name(async function mousedown(e) {
+		}), isMobile() ? dom._class("composePopupMobile") : [], isMobile() ? [] : initWidth ? style({ width: initWidth + "px" }) : [], isMobile() ? [] : initHeight ? style({ height: initHeight + "px" }) : [], dom.div(css("composeResizeGrab", { position: "absolute", marginTop: "-1em", marginLeft: "-1em", width: "1em", height: "1em", cursor: "nw-resize" }), /* @__PURE__ */ __name(async function mousedown(e) {
 			page.style.pointerEvents = "none";
 			resizeLast = null;
 			await startDrag(e, (e2) => {
@@ -2875,14 +4182,13 @@
 			flexGrow: "1",
 			display: "flex",
 			flexDirection: "column"
-		}), dom.table(style({ width: "100%" }), dom.tr(dom.td(composeTextMildStyle, dom.span("From:")), dom.td(dom.div(css("composeButtonsSpread", { display: "flex", gap: "1em", justifyContent: "space-between" }), dom.div(from = dom.select(attr.required(""), style({ width: "auto" }), fromOptions), " ", toBtn = dom.clickbutton("To", clickCmd(cmdAddTo, shortcuts)), " ", ccBtn = dom.clickbutton("Cc", clickCmd(cmdAddCc, shortcuts)), " ", bccBtn = dom.clickbutton("Bcc", clickCmd(cmdAddBcc, shortcuts)), " ", replyToBtn = dom.clickbutton("ReplyTo", clickCmd(cmdReplyTo, shortcuts)), " ", customFromBtn = dom.clickbutton("From", attr.title("Set custom From address/name."), clickCmd(cmdCustomFrom, shortcuts))), dom.div(listMailboxes().find((mb) => mb.Draft) ? [
-			dom.clickbutton("Save", attr.title("Save draft message."), clickCmd(cmdSave, shortcuts)),
-			" "
-		] : [], dom.clickbutton("Close", attr.title("Close window, saving draft message if body has changed or a draft was saved earlier."), clickCmd(cmdClose, shortcuts)))))), toRow = dom.tr(dom.td("To:", composeTextMildStyle), toCell = dom.td(composeCellStyle)), replyToRow = dom.tr(dom.td("Reply-To:", composeTextMildStyle), replyToCell = dom.td(composeCellStyle)), ccRow = dom.tr(dom.td("Cc:", composeTextMildStyle), ccCell = dom.td(composeCellStyle)), bccRow = dom.tr(dom.td("Bcc:", composeTextMildStyle), bccCell = dom.td(composeCellStyle)), dom.tr(dom.td("Subject:", composeTextMildStyle), dom.td(subjectAutosize = dom.span(
+		}), dom.table(style({ width: "100%" }), dom.tr(dom._class("composeHeaderRow"), dom.td(attr.colspan("2"), dom.div(dom._class("composeFromBar"), dom.label(dom._class("composeFromLabel"), ui("From"), from = dom.select(attr.required(""), fromOptions)), dom.div(dom._class("composeHeaderActions"), listMailboxes().find((mb) => mb.Draft) ? [
+			dom.clickbutton(ui("Save"), attr.title(ui("Save draft message.")), clickCmd(cmdSave, shortcuts))
+		] : [], dom.clickbutton(ui("Close"), attr.title(ui("Close window, saving draft message if body has changed or a draft was saved earlier.")), clickCmd(cmdClose, shortcuts)))))), dom.tr(dom._class("composeToolbarRow"), dom.td(attr.colspan("2"), dom.div(dom._class("composeToolbarBtns"), toBtn = dom.clickbutton(ui("To"), clickCmd(cmdAddTo, shortcuts)), ccBtn = dom.clickbutton(ui("Cc"), clickCmd(cmdAddCc, shortcuts)), bccBtn = dom.clickbutton(ui("Bcc"), clickCmd(cmdAddBcc, shortcuts)), replyToBtn = dom.clickbutton(ui("Reply-To"), clickCmd(cmdReplyTo, shortcuts)), customFromBtn = dom.clickbutton(ui("Custom From"), attr.title(ui("Set custom From address/name.")), clickCmd(cmdCustomFrom, shortcuts))))), toRow = dom.tr(dom._class("composeAddrRow"), dom.td(ui("To:"), composeTextMildStyle), toCell = dom.td(composeCellStyle)), replyToRow = dom.tr(dom._class("composeAddrRow"), dom.td(ui("Reply-To:"), composeTextMildStyle), replyToCell = dom.td(composeCellStyle)), ccRow = dom.tr(dom._class("composeAddrRow"), dom.td(ui("Cc:"), composeTextMildStyle), ccCell = dom.td(composeCellStyle)), bccRow = dom.tr(dom._class("composeAddrRow"), dom.td(ui("Bcc:"), composeTextMildStyle), bccCell = dom.td(composeCellStyle)), dom.tr(dom._class("composeSubjectRow"), dom.td(ui("Subject:"), composeTextMildStyle), dom.td(subjectAutosize = dom.span(
 			dom._class("autosize"),
 			style({ width: "100%" }),
 			// Without 100% width, the span takes minimal width for input, we want the full table cell.
-			subject = dom.input(style({ width: "100%" }), attr.value(opts.subject || ""), attr.required(""), focusPlaceholder("subject..."), /* @__PURE__ */ __name(function input() {
+			subject = dom.input(style({ width: "100%" }), attr.value(opts.subject || ""), attr.required(""), focusPlaceholder(ui("subject...")), /* @__PURE__ */ __name(function input() {
 				subjectAutosize.dataset.value = subject.value;
 			}, "input"))
 		)))), body = dom.textarea(
@@ -2905,8 +4211,8 @@
 			!listMailboxes().find((mb) => mb.Draft) ? [] : /* @__PURE__ */ __name(function input() {
 				draftScheduleSave();
 			}, "input")
-		), !(opts.attachmentsMessageItem && opts.attachmentsMessageItem.Attachments && opts.attachmentsMessageItem.Attachments.length > 0) ? [] : dom.div(style({ margin: ".5em 0" }), "Forward attachments: ", forwardAttachmentViews = (opts.attachmentsMessageItem?.Attachments || []).map((a) => {
-			const filename = a.Filename || "(unnamed)";
+		), dom.div(dom._class("composeMeta"), !(opts.attachmentsMessageItem && opts.attachmentsMessageItem.Attachments && opts.attachmentsMessageItem.Attachments.length > 0) ? [] : dom.div(ui("Forward attachments: "), forwardAttachmentViews = (opts.attachmentsMessageItem?.Attachments || []).map((a) => {
+			const filename = a.Filename || ui("(unnamed)");
 			const size = formatSize(a.Part.DecodedSize);
 			const checkbox = dom.input(attr.type("checkbox"), /* @__PURE__ */ __name(function change() {
 				checkAttachments();
@@ -2920,44 +4226,44 @@
 			return v;
 		}), dom.label(styleClasses.textMild, dom.input(attr.type("checkbox"), /* @__PURE__ */ __name(function change(e) {
 			forwardAttachmentViews.forEach((v) => v.checkbox.checked = e.target.checked);
-		}, "change")), " (Toggle all)")), noAttachmentsWarning = dom.div(style({ display: "none" }), css("composeNoAttachmentsWarning", { backgroundColor: styles.warningBackgroundColor, padding: "0.15em .25em", margin: ".5em 0" }), "Message mentions attachments, but no files are attached."), dom.label(style({ margin: "1ex 0", display: "block" }), "Attachments ", attachments = dom.input(attr.type("file"), attr.multiple(""), /* @__PURE__ */ __name(function change() {
+		}, "change")), ui(" (Toggle all)"))), noAttachmentsWarning = dom.div(style({ display: "none" }), css("composeNoAttachmentsWarning", { backgroundColor: styles.warningBackgroundColor, padding: "0.35em .5em", borderRadius: styles.radius }), ui("Message mentions attachments, but no files are attached.")), dom.label(ui("Attachments "), attachments = dom.input(attr.type("file"), attr.multiple(""), /* @__PURE__ */ __name(function change() {
 			checkAttachments();
-		}, "change"))), dom.label(style({ margin: "1ex 0", display: "block" }), attr.title("How to use TLS for message delivery over SMTP:\n\nDefault: Delivery attempts follow the policies published by the recipient domain: Verification with MTA-STS and/or DANE, or optional opportunistic unverified STARTTLS if the domain does not specify a policy.\n\nWith RequireTLS: For sensitive messages, you may want to require verified TLS. The recipient destination domain SMTP server must support the REQUIRETLS SMTP extension for delivery to succeed. It is automatically chosen when the destination domain mail servers of all recipients are known to support it.\n\nFallback to insecure: If delivery fails due to MTA-STS and/or DANE policies specified by the recipient domain, and the content is not sensitive, you may choose to ignore the recipient domain TLS policies so delivery can succeed."), "TLS ", requiretls = dom.select(dom.option(attr.value(""), "Default"), dom.option(attr.value("yes"), "With RequireTLS"), dom.option(attr.value("no"), "Fallback to insecure"))), dom.div(scheduleLink = dom.a(attr.href(""), "Schedule", /* @__PURE__ */ __name(function click(e) {
+		}, "change"))), dom.label(attr.title(ui("How to use TLS for message delivery over SMTP:\n\nDefault: Delivery attempts follow the policies published by the recipient domain: Verification with MTA-STS and/or DANE, or optional opportunistic unverified STARTTLS if the domain does not specify a policy.\n\nWith RequireTLS: For sensitive messages, you may want to require verified TLS. The recipient destination domain SMTP server must support the REQUIRETLS SMTP extension for delivery to succeed. It is automatically chosen when the destination domain mail servers of all recipients are known to support it.\n\nFallback to insecure: If delivery fails due to MTA-STS and/or DANE policies specified by the recipient domain, and the content is not sensitive, you may choose to ignore the recipient domain TLS policies so delivery can succeed.")), ui("TLS "), requiretls = dom.select(dom.option(attr.value(""), ui("Default")), dom.option(attr.value("yes"), ui("With RequireTLS")), dom.option(attr.value("no"), ui("Fallback to insecure")))), dom.div(scheduleLink = dom.a(attr.href(""), ui("Schedule"), /* @__PURE__ */ __name(function click(e) {
 			e.preventDefault();
 			scheduleTime.value = localdatetime(/* @__PURE__ */ new Date());
 			scheduleTimeChanged();
 			scheduleLink.style.display = "none";
 			scheduleElem.style.display = "";
 			scheduleTime.setAttribute("required", "");
-		}, "click")), scheduleElem = dom.div(style({ display: "none" }), dom.clickbutton("Start of next day", /* @__PURE__ */ __name(function click(e) {
+		}, "click")), scheduleElem = dom.div(style({ display: "none" }), dom.div(dom._class("composeSchedulePresets"), dom.clickbutton(ui("Start of next day"), /* @__PURE__ */ __name(function click(e) {
 			e.preventDefault();
 			const d = new Date(scheduleTime.value);
 			const nextday = new Date(d.getTime() + 24 * 3600 * 1e3);
 			scheduleTime.value = localdate(nextday) + "T09:00:00";
 			scheduleTimeChanged();
-		}, "click")), " ", dom.clickbutton("+1 hour", /* @__PURE__ */ __name(function click(e) {
+		}, "click")), dom.clickbutton(ui("+1 hour"), /* @__PURE__ */ __name(function click(e) {
 			e.preventDefault();
 			const d = new Date(scheduleTime.value);
 			scheduleTime.value = localdatetime(new Date(d.getTime() + 3600 * 1e3));
 			scheduleTimeChanged();
-		}, "click")), " ", dom.clickbutton("+1 day", /* @__PURE__ */ __name(function click(e) {
+		}, "click")), dom.clickbutton(ui("+1 day"), /* @__PURE__ */ __name(function click(e) {
 			e.preventDefault();
 			const d = new Date(scheduleTime.value);
 			scheduleTime.value = localdatetime(new Date(d.getTime() + 24 * 3600 * 1e3));
 			scheduleTimeChanged();
-		}, "click")), " ", dom.clickbutton("Now", /* @__PURE__ */ __name(function click(e) {
+		}, "click")), dom.clickbutton(ui("Now"), /* @__PURE__ */ __name(function click(e) {
 			e.preventDefault();
 			scheduleTime.value = localdatetime(/* @__PURE__ */ new Date());
 			scheduleTimeChanged();
-		}, "click")), " ", dom.clickbutton("Cancel", /* @__PURE__ */ __name(function click(e) {
+		}, "click")), dom.clickbutton(ui("Cancel"), /* @__PURE__ */ __name(function click(e) {
 			e.preventDefault();
 			scheduleLink.style.display = "";
 			scheduleElem.style.display = "none";
 			scheduleTime.removeAttribute("required");
 			scheduleTime.value = "";
-		}, "click")), dom.div(style({ marginTop: "1ex" }), scheduleTime = dom.input(attr.type("datetime-local"), /* @__PURE__ */ __name(function change() {
+		}, "click"))), dom.div(scheduleTime = dom.input(attr.type("datetime-local"), /* @__PURE__ */ __name(function change() {
 			scheduleTimeChanged();
-		}, "change")), " in local timezone " + (Intl.DateTimeFormat().resolvedOptions().timeZone || "") + ", ", scheduleWeekday = dom.span()))), dom.div(style({ margin: "3ex 0 1ex 0", display: "block" }), dom.submitbutton("Send"), " ", opts.responseMessageID && listMailboxes().find((mb) => mb.Archive) ? dom.clickbutton("Send and archive thread", clickCmd(cmdSendArchive, shortcuts)) : [])), /* @__PURE__ */ __name(async function submit2(e) {
+		}, "change")), ui(" in local timezone ") + (Intl.DateTimeFormat().resolvedOptions().timeZone || "") + ", ", scheduleWeekday = dom.span()))))), dom.div(dom._class("composeFooter"), opts.responseMessageID && listMailboxes().find((mb) => mb.Archive) ? dom.clickbutton(ui("Send and archive"), clickCmd(cmdSendArchive, shortcuts)) : [], dom.submitbutton(dom._class("btnPrimary"), ui("Send"))), /* @__PURE__ */ __name(async function submit2(e) {
 			e.preventDefault();
 			shortcutCmd(cmdSend, shortcuts);
 		}, "submit")));
@@ -2977,6 +4283,7 @@
 		if (!opts.replyto) {
 			replyToRow.style.display = "none";
 		}
+		clearMoveUndo();
 		document.body.appendChild(composeElem);
 		if (toViews.length > 0 && !toViews[0].input.value) {
 			toViews[0].input.focus();
@@ -2997,12 +4304,12 @@
 		const m = mi.Message;
 		const draftMailboxID = listMailboxes().find((mb) => mb.Draft)?.ID;
 		if (m.MailboxID !== draftMailboxID) {
-			throw new Error("only messages in draft mailbox can be edited");
+			throw new Error(ui("only messages in draft mailbox can be edited"));
 		}
 		const env = mi.Envelope;
 		let refMsgID = 0;
 		if (env.InReplyTo) {
-			refMsgID = await withStatus("Looking up referenced message", client.MessageFindMessageID(env.InReplyTo));
+			refMsgID = await withStatus(ui("Looking up referenced message"), client.MessageFindMessageID(env.InReplyTo));
 		}
 		const isForward = !!env.Subject.match(/^\[?fwd?:/i) || !!env.Subject.match(/\(fwd\)[ \t]*$/i);
 		const opts = {
@@ -3028,87 +4335,98 @@
 		const msgIDs = msgs.map((m) => m.ID);
 		let fieldsetnew;
 		let newlabel;
-		const remove = popover(e.target, {}, dom.div(css("popoverLabels", { display: "flex", flexDirection: "column", gap: "1ex" }), knownLabels.map((l) => dom.div(dom.label(dom.input(attr.type("checkbox"), activeLabels.includes(l) ? attr.checked("") : [], style({ marginRight: ".5em" }), attr.title("Add/remove this label to the message(s), leaving other labels unchanged."), /* @__PURE__ */ __name(async function change(e2) {
-			if (activeLabels.includes(l)) {
-				await withStatus("Removing label", client.FlagsClear(msgIDs, [l]), e2.target);
-				activeLabels.splice(activeLabels.indexOf(l), 1);
+		const remove = popover(e.target, { transparent: true }, dom.div(dom._class("menuList"), ...knownLabels.map((l) => dom.div(dom._class("menuItem"), dom.label(dom.input(attr.type("checkbox"), activeLabels.includes(l) ? attr.checked("") : [], attr.title(ui("Add/remove this label to the message(s), leaving other labels unchanged.")), /* @__PURE__ */ __name(async function change(e2) {
+			const input = e2.target;
+			if (input.checked) {
+				await withStatus(ui("Adding label"), client.FlagsAdd(msgIDs, [l]), input);
+				if (!activeLabels.includes(l)) {
+					activeLabels.push(l);
+				}
 			} else {
-				await withStatus("Adding label", client.FlagsAdd(msgIDs, [l]), e2.target);
-				activeLabels.push(l);
+				await withStatus(ui("Removing label"), client.FlagsClear(msgIDs, [l]), input);
+				const i = activeLabels.indexOf(l);
+				if (i >= 0) {
+					activeLabels.splice(i, 1);
+				}
 			}
-		}, "change")), " ", dom.span(styleClasses.keyword, l))))), dom.hr(style({ margin: "2ex 0" })), dom.form(/* @__PURE__ */ __name(async function submit(e2) {
+		}, "change")), dom.span(styleClasses.keyword, l)))), dom.div(dom._class("menuItem"), dom._class("menuItemForm"), dom.form(/* @__PURE__ */ __name(async function submit(e2) {
 			e2.preventDefault();
-			await withStatus("Adding new label", client.FlagsAdd(msgIDs, [newlabel.value]), fieldsetnew);
+			await withStatus(ui("Adding new label"), client.FlagsAdd(msgIDs, [newlabel.value]), fieldsetnew);
 			remove();
-		}, "submit"), fieldsetnew = dom.fieldset(dom.div(newlabel = dom.input(focusPlaceholder("new-label"), attr.required(""), attr.title('New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"].')), " ", dom.submitbutton("Add new label", attr.title("Add this label to the message(s), leaving other labels unchanged."))))));
+		}, "submit"), fieldsetnew = dom.fieldset(dom.div(style({ display: "flex", gap: "6px", flexWrap: "wrap" }), newlabel = dom.input(focusPlaceholder(ui("new-label")), attr.required(""), style({ flex: "1 1 8em", minWidth: 0 }), attr.title(ui('New label to add/set on the message(s), must be lower-case, ascii-only, without spaces and without the following special characters: (){%*"\\].'))), dom.submitbutton(ui("Add new label"), attr.title(ui("Add this label to the message(s), leaving other labels unchanged.")))))))));
 	}, "labelsPopover");
 	var movePopover = /* @__PURE__ */ __name((e, mailboxes, msgs) => {
 		if (msgs.length === 0) {
 			return;
 		}
 		let msgsMailboxID = msgs[0].MailboxID && msgs.filter((m) => m.MailboxID === msgs[0].MailboxID).length === msgs.length ? msgs[0].MailboxID : 0;
-		const remove = popover(e.target, {}, dom.div(css("popoverMove", { display: "flex", flexDirection: "column", gap: ".25em" }), mailboxes.map((mb) => dom.div(dom.clickbutton(mb.Name, mb.ID === msgsMailboxID ? attr.disabled("") : [], /* @__PURE__ */ __name(async function click() {
+		const remove = menuPopover(e.target, mailboxes.map((mb) => dom.clickbutton(mailboxLabel(mb, mb.Name), mb.ID === msgsMailboxID ? attr.disabled("") : [], /* @__PURE__ */ __name(async function click() {
 			const moveMsgs = msgs.filter((m) => m.MailboxID !== mb.ID);
 			const msgIDs = moveMsgs.map((m) => m.ID);
-			await withStatus("Moving to mailbox", client.MessageMove(msgIDs, mb.ID, false));
+			await withStatus(ui("Moving to mailbox"), client.MessageMove(msgIDs, mb.ID, false));
+			offerMoveUndo(moveMsgs.map((m) => ({ id: m.ID, mailboxID: m.MailboxID })));
 			if (moveMsgs.length === 1) {
 				await moveAskRuleset(moveMsgs[0].ID, moveMsgs[0].MailboxID, mb, mailboxes);
 			}
 			remove();
-		}, "click"))))));
+		}, "click"))));
 	}, "movePopover");
 	var moveAskRuleset = /* @__PURE__ */ __name(async (msgID, mbSrcID, mbDst, mailboxes) => {
 		const mbSrc = mailboxes.find((mb) => mb.ID === mbSrcID);
 		if (!mbSrc || isSpecialUse(mbDst) || isSpecialUse(mbSrc)) {
 			return;
 		}
-		const [listID, msgFrom, isRemove, rcptTo, ruleset] = await withStatus("Checking rulesets", client.RulesetSuggestMove(msgID, mbSrc.ID, mbDst.ID));
+		const [listID, msgFrom, isRemove, rcptTo, ruleset] = await withStatus(ui("Checking rulesets"), client.RulesetSuggestMove(msgID, mbSrc.ID, mbDst.ID));
 		if (!ruleset) {
 			return;
 		}
 		const what = listID ? ['list with id "', listID, '"'] : ['address "', msgFrom, '"'];
 		if (isRemove) {
-			const remove2 = popup(dom.h1("Remove rule?"), dom.p(style({ maxWidth: "30em" }), "Would you like to remove the server-side rule that automatically delivers messages from ", what, ' to mailbox "', mbDst.Name, '"?'), dom.br(), dom.div(dom.clickbutton("Yes, remove rule", /* @__PURE__ */ __name(async function click() {
-				await withStatus("Remove ruleset", client.RulesetRemove(rcptTo, ruleset));
+			const remove2 = popup(dom.div(dom._class("dialogPanel"), dom._class("confirmPanel"), dom.div(dom._class("dialogHeader"), dom.h1(ui("Remove rule?")), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close without removing rule.")), /* @__PURE__ */ __name(function click() {
 				remove2();
-			}, "click")), " ", dom.clickbutton("Not now", /* @__PURE__ */ __name(async function click() {
+			}, "click"))), dom.div(dom._class("dialogBody"), dom.p(ui("Would you like to remove the server-side rule that automatically delivers messages from "), what, ui(' to mailbox "'), mailboxLabel(mbDst, mbDst.Name), '"?'), dom.div(dom._class("dialogActionsStack"), dom.clickbutton(ui("No, and don't ask again for "), what, /* @__PURE__ */ __name(async function click() {
+				await withStatus(ui("Store ruleset response"), client.RulesetMessageNever(rcptTo, listID, msgFrom, true));
 				remove2();
-			}, "click"))), dom.br(), dom.div(style({ marginBottom: "1ex" }), dom.clickbutton("No, and don't ask again for ", what, /* @__PURE__ */ __name(async function click() {
-				await withStatus("Store ruleset response", client.RulesetMessageNever(rcptTo, listID, msgFrom, true));
+			}, "click")), dom.clickbutton(ui(`No, and don't ask again when moving messages out of "`), mailboxLabel(mbSrc, mbSrc.Name), '"', /* @__PURE__ */ __name(async function click() {
+				await withStatus(ui("Store ruleset response"), client.RulesetMailboxNever(mbSrc.ID, false));
 				remove2();
-			}, "click"))), dom.div(dom.clickbutton(`No, and don't ask again when moving messages out of "`, mbSrc.Name, '"', /* @__PURE__ */ __name(async function click() {
-				await withStatus("Store ruleset response", client.RulesetMailboxNever(mbSrc.ID, false));
+			}, "click")))), dom.div(dom._class("dialogFooter"), dom.clickbutton(ui("Not now"), /* @__PURE__ */ __name(function click() {
 				remove2();
-			}, "click"))));
+			}, "click")), dom.clickbutton(dom._class("btnPrimary"), ui("Yes, remove rule"), /* @__PURE__ */ __name(async function click() {
+				await withStatus(ui("Remove ruleset"), client.RulesetRemove(rcptTo, ruleset));
+				remove2();
+			}, "click")))));
 			return;
 		}
-		const remove = popup(dom.h1("Add rule?"), dom.p(style({ maxWidth: "30em" }), "Would you like to create a server-side ruleset that automatically delivers future messages from ", what, ' to mailbox "', mbDst.Name, '"?'), dom.br(), dom.div(dom.clickbutton("Yes, add rule", /* @__PURE__ */ __name(async function click() {
-			await withStatus("Add ruleset", client.RulesetAdd(rcptTo, ruleset));
+		const remove = popup(dom.div(dom._class("dialogPanel"), dom._class("confirmPanel"), dom.div(dom._class("dialogHeader"), dom.h1(ui("Add rule?")), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close without adding rule.")), /* @__PURE__ */ __name(function click() {
 			remove();
-		}, "click")), " ", dom.clickbutton("Not now", /* @__PURE__ */ __name(async function click() {
+		}, "click"))), dom.div(dom._class("dialogBody"), dom.p(ui("Would you like to create a server-side ruleset that automatically delivers future messages from "), what, ui(' to mailbox "'), mailboxLabel(mbDst, mbDst.Name), '"?'), dom.div(dom._class("dialogActionsStack"), dom.clickbutton(ui("No, and don't ask again for "), what, /* @__PURE__ */ __name(async function click() {
+			await withStatus(ui("Store ruleset response"), client.RulesetMessageNever(rcptTo, listID, msgFrom, false));
 			remove();
-		}, "click"))), dom.br(), dom.div(style({ marginBottom: "1ex" }), dom.clickbutton("No, and don't ask again for ", what, /* @__PURE__ */ __name(async function click() {
-			await withStatus("Store ruleset response", client.RulesetMessageNever(rcptTo, listID, msgFrom, false));
+		}, "click")), dom.clickbutton(ui(`No, and don't ask again when moving messages to "`), mailboxLabel(mbDst, mbDst.Name), '"', /* @__PURE__ */ __name(async function click() {
+			await withStatus(ui("Store ruleset response"), client.RulesetMailboxNever(mbDst.ID, true));
 			remove();
-		}, "click"))), dom.div(dom.clickbutton(`No, and don't ask again when moving messages to "`, mbDst.Name, '"', /* @__PURE__ */ __name(async function click() {
-			await withStatus("Store ruleset response", client.RulesetMailboxNever(mbDst.ID, true));
+		}, "click")))), dom.div(dom._class("dialogFooter"), dom.clickbutton(ui("Not now"), /* @__PURE__ */ __name(function click() {
 			remove();
-		}, "click"))));
+		}, "click")), dom.clickbutton(dom._class("btnPrimary"), ui("Yes, add rule"), /* @__PURE__ */ __name(async function click() {
+			await withStatus(ui("Add ruleset"), client.RulesetAdd(rcptTo, ruleset));
+			remove();
+		}, "click")))));
 	}, "moveAskRuleset");
 	var isSpecialUse = /* @__PURE__ */ __name((mb) => mb.Archive || mb.Draft || mb.Junk || mb.Sent || mb.Trash, "isSpecialUse");
 	var newMsgitemView = /* @__PURE__ */ __name((mi, msglistView, otherMailbox, listMailboxes, receivedTime, initialCollapsed) => {
 		let ageTimer = 0;
-		const identityTag = /* @__PURE__ */ __name((s, title) => dom.span(css("msgItemIdentity", { padding: "0 .15em", marginLeft: ".15em", borderRadius: ".15em", fontWeight: "normal", fontSize: ".9em", whiteSpace: "nowrap", backgroundColor: styles.backgroundColorMilder, color: styles.color, border: "1px solid", borderColor: styles.colorMilder }), s, attr.title(title)), "identityTag");
+		const identityTag = /* @__PURE__ */ __name((s, title) => dom.span(css("msgItemIdentity", { padding: "2px 8px", marginLeft: ".15em", borderRadius: "20px", fontWeight: "600", fontSize: "11px", whiteSpace: "nowrap", backgroundColor: styles.accentSoft, color: styles.accent, border: "1px solid", borderColor: styles.borderColor }), s, attr.title(title)), "identityTag");
 		const identityHeader = [];
 		if (!envelopeIdentity(mi.Envelope.From || []) && !envelopeIdentity(mi.Envelope.To || [])) {
 			if (envelopeIdentity(mi.Envelope.CC || [])) {
-				identityHeader.push(identityTag("cc", "You are in the CC header"));
+				identityHeader.push(identityTag("cc", ui("You are in the CC header")));
 			}
 			if (envelopeIdentity(mi.Envelope.BCC || [])) {
-				identityHeader.push(identityTag("bcc", "You are in the BCC header"));
+				identityHeader.push(identityTag("bcc", ui("You are in the BCC header")));
 			}
 			if (identityHeader.length === 0) {
-				identityHeader.push(identityTag("-", "You are not in any To, From, CC, BCC header. Could message to a mailing list or Bcc without Bcc message header."));
+				identityHeader.push(identityTag("-", ui("You are not in any To, From, CC, BCC header. Could message to a mailing list or Bcc without Bcc message header.")));
 			}
 		}
 		const remove = /* @__PURE__ */ __name(() => {
@@ -3119,7 +4437,7 @@
 			}
 		}, "remove");
 		const age = /* @__PURE__ */ __name((date) => {
-			const r = dom.span(dom._class("notooltip"), attr.title(date.toString()));
+			const r = dom.span(dom._class("notooltip"), attr.title(date.toLocaleString(uiLocale())));
 			const set = /* @__PURE__ */ __name(() => {
 				const nowSecs = (/* @__PURE__ */ new Date()).getTime() / 1e3;
 				let t = nowSecs - date.getTime() / 1e3;
@@ -3134,7 +4452,7 @@
 				const month = 30 * day;
 				const year = 365 * day;
 				const periods = [year, month, day, hour, minute];
-				const suffix = ["y", "mo", "d", "h", "min"];
+				const suffix = [ui("y"), ui("mo"), ui("d"), ui("h"), ui("min")];
 				let s;
 				let nextSecs = 0;
 				for (let i = 0; i < periods.length; i++) {
@@ -3148,7 +4466,7 @@
 					}
 				}
 				if (t < 60) {
-					s = "<1min";
+					s = ui("<1min");
 					nextSecs = 60 - t;
 					negative = "";
 				}
@@ -3194,10 +4512,10 @@
 				threadChar = "\u21B3";
 				if (msgitemView.parent.messageitem.Message.MessageID === mi2.Message.MessageID) {
 					threadChar = "\u2248";
-					threadCharTitle = "Same Message-ID.";
+					threadCharTitle = ui("Same Message-ID.");
 				} else if (mi2.Message.ThreadMissingLink || (mi2.Message.ThreadParentIDs || []).length > 0 && (mi2.Message.ThreadParentIDs || [])[0] !== msgitemView.parent.messageitem.Message.ID) {
 					threadChar = "\u21AF";
-					threadCharTitle = "Immediate parent message is missing.";
+					threadCharTitle = ui("Immediate parent message is missing.");
 				}
 			}
 			const isUnread = /* @__PURE__ */ __name(() => !mi2.Message.Seen || msgitemView.isCollapsedThreadRoot() && !!msgitemView.findDescendant((miv) => !miv.messageitem.Message.Seen), "isUnread");
@@ -3226,7 +4544,8 @@
 			const mailboxtags = [];
 			const mailboxIDs = /* @__PURE__ */ new Set();
 			const addMailboxTag = /* @__PURE__ */ __name((mb, isCollapsedKid) => {
-				let name = mb.Name;
+				const full = mailboxLabel(mb, mb.Name);
+				let name = full;
 				mailboxIDs.add(mb.ID);
 				if (name.length > 8 + 1 + 3 + 1 + 8 + 4) {
 					const t = name.split("/");
@@ -3238,7 +4557,7 @@
 						name = first.substring(0, 8) + "/.../" + last.substring(0, 8);
 					}
 				}
-				const e = dom.span(css("msgItemMailbox", { padding: "0 .15em", marginLeft: ".15em", borderRadius: ".15em", fontWeight: "normal", fontSize: ".9em", whiteSpace: "nowrap", background: styles.backgroundColorMilder, color: ["white", "#ddd"], border: "1px solid", borderColor: styles.colorMilder }), isCollapsedKid ? css("msgItemMailboxCollapsed", { background: "#eee", color: "#333" }, true) : [], name === mb.Name ? [] : attr.title(mb.Name), name);
+				const e = dom.span(css("msgItemMailbox", { padding: "2px 8px", marginLeft: ".15em", borderRadius: "20px", fontWeight: "600", fontSize: "11px", whiteSpace: "nowrap", background: styles.accentSoft, color: styles.accent, border: "1px solid", borderColor: styles.borderColor }), isCollapsedKid ? css("msgItemMailboxCollapsed", { background: styles.accentSoft, color: styles.colorMild }, true) : [], name === full ? [] : attr.title(full), name);
 				mailboxtags.push(e);
 			}, "addMailboxTag");
 			const othermb = otherMailbox(m.MailboxID);
@@ -3251,7 +4570,7 @@
 					if (!mailboxIDs.has(m2.MailboxID) && otherMailbox(m2.MailboxID)) {
 						const mb = listMailboxes().find((mb2) => mb2.ID === m2.MailboxID);
 						if (!mb) {
-							throw new ConsistencyError("missing mailbox for message in thread");
+							throw new ConsistencyError(ui("missing mailbox for message in thread"));
 						}
 						addMailboxTag(mb, true);
 					}
@@ -3302,32 +4621,30 @@
 					if (title) {
 						title += ",\n";
 					}
-					title += "addressed: " + ta.map((a) => formatAddress(a)).join(", ");
+					title += ui("addressed: ") + ta.map((a) => formatAddress(a)).join(", ");
 				}
 				return [
 					attr.title(title),
 					join([
-						...fa.map((a) => formatAddressShort(a, junk2)),
-						...ta.map((a) => dom.span(style({ fontStyle: "italic" }), formatAddressShort(a, junk2)))
+						...fa.map((a) => new String(formatAddressShort(a, junk2))),
+						...ta.map((a) => dom.span(style({ fontStyle: "italic" }), new String(formatAddressShort(a, junk2))))
 					], () => ", ")
 				];
 			}, "correspondents");
-			const msgItemCellStyle = css("msgItemCell", { padding: "2px 4px" });
-			const msgItemStyle = css("msgItem", { display: "flex", userSelect: "none", cursor: "pointer", borderRadius: ".15em", border: "1px solid transparent" });
-			ensureCSS(".msgItem.focus", { borderColor: styles.msgItemFocusBorderColor, border: "1px solid" });
+			ensureCSS(".msgItem.focus", { borderColor: styles.msgItemFocusBorderColor, borderLeftColor: styles.msgItemFocusBorderColor });
 			ensureCSS(".msgItem:hover", { backgroundColor: styles.msgItemHoverBackgroundColor });
-			ensureCSS(".msgItem.active", { background: styles.msgItemActiveBackground });
+			ensureCSS(".msgItem.active", { background: styles.msgItemActiveBackground, borderLeftColor: styles.msgItemActiveBorder });
 			const active = msgitemView.root && msgitemView.root.classList.contains("active");
 			const focus = msgitemView.root && msgitemView.root.classList.contains("focus");
 			const elem = dom.div(
-				msgItemStyle,
+				dom._class("msgItem"),
 				active ? dom._class("active") : [],
 				focus ? dom._class("focus") : [],
 				attr.draggable("true"),
 				/* @__PURE__ */ __name(function dragstart(e) {
 					if (!msglistView.selected().includes(msgitemView)) {
 						e.preventDefault();
-						window.alert("Can only drag items in selection.");
+						window.alert(ui("Can only drag items in selection."));
 						return;
 					}
 					e.dataTransfer.setData("application/vnd.mox.messages", JSON.stringify(msglistView.selected().map((miv) => [miv.messageitem.Message.MailboxID, miv.messageitem.Message.ID])));
@@ -3336,7 +4653,7 @@
 				settings.threading !== ThreadMode.ThreadOff && !msgitemView.parent && msgitemView.kids.length > 0 ? /* @__PURE__ */ __name(function dblclick(e) {
 					e.stopPropagation();
 					if (settings.threading === ThreadMode.ThreadOn) {
-						withStatus("Saving thread expand/collapse", client.ThreadCollapse([msgitemView.messageitem.Message.ID], !msgitemView.collapsed));
+						withStatus(ui("Saving thread expand/collapse"), client.ThreadCollapse([msgitemView.messageitem.Message.ID], !msgitemView.collapsed));
 					}
 					if (msgitemView.collapsed) {
 						msglistView.threadExpand(msgitemView);
@@ -3345,34 +4662,91 @@
 						msglistView.viewportEnsureMessages();
 					}
 				}, "dblclick") : [],
-				isUnread() ? css("msgItemUnread", { fontWeight: "bold" }) : [],
+				isUnread() ? dom._class("msgItemUnread") : [],
 				// Relevant means not muted and matching the query.
 				isRelevant() ? [] : css("msgItemNotRelevant", { opacity: ".4" }),
-				dom.div(msgItemCellStyle, dom._class("msgItemFlags"), dom.div(css("msgItemFlagsSpread", { display: "flex", justifyContent: "space-between" }), dom.div(flagList(msgitemView)), !msgitemView.parent && msgitemView.kids.length > 0 && msgitemView.collapsed ? dom.clickbutton("" + (1 + msgitemView.descendants().length), attr.tabindex("-1"), attr.title("Expand thread."), attr.arialabel("Expand thread."), /* @__PURE__ */ __name(function click(e) {
+				dom.div(dom._class("msgItemCell"), dom._class("msgItemFlags"), dom.div(css("msgItemFlagsSpread", { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }), dom.div(flagList(msgitemView)), !msgitemView.parent && msgitemView.kids.length > 0 && msgitemView.collapsed ? dom.clickbutton(dom._class("msgThreadToggle"), "" + (1 + msgitemView.descendants().length), attr.tabindex("-1"), attr.title(ui("Expand thread.")), attr.arialabel(ui("Expand thread.")), /* @__PURE__ */ __name(function click(e) {
 					e.stopPropagation();
 					if (settings.threading === ThreadMode.ThreadOn) {
-						withStatus("Saving thread expanded", client.ThreadCollapse([msgitemView.messageitem.Message.ID], false));
+						withStatus(ui("Saving thread expanded"), client.ThreadCollapse([msgitemView.messageitem.Message.ID], false));
 					}
 					msglistView.threadExpand(msgitemView);
-				}, "click")) : [], !msgitemView.parent && msgitemView.kids.length > 0 && !msgitemView.collapsed ? dom.clickbutton("-", style({ width: "1em" }), attr.tabindex("-1"), attr.title("Collapse thread."), attr.arialabel("Collapse thread."), /* @__PURE__ */ __name(function click(e) {
+				}, "click")) : [], !msgitemView.parent && msgitemView.kids.length > 0 && !msgitemView.collapsed ? dom.clickbutton(dom._class("msgThreadToggle"), threadCollapseIcon(), attr.tabindex("-1"), attr.title(ui("Collapse thread.")), attr.arialabel(ui("Collapse thread.")), /* @__PURE__ */ __name(function click(e) {
 					e.stopPropagation();
 					if (settings.threading === ThreadMode.ThreadOn) {
-						withStatus("Saving thread expanded", client.ThreadCollapse([msgitemView.messageitem.Message.ID], true));
+						withStatus(ui("Saving thread expanded"), client.ThreadCollapse([msgitemView.messageitem.Message.ID], true));
 					}
 					msglistView.threadCollapse(msgitemView);
 					msglistView.viewportEnsureMessages();
 				}, "click")) : [])),
 				dom.div(
-					msgItemCellStyle,
-					dom._class("msgItemFrom"),
-					dom.div(css("msgItemFromSpread", { display: "flex", justifyContent: "space-between" }), dom.div(dom._class("silenttitle"), css("msgItemFromText", { whiteSpace: "nowrap", overflow: "hidden" }), correspondents()), identityHeader),
+					dom._class("msgItemCell"),
+					dom._class("msgItemMain"),
+					dom.div(dom._class("msgItemFromRow"), dom.clickbutton(dom._class("msgItemFlagBtn"), mi2.Message.Flagged ? dom._class("isOn") : [], flagMarkIcon(mi2.Message.Flagged), attr.arialabel(mi2.Message.Flagged ? ui("Remove flag") : ui("Flag message")), attr.title(mi2.Message.Flagged ? ui("Remove flag.") : ui("Flag message.")), /* @__PURE__ */ __name(async function click(e) {
+						e.preventDefault();
+						e.stopPropagation();
+						const id = mi2.Message.ID;
+						if (mi2.Message.Flagged) {
+							await withStatus(ui("Removing flag"), client.FlagsClear([id], ["\\Flagged"]));
+						} else {
+							await withStatus(ui("Flagging"), client.FlagsAdd([id], ["\\Flagged"]));
+						}
+					}, "click")), dom.div(dom._class("silenttitle"), dom._class("msgItemFromText"), correspondents()), identityHeader),
+					dom.div(dom._class("msgItemSubjectRow"), dom.div(dom._class("msgItemSubjectText"), threadIndent > 0 ? dom.span(threadChar, style({ paddingLeft: threadIndent / 2 + "em" }), css("msgItemThreadChar", { opacity: ".75", fontWeight: "normal" }), threadCharTitle ? attr.title(threadCharTitle) : []) : [], msgitemView.parent ? [] : new String(mi2.Envelope.Subject || ui("(no subject)"))), dom.div(keywords, mailboxtags)),
+					mi2.Message.Preview ? dom.div(dom._class("msgItemPreviewRow"), dom.div(dom._class("msgItemPreviewText"), new String(mi2.Message.Preview))) : [],
 					// Thread messages are connected by a vertical bar. The first and last message are
 					// only half the height of the item, to indicate start/end, and so it stands out
 					// from any thread above/below.
 					(msgitemView.parent || msgitemView.kids.length > 0) && !msgitemView.threadRoot().collapsed ? dom.div(css("msgItemThreadBar", { position: "absolute", right: 0, top: 0, bottom: 0, borderRight: "2px solid", borderRightColor: styles.colorMilder }), !msgitemView.parent ? css("msgItemThreadBarFirst", { top: "50%", bottom: "-1px" }) : isThreadLast() ? css("msgItemThreadBarLast", { top: "-1px", bottom: "50%" }) : css("msgItemThreadBarMiddle", { top: "-1px", bottom: "-1px" })) : []
 				),
-				dom.div(msgItemCellStyle, css("msgItemSubject", { position: "relative" }), dom.div(css("msgItemSubjectSpread", { display: "flex", justifyContent: "space-between", position: "relative" }), dom.div(css("msgItemSubjectText", { whiteSpace: "nowrap", overflow: "hidden" }), threadIndent > 0 ? dom.span(threadChar, style({ paddingLeft: threadIndent / 2 + "em" }), css("msgItemThreadChar", { opacity: ".75", fontWeight: "normal" }), threadCharTitle ? attr.title(threadCharTitle) : []) : [], msgitemView.parent ? [] : mi2.Envelope.Subject || "(no subject)", dom.span(css("msgItemSubjectSnippet", { fontWeight: "normal", color: styles.colorMilder }), " " + (mi2.Message.Preview || ""))), dom.div(keywords, mailboxtags))),
-				dom.div(msgItemCellStyle, dom._class("msgItemAge"), age(received())),
+				dom.div(dom._class("msgItemCell"), dom._class("msgItemAge"), age(received())),
+				dom.div(dom._class("msgItemHoverActions"), mi2.Message.MailboxID === msglistView.mailboxes().find((box) => box.Trash)?.ID ? dom.clickbutton(dom._class("msgItemHoverIcon"), dom._class("msgItemHoverDanger"), strokeIcon(strokePaths.trash), attr.arialabel(ui("Delete")), attr.title(ui("Permanently delete message.")), /* @__PURE__ */ __name(async function click(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					if (msglistView.selected().includes(msgitemView)) {
+						await msglistView.cmdDelete();
+						return;
+					}
+					if (!window.confirm(ui("Are you sure you want to permanently delete?"))) {
+						return;
+					}
+					forgetMovedMessages([mi2.Message.ID]);
+					await withStatus(ui("Permanently deleting messages"), client.MessageDelete([mi2.Message.ID]));
+				}, "click")) : dom.clickbutton(dom._class("msgItemHoverIcon"), strokeIcon(strokePaths.trash), attr.arialabel(ui("Trash")), attr.title(ui("Move to the Trash mailbox.")), /* @__PURE__ */ __name(async function click(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					if (msglistView.selected().includes(msgitemView)) {
+						await msglistView.cmdTrash();
+						return;
+					}
+					const mb = msglistView.mailboxes().find((box) => box.Trash);
+					if (!mb) {
+						window.alert(ui("No mailbox configured for trash yet."));
+						return;
+					}
+					if (mi2.Message.MailboxID === mb.ID) {
+						return;
+					}
+					await withStatus(ui("Moving to trash mailbox"), client.MessageMove([mi2.Message.ID], mb.ID, true));
+					offerMoveUndo([{ id: mi2.Message.ID, mailboxID: mi2.Message.MailboxID }]);
+				}, "click")), dom.clickbutton(dom._class("msgItemHoverIcon"), strokeIcon(strokePaths.archive), attr.arialabel(ui("Archive")), attr.title(ui("Move to the Archive mailbox.")), /* @__PURE__ */ __name(async function click(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					if (msglistView.selected().includes(msgitemView)) {
+						await msglistView.cmdArchive();
+						return;
+					}
+					const mb = msglistView.mailboxes().find((box) => box.Archive);
+					if (!mb) {
+						window.alert(ui("No mailbox configured for archiving yet."));
+						return;
+					}
+					if (mi2.Message.MailboxID === mb.ID) {
+						return;
+					}
+					await withStatus(ui("Moving to archive mailbox"), client.MessageMove([mi2.Message.ID], mb.ID, true));
+					offerMoveUndo([{ id: mi2.Message.ID, mailboxID: mi2.Message.MailboxID }]);
+				}, "click"))),
 				/* @__PURE__ */ __name(function click(e) {
 					e.preventDefault();
 					e.stopPropagation();
@@ -3478,14 +4852,23 @@
 
 ---- Forwarded Message ----
 `;
-				const padspace = /* @__PURE__ */ __name((s, size) => s + " ".repeat(size - s.length), "padspace");
+				const fields = [
+					[ui("Subject:"), subject2],
+					[ui("Date:"), date],
+					[ui("From:"), from],
+					[ui("Reply-To:"), replyTo],
+					[ui("To:"), to2],
+					[ui("Cc:"), cc2]
+				];
+				const labelWidth = fields.reduce((n, [k, l]) => l.length === 0 ? n : Math.max(n, k.length), 0);
+				const padspace = /* @__PURE__ */ __name((s, size) => s + " ".repeat(Math.max(0, size - s.length)), "padspace");
 				const add = /* @__PURE__ */ __name((k, l) => {
 					if (l.length === 0) {
 						return;
 					}
 					const last = l.length - 1;
 					l.map((v, i) => {
-						prefix += padspace(k, 10) + " " + v;
+						prefix += padspace(k, labelWidth) + " " + v;
 						if (i < last) {
 							prefix += ",";
 						}
@@ -3493,12 +4876,9 @@
 						k = "";
 					});
 				}, "add");
-				add("Subject:", subject2);
-				add("Date:", date);
-				add("From:", from);
-				add("Reply-To:", replyTo);
-				add("To:", to2);
-				add("Cc:", cc2);
+				for (const [k, l] of fields) {
+					add(k, l);
+				}
 				body = prefix + "\n" + body;
 			} else {
 				body = body.split("\n").map((line) => "> " + line).join("\n");
@@ -3513,8 +4893,8 @@
 						const from = mi.Envelope.From[0];
 						const name = from.Name || formatEmail(from);
 						const dt = mi.Envelope.Date.getFullYear() === 1 ? m.Received : mi.Envelope.Date;
-						const datetime = dt.toLocaleDateString(void 0, { weekday: "short", year: "numeric", month: "short", day: "numeric" }) + " at " + dt.toLocaleTimeString();
-						onWroteLine = "On " + datetime + ", " + name + " wrote:\n";
+						const datetime = dt.toLocaleString(uiLocale(), { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+						onWroteLine = wroteLine(datetime, name);
 					}
 					body = "\n\n" + sig + "\n" + onWroteLine + body;
 				}
@@ -3608,7 +4988,7 @@
 				path = pm.HTMLPath;
 			}
 			if (!path) {
-				window.alert("Part not found.");
+				window.alert(ui("Part not found."));
 				return;
 			}
 			window.open("msg/" + m.ID + "/viewtext/" + [0, ...path].join("."), "_blank");
@@ -3628,7 +5008,12 @@
 		const cmdToggleHeaders = /* @__PURE__ */ __name(async () => {
 			settingsPut({ ...settings, showAllHeaders: !settings.showAllHeaders });
 			const pm = await parsedMessagePromise;
+			if (isMobile() && settings.showAllHeaders) {
+				msgheaderDetailsExpanded = true;
+				msgheaderDetailsElem.classList.add("expanded");
+			}
 			loadHeaderDetails(pm);
+			loadMobileHeaderSummary();
 		}, "cmdToggleHeaders");
 		let textbtn, htmlbtn, htmlextbtn;
 		const activeBtn = /* @__PURE__ */ __name((b) => {
@@ -3641,7 +5026,7 @@
 		const fromAddressSettingsSave = /* @__PURE__ */ __name(async (mode) => {
 			const froms = mi.Envelope.From || [];
 			if (froms.length === 1) {
-				await withStatus("Saving view mode settings for address", client.FromAddressSettingsSave({ FromAddress: froms[0].User + "@" + (froms[0].Domain.Unicode || froms[0].Domain.ASCII), ViewMode: mode }));
+				await withStatus(ui("Saving view mode settings for address"), client.FromAddressSettingsSave({ FromAddress: froms[0].User + "@" + (froms[0].Domain.Unicode || froms[0].Domain.ASCII), ViewMode: mode }));
 			}
 		}, "fromAddressSettingsSave");
 		const cmdShowText = /* @__PURE__ */ __name(async () => {
@@ -3677,8 +5062,12 @@
 		}, "cmdShowHTMLCycle");
 		const cmdShowInternals = /* @__PURE__ */ __name(async () => {
 			const pm = await parsedMessagePromise;
-			const mimepart = /* @__PURE__ */ __name((p) => dom.li((p.MediaType + "/" + p.MediaSubType).toLowerCase(), p.ContentTypeParams ? " " + JSON.stringify(p.ContentTypeParams) : [], p.Parts && p.Parts.length === 0 ? [] : dom.ul(css("internalsList", { listStyle: "disc", marginLeft: "1em" }), (p.Parts || []).map((pp) => mimepart(pp)))), "mimepart");
-			popup(css("popupInternals", { display: "flex", gap: "1em" }), dom.div(dom.h1("Mime structure"), dom.ul(css("internalsList", { listStyle: "disc", marginLeft: "1em" }), mimepart(pm.Part))), dom.div(css("internalsMessage", { whiteSpace: "pre-wrap", tabSize: 4, maxWidth: "50%" }), dom.h1("Message"), JSON.stringify(m, void 0, "	")), dom.div(css("internalsParts", { whiteSpace: "pre-wrap", tabSize: 4, maxWidth: "50%" }), dom.h1("Part"), JSON.stringify(pm.Part, void 0, "	")));
+			const mimepart = /* @__PURE__ */ __name((p) => dom.li((p.MediaType + "/" + p.MediaSubType).toLowerCase(), p.ContentTypeParams ? " " + JSON.stringify(p.ContentTypeParams) : [], p.Parts && p.Parts.length === 0 ? [] : dom.ul(dom._class("internalsList"), (p.Parts || []).map((pp) => mimepart(pp)))), "mimepart");
+			const remove = popup(dom.div(dom._class("dialogPanel"), dom._class("internalsPanel"), dom.div(dom._class("dialogHeader"), dom.h1(ui("MIME internals")), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close internals.")), /* @__PURE__ */ __name(function click() {
+				remove();
+			}, "click"))), dom.div(dom._class("dialogBody"), dom.div(dom._class("internalsColumns"), dom.div(dom.h2(ui("Mime structure")), dom.ul(dom._class("internalsList"), mimepart(pm.Part))), dom.div(dom.h2(ui("Message")), dom.pre(dom._class("internalsPre"), JSON.stringify(m, void 0, "	"))), dom.div(dom.h2(ui("Part")), dom.pre(dom._class("internalsPre"), JSON.stringify(pm.Part, void 0, "	"))))), dom.div(dom._class("dialogFooter"), dom.clickbutton(ui("Close"), /* @__PURE__ */ __name(function click() {
+				remove();
+			}, "click")))));
 		}, "cmdShowInternals");
 		const cmdUp = /* @__PURE__ */ __name(async () => {
 			msgscrollElem.scrollTo({ top: msgscrollElem.scrollTop - 3 * msgscrollElem.getBoundingClientRect().height / 4, behavior: "smooth" });
@@ -3723,49 +5112,125 @@
 		let urlType;
 		let msgbuttonElem, msgheaderElem, msgattachmentElem, msgmodeElem;
 		let msgheaderFullElem;
+		let msgmobileSummaryElem;
+		let msgheaderDetailsElem;
+		let msgheaderDetailsExpanded = false;
 		const msgmetaElem = dom.div(
 			css("msgmeta", { backgroundColor: styles.backgroundColorMild, borderBottom: "5px solid", borderBottomColor: ["white", "black"], maxHeight: "90%", overflowY: "auto" }),
 			attr.role("region"),
-			attr.arialabel("Buttons and headers for message"),
+			attr.arialabel(ui("Buttons and headers for message")),
+			msgmobileSummaryElem = dom.div(dom._class("msgMobileSummary")),
 			msgbuttonElem = dom.div(),
-			dom.div(attr.arialive("assertive"), dom.table(styleClasses.msgHeaders, msgheaderElem = dom.tbody()), msgheaderFullElem = dom.table(), msgattachmentElem = dom.div(), msgmodeElem = dom.div()),
+			dom.div(attr.arialive("assertive"), msgheaderDetailsElem = dom.div(dom._class("msgHeaderDetails"), dom.table(styleClasses.msgHeaders, msgheaderElem = dom.tbody()), msgheaderFullElem = dom.table(css("msgHeaderExtra", { width: "100%" }))), msgattachmentElem = dom.div(), msgmodeElem = dom.div()),
 			// Explicit separator that separates headers from body, to
 			// prevent HTML messages from faking UI elements.
 			dom.div(css("headerBodySeparator", { height: "2px", backgroundColor: styles.borderColor }))
 		);
-		const msgscrollElem = dom.div(dom._class("pad"), yscrollAutoStyle, attr.role("region"), attr.arialabel("Message body"), css("msgscroll", { backgroundColor: styles.backgroundColor }));
+		const msgscrollElem = dom.div(dom._class("pad"), yscrollAutoStyle, attr.role("region"), attr.arialabel(ui("Message body")), css("msgscroll", { backgroundColor: styles.backgroundColor }));
 		const msgcontentElem = dom.div(css("scrollparent", { position: "relative", flexGrow: "1" }));
 		const trashMailboxID = listMailboxes().find((mb) => mb.Trash)?.ID;
 		const draftMailboxID = listMailboxes().find((mb) => mb.Draft)?.ID;
+		let buttonPm = parsedMessageOpt || null;
+		const trashOrDeleteBtn = /* @__PURE__ */ __name(() => m.MailboxID === trashMailboxID ? msgActionButton(ui("Delete"), strokePaths.trash, attr.title(ui("Permanently delete message.")), clickCmd(msglistView.cmdDelete, shortcuts)) : msgActionButton(ui("Trash"), strokePaths.trash, attr.title(ui("Move to the Trash mailbox.")), clickCmd(msglistView.cmdTrash, shortcuts)), "trashOrDeleteBtn");
+		const moreActionsPopover = /* @__PURE__ */ __name((ref) => {
+			menuPopover(ref, [
+				!buttonPm || !buttonPm.ListReplyAddress ? [] : dom.clickbutton(ui("Reply to list"), attr.title(ui("Compose a reply to this mailing list.")), clickCmd(cmdReplyList, shortcuts)),
+				dom.clickbutton(ui("Junk"), attr.title(ui("Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages.")), clickCmd(msglistView.cmdJunk, shortcuts)),
+				dom.clickbutton(ui("Move to..."), /* @__PURE__ */ __name(function click(e) {
+					movePopover(e, listMailboxes(), [m]);
+				}, "click")),
+				dom.clickbutton(ui("Labels..."), /* @__PURE__ */ __name(function click(e) {
+					labelsPopover(e, [m], possibleLabels);
+				}, "click")),
+				dom.clickbutton(ui("Print"), attr.title(ui("Print message, opens in new tab and opens print dialog.")), clickCmd(cmdPrint, shortcuts)),
+				dom.clickbutton(ui("Mark Not Junk"), attr.title(ui("Mark as not junk, causing this message to be used in spam classification of new incoming messages.")), clickCmd(msglistView.cmdMarkNotJunk, shortcuts)),
+				dom.clickbutton(ui("Mark Read"), clickCmd(msglistView.cmdMarkRead, shortcuts)),
+				dom.clickbutton(ui("Mark Unread"), clickCmd(msglistView.cmdMarkUnread, shortcuts)),
+				dom.clickbutton(ui("Mute thread"), clickCmd(msglistView.cmdMute, shortcuts)),
+				dom.clickbutton(ui("Unmute thread"), clickCmd(msglistView.cmdUnmute, shortcuts)),
+				dom.clickbutton(ui("Open in new tab"), clickCmd(cmdOpenNewTab, shortcuts)),
+				dom.clickbutton(ui("Download raw original message"), clickCmd(cmdDownloadRaw, shortcuts)),
+				dom.clickbutton(ui("Export as ..."), /* @__PURE__ */ __name(function click(e) {
+					popoverExport(e.target, "", [m.ID]);
+				}, "click")),
+				dom.clickbutton(ui("Show raw original message in new tab"), clickCmd(cmdOpenRaw, shortcuts)),
+				dom.clickbutton(ui("Show currently displayed part as decoded text"), clickCmd(cmdOpenRawPart, shortcuts)),
+				dom.clickbutton(ui("Show internals in popup"), clickCmd(cmdShowInternals, shortcuts))
+			]);
+		}, "moreActionsPopover");
 		const loadButtons = /* @__PURE__ */ __name((pm) => {
-			dom._kids(msgbuttonElem, dom.div(dom._class("pad"), m.MailboxID === draftMailboxID ? dom.clickbutton("Edit", attr.title("Continue editing this draft message."), clickCmd(cmdComposeDraft, shortcuts)) : [], " ", !pm || !pm.ListReplyAddress ? [] : dom.clickbutton("Reply to list", attr.title("Compose a reply to this mailing list."), clickCmd(cmdReplyList, shortcuts)), " ", pm && pm.ListReplyAddress && formatEmail(pm.ListReplyAddress) === fromAddress ? [] : dom.clickbutton("Reply", attr.title("Compose a reply to the sender of this message."), clickCmd(cmdReply, shortcuts)), " ", (mi.Envelope.To || []).length <= 1 && (mi.Envelope.CC || []).length === 0 && (mi.Envelope.BCC || []).length === 0 ? [] : dom.clickbutton("Reply all", attr.title("Compose a reply to all participants of this message."), clickCmd(cmdReplyAll, shortcuts)), " ", dom.clickbutton("Forward", attr.title("Compose a forwarding message, optionally including attachments."), clickCmd(cmdForward, shortcuts)), " ", dom.clickbutton("Archive", attr.title("Move to the Archive mailbox."), clickCmd(msglistView.cmdArchive, shortcuts)), " ", m.MailboxID === trashMailboxID ? dom.clickbutton("Delete", attr.title("Permanently delete message."), clickCmd(msglistView.cmdDelete, shortcuts)) : dom.clickbutton("Trash", attr.title("Move to the Trash mailbox."), clickCmd(msglistView.cmdTrash, shortcuts)), " ", dom.clickbutton("Junk", attr.title("Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages."), clickCmd(msglistView.cmdJunk, shortcuts)), " ", dom.clickbutton("Move to...", /* @__PURE__ */ __name(function click(e) {
-				movePopover(e, listMailboxes(), [m]);
-			}, "click")), " ", dom.clickbutton("Labels...", attr.title("Add/remove labels."), /* @__PURE__ */ __name(function click(e) {
-				labelsPopover(e, [m], possibleLabels);
-			}, "click")), " ", dom.clickbutton("More...", attr.title("Show more actions."), /* @__PURE__ */ __name(function click(e) {
-				popover(e.target, { transparent: true }, dom.div(css("popupMore", { display: "flex", flexDirection: "column", gap: ".5ex", textAlign: "right" }), [
-					dom.clickbutton("Print", attr.title("Print message, opens in new tab and opens print dialog."), clickCmd(cmdPrint, shortcuts)),
-					dom.clickbutton("Mark Not Junk", attr.title("Mark as not junk, causing this message to be used in spam classification of new incoming messages."), clickCmd(msglistView.cmdMarkNotJunk, shortcuts)),
-					dom.clickbutton("Mark Read", clickCmd(msglistView.cmdMarkRead, shortcuts)),
-					dom.clickbutton("Mark Unread", clickCmd(msglistView.cmdMarkUnread, shortcuts)),
-					dom.clickbutton("Mute thread", clickCmd(msglistView.cmdMute, shortcuts)),
-					dom.clickbutton("Unmute thread", clickCmd(msglistView.cmdUnmute, shortcuts)),
-					dom.clickbutton("Open in new tab", clickCmd(cmdOpenNewTab, shortcuts)),
-					dom.clickbutton("Download raw original message", clickCmd(cmdDownloadRaw, shortcuts)),
-					dom.clickbutton("Export as ...", /* @__PURE__ */ __name(function click2(e2) {
-						popoverExport(e2.target, "", [m.ID]);
-					}, "click")),
-					dom.clickbutton("Show raw original message in new tab", clickCmd(cmdOpenRaw, shortcuts)),
-					dom.clickbutton("Show currently displayed part as decoded text", clickCmd(cmdOpenRawPart, shortcuts)),
-					dom.clickbutton("Show internals in popup", clickCmd(cmdShowInternals, shortcuts))
-				].map((b) => dom.div(b))));
-			}, "click"))));
+			buttonPm = pm;
+			const oneRecipient = (mi.Envelope.To || []).length <= 1 && (mi.Envelope.CC || []).length === 0 && (mi.Envelope.BCC || []).length === 0;
+			const row = dom.div(dom._class("msgActionRow"), m.MailboxID === draftMailboxID ? msgActionButton(ui("Edit"), strokePaths.pencil, attr.title(ui("Continue editing this draft message.")), clickCmd(cmdComposeDraft, shortcuts)) : [], pm && pm.ListReplyAddress && formatEmail(pm.ListReplyAddress) === fromAddress ? [] : msgActionButton(ui("Reply"), strokePaths.reply, attr.title(ui("Compose a reply to the sender of this message.")), clickCmd(cmdReply, shortcuts)), oneRecipient ? [] : msgActionButton(ui("Reply all"), strokePaths.replyAll, attr.title(ui("Compose a reply to all participants of this message.")), clickCmd(cmdReplyAll, shortcuts)), msgActionButton(ui("Forward"), strokePaths.forward, attr.title(ui("Compose a forwarding message, optionally including attachments.")), clickCmd(cmdForward, shortcuts)), trashOrDeleteBtn(), msgActionButton(ui("Archive"), strokePaths.archive, attr.title(ui("Move to the Archive mailbox.")), clickCmd(msglistView.cmdArchive, shortcuts)), msgActionButton(ui("More"), strokePaths.more, attr.title(ui("More actions.")), /* @__PURE__ */ __name(function click(e) {
+				moreActionsPopover(e.currentTarget);
+			}, "click")));
+			dom._kids(msgbuttonElem, isMobile() ? dom.div(dom._class("msgbuttonMobile"), row) : dom.div(dom._class("msgbuttonScroll"), row));
 		}, "loadButtons");
 		loadButtons(parsedMessageOpt || null);
+		const recipientLabel = /* @__PURE__ */ __name((a) => {
+			const n = a.Name;
+			if (n && !n.includes("<") && !n.includes("@") && !n.includes(">")) {
+				return n;
+			}
+			return formatEmail(a);
+		}, "recipientLabel");
+		const recipientsShort = /* @__PURE__ */ __name((addrs) => {
+			if (addrs.length === 0) {
+				return ui("undisclosed recipients");
+			}
+			const names = addrs.map(recipientLabel);
+			if (names.length <= 2) {
+				return names.join(", ");
+			}
+			return names[0] + ", " + names[1] + " +" + (names.length - 2);
+		}, "recipientsShort");
+		const loadMobileHeaderSummary = /* @__PURE__ */ __name(() => {
+			if (!isMobile()) {
+				dom._kids(msgmobileSummaryElem, []);
+				return;
+			}
+			const msgenv = mi.Envelope;
+			const received = mi.Message.Received;
+			const receivedlocal = new Date(received.getTime());
+			const dateStr = receivedlocal.toLocaleDateString(uiLocale(), { month: "short", day: "numeric" }) + " " + receivedlocal.toLocaleTimeString(uiLocale(), { hour: "2-digit", minute: "2-digit" });
+			const from = (msgenv.From || [])[0];
+			const fromStr = from ? formatAddressShort(from, false) : ui("(unknown sender)");
+			let toLine = ui("To: ") + recipientsShort(msgenv.To || []);
+			const cc = msgenv.CC || [];
+			if (cc.length > 0) {
+				toLine += ui(" \xB7 Cc: ") + recipientsShort(cc);
+			}
+			const chips = [];
+			if (mi.Message.IsForward) {
+				chips.push(dom.span(dom._class("msgMobileSummaryChip"), ui("Forwarded")));
+			}
+			if (mi.Message.IsMailingList) {
+				chips.push(dom.span(dom._class("msgMobileSummaryChip"), ui("Mailing list")));
+			}
+			if (mi.IsSigned) {
+				chips.push(dom.span(dom._class("msgMobileSummaryChip"), ui("Signed")));
+			}
+			if (mi.IsEncrypted) {
+				chips.push(dom.span(dom._class("msgMobileSummaryChip"), ui("Encrypted")));
+			}
+			if (refineKeyword) {
+				for (const kw of mi.Message.Keywords || []) {
+					chips.push(dom.clickbutton(dom._class("msgMobileSummaryChip"), kw, /* @__PURE__ */ __name(async function click() {
+						await refineKeyword(kw);
+					}, "click")));
+				}
+			}
+			dom._kids(msgmobileSummaryElem, dom.div(dom._class("msgMobileSummaryTop"), dom.div(dom._class("msgMobileSummaryFrom"), fromStr), dom.div(dom._class("msgMobileSummaryDate"), attr.title(ui("Received: ") + received.toString() + ";\n" + ui("Date header in message: ") + (msgenv.Date ? msgenv.Date.toString() : ui("(missing/invalid)"))), dateStr)), dom.div(dom._class("msgMobileSummaryMeta"), dom.span(dom._class("msgMobileSummaryTo"), toLine), dom.clickbutton(dom._class("msgMobileDetailsToggle"), msgheaderDetailsExpanded ? ui("Less") : ui("Details"), attr.title(msgheaderDetailsExpanded ? ui("Hide full headers.") : ui("Show full headers.")), /* @__PURE__ */ __name(function click() {
+				msgheaderDetailsExpanded = !msgheaderDetailsExpanded;
+				msgheaderDetailsElem.classList.toggle("expanded", msgheaderDetailsExpanded);
+				loadMobileHeaderSummary();
+			}, "click"))), chips.length > 0 ? dom.div(dom._class("msgMobileSummaryChips"), chips) : []);
+		}, "loadMobileHeaderSummary");
 		loadMsgheaderView(msgheaderElem, miv.messageitem, accountSettings.ShowHeaders || [], refineKeyword, false);
+		loadMobileHeaderSummary();
 		const headerTextMildStyle = css("headerTextMild", { textAlign: "right", color: styles.colorMild });
 		const loadHeaderDetails = /* @__PURE__ */ __name((pm) => {
-			const table = dom.table(css("msgHeaderDetails", { width: "100%" }), !settings.showAllHeaders ? [] : Object.entries(pm.Headers || {}).sort().map((t) => (t[1] || []).map((v) => dom.tr(dom.td(t[0] + ":", headerTextMildStyle), dom.td(v)))));
+			const table = dom.table(css("msgHeaderExtra", { width: "100%" }), !settings.showAllHeaders ? [] : Object.entries(pm.Headers || {}).sort().map((t) => (t[1] || []).map((v) => dom.tr(dom.td(t[0] + ":", headerTextMildStyle), dom.td(v)))));
 			msgheaderFullElem.replaceWith(table);
 			msgheaderFullElem = table;
 		}, "loadHeaderDetails");
@@ -3823,15 +5288,15 @@
 			const popupRoot = dom.div(css("attachmentsOverlay", { position: "fixed", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: styles.overlayBackgroundColor, display: "flex", flexDirection: "column", alignContent: "stretch", padding: "1em", zIndex: zindexes.attachments }), /* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
 				cmdViewClose();
-			}, "click"), attr.tabindex("0"), !(index > 0) ? [] : dom.div(css("attachmentsPrevious", { position: "absolute", left: "1em", top: 0, bottom: 0, fontSize: "1.5em", width: "2em", display: "flex", alignItems: "center", cursor: "pointer" }), dom.div(dom._class("silenttitle"), attachmentsArrowStyle, attr.title("To previous viewable attachment."), "\u2190"), attr.tabindex("0"), clickCmd(cmdViewPrev, attachShortcuts), enterCmd(cmdViewPrev, attachShortcuts)), dom.div(css("attachmentsDownloadHeaderBox", { textAlign: "center", paddingBottom: "30px" }), dom.span(dom._class("pad"), /* @__PURE__ */ __name(function click(e) {
+			}, "click"), attr.tabindex("0"), !(index > 0) ? [] : dom.div(css("attachmentsPrevious", { position: "absolute", left: "1em", top: 0, bottom: 0, fontSize: "1.5em", width: "2em", display: "flex", alignItems: "center", cursor: "pointer" }), dom.div(dom._class("silenttitle"), attachmentsArrowStyle, attr.title(ui("To previous viewable attachment.")), "\u2190"), attr.tabindex("0"), clickCmd(cmdViewPrev, attachShortcuts), enterCmd(cmdViewPrev, attachShortcuts)), dom.div(css("attachmentsDownloadHeaderBox", { textAlign: "center", paddingBottom: "30px" }), dom.span(dom._class("pad"), /* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
-			}, "click"), css("attachmentsDownloadHeader", { backgroundColor: styles.popupBackgroundColor, color: styles.popupColor, boxShadow: styles.boxShadow, border: "1px solid", borderColor: styles.popupBorderColor, borderRadius: ".25em" }), a.Filename || "(unnamed)", " - ", formatSize(a.Part.DecodedSize), " - ", dom.a("Download", attr.download(""), attr.href("msg/" + m.ID + "/download/" + pathStr), /* @__PURE__ */ __name(function click(e) {
+			}, "click"), css("attachmentsDownloadHeader", { display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 12px", backgroundColor: styles.popupBackgroundColor, color: styles.popupColor, boxShadow: styles.boxShadow, border: "1px solid", borderColor: styles.popupBorderColor, borderRadius: styles.radius }), dom.span(a.Filename || ui("(unnamed)")), dom.span("\xB7", style({ color: styles.colorMilder })), dom.span(formatSize(a.Part.DecodedSize)), dom.a(dom._class("button"), ui("Download"), attr.download(""), attr.href("msg/" + m.ID + "/download/" + pathStr), /* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
-			}, "click")))), isImage(a) ? dom.div(css("attachmentsImageBox", { flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center", maxHeight: "calc(100% - 50px)", margin: "0 5em" }), dom.img(css("attachmentsImage", { maxWidth: "100%", maxHeight: "100%", boxShadow: styles.boxShadow, margin: "0 30px" }), attr.src("msg/" + m.ID + "/view/" + pathStr))) : isText(a) ? dom.iframe(attr.title("Attachment shown as text."), attachmentsIframeStyle, attr.src("msg/" + m.ID + "/viewtext/" + pathStr)) : isPDF(a) ? dom.iframe(attr.title("Attachment as PDF."), attachmentsIframeStyle, attr.src("msg/" + m.ID + "/view/" + pathStr)) : content = dom.div(/* @__PURE__ */ __name(function click(e) {
+			}, "click")))), isImage(a) ? dom.div(css("attachmentsImageBox", { flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center", maxHeight: "calc(100% - 50px)", margin: "0 5em" }), dom.img(css("attachmentsImage", { maxWidth: "100%", maxHeight: "100%", boxShadow: styles.boxShadow, margin: "0 30px" }), attr.src("msg/" + m.ID + "/view/" + pathStr))) : isText(a) ? dom.iframe(attr.title(ui("Attachment shown as text.")), attachmentsIframeStyle, attr.src("msg/" + m.ID + "/viewtext/" + pathStr)) : isPDF(a) ? dom.iframe(attr.title(ui("Attachment as PDF.")), attachmentsIframeStyle, attr.src("msg/" + m.ID + "/view/" + pathStr)) : content = dom.div(/* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
-			}, "click"), css("attachmentsBinary", { minWidth: "30em", padding: "2ex", boxShadow: styles.boxShadow, backgroundColor: styles.popupBackgroundColor, margin: "0 5em", textAlign: "center" }), dom.div(style({ marginBottom: "2ex" }), "Attachment could be a binary file."), dom.clickbutton("View as text", /* @__PURE__ */ __name(function click() {
-				content.replaceWith(dom.iframe(attr.title("Attachment shown as text, though it could be a binary file."), attachmentsIframeStyle, attr.src("msg/" + m.ID + "/viewtext/" + pathStr)));
-			}, "click"))), !(index < attachments.length - 1) ? [] : dom.div(css("attachmentsNext", { position: "absolute", right: "1em", top: 0, bottom: 0, fontSize: "1.5em", width: "2em", display: "flex", alignItems: "center", cursor: "pointer" }), dom.div(dom._class("silenttitle"), attachmentsArrowStyle, attr.title("To next viewable attachment."), "\u2192"), attr.tabindex("0"), clickCmd(cmdViewNext, attachShortcuts), enterCmd(cmdViewNext, attachShortcuts)));
+			}, "click"), css("attachmentsBinary", { minWidth: "30em", padding: "2ex", boxShadow: styles.boxShadow, backgroundColor: styles.popupBackgroundColor, margin: "0 5em", textAlign: "center" }), dom.div(style({ marginBottom: "2ex" }), ui("Attachment could be a binary file.")), dom.clickbutton(ui("View as text"), /* @__PURE__ */ __name(function click() {
+				content.replaceWith(dom.iframe(attr.title(ui("Attachment shown as text, though it could be a binary file.")), attachmentsIframeStyle, attr.src("msg/" + m.ID + "/viewtext/" + pathStr)));
+			}, "click"))), !(index < attachments.length - 1) ? [] : dom.div(css("attachmentsNext", { position: "absolute", right: "1em", top: 0, bottom: 0, fontSize: "1.5em", width: "2em", display: "flex", alignItems: "center", cursor: "pointer" }), dom.div(dom._class("silenttitle"), attachmentsArrowStyle, attr.title(ui("To next viewable attachment.")), "\u2192"), attr.tabindex("0"), clickCmd(cmdViewNext, attachShortcuts), enterCmd(cmdViewNext, attachShortcuts)));
 			document.body.appendChild(popupRoot);
 			popupRoot.focus();
 			attachmentView = { key: keyHandler(attachShortcuts) };
@@ -3839,25 +5304,22 @@
 		var filesAll = false;
 		const renderAttachments = /* @__PURE__ */ __name(() => {
 			const l = mi.Attachments || [];
-			dom._kids(msgattachmentElem, l && l.length === 0 ? [] : dom.div(css("inlineAttachmentsSeparator", { borderTop: "1px solid", borderTopColor: styles.borderColor }), dom.div(dom._class("pad"), "Attachments: ", l.slice(0, filesAll ? l.length : 4).map((a) => {
-				const name = a.Filename || "(unnamed)";
+			dom._kids(msgattachmentElem, l && l.length === 0 ? [] : dom.div(css("inlineAttachmentsSeparator", { borderTop: "1px solid", borderTopColor: styles.borderColor }), dom.div(dom._class("pad"), dom._class("inlineAttachmentsLine"), ui("Attachments: "), l.slice(0, filesAll ? l.length : 4).map((a) => {
+				const name = a.Filename || ui("(unnamed)");
 				const viewable = isViewable(a);
 				const size = formatSize(a.Part.DecodedSize);
 				const eye = "\u{1F441}";
 				const dl = "\u2913";
 				const dlurl = "msg/" + m.ID + "/download/" + [0].concat(a.Path || []).join(".");
-				const viewbtn = dom.clickbutton(eye, viewable ? " " + name : style({ padding: "0px 0.25em" }), attr.title("View this file. Size: " + size), style({ lineHeight: "1.5" }), /* @__PURE__ */ __name(function click() {
+				const viewbtn = dom.clickbutton(eye, viewable ? " " + new String(name) : [], attr.title(ui("View this file. Size: ") + size), /* @__PURE__ */ __name(function click() {
 					view(a);
 				}, "click"));
-				const dlbtn = dom.a(dom._class("button"), attr.download(""), attr.href(dlurl), dl, viewable ? style({ padding: "0px 0.25em" }) : " " + name, attr.title("Download this file. Size: " + size), style({ lineHeight: "1.5" }));
-				if (viewable) {
-					return [dom.span(dom._class("btngroup"), urlType === "text" && isImage(a) ? style({ opacity: ".6" }) : [], viewbtn, dlbtn), " "];
-				}
-				return [dom.span(dom._class("btngroup"), dlbtn, viewbtn), " "];
-			}), filesAll || l.length < 6 ? [] : dom.clickbutton("More...", /* @__PURE__ */ __name(function click() {
+				const dlbtn = dom.a(dom._class("button"), attr.download(""), attr.href(dlurl), dl, viewable ? [] : " " + new String(name), attr.title(ui("Download this file. Size: ") + size));
+				return dom.span(dom._class("btngroup"), urlType === "text" && isImage(a) ? style({ opacity: ".6" }) : [], viewbtn, dlbtn);
+			}), filesAll || l.length < 6 ? [] : dom.clickbutton(ui("More..."), /* @__PURE__ */ __name(function click() {
 				filesAll = true;
 				renderAttachments();
-			}, "click")), " ", dom.a("Download all as zip", attr.download(""), style({ color: "inherit" }), attr.href("msg/" + m.ID + "/attachments.zip")))));
+			}, "click")), " ", dom.a(ui("Download all as zip"), attr.download(""), style({ color: "inherit" }), attr.href("msg/" + m.ID + "/attachments.zip")))));
 		}, "renderAttachments");
 		renderAttachments();
 		const root = dom.div(css("msgViewRoot", { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, display: "flex", flexDirection: "column" }));
@@ -3875,12 +5337,12 @@
 		}, "loadText");
 		const loadHTML = /* @__PURE__ */ __name(() => {
 			urlType = "html";
-			dom._kids(msgcontentElem, dom.iframe(attr.tabindex("0"), attr.title("HTML version of message with images inlined, without external resources loaded."), attr.src("msg/" + m.ID + "/" + urlType), css("msgIframeHTML", { position: "absolute", width: "100%", height: "100%" })));
+			dom._kids(msgcontentElem, dom.iframe(attr.tabindex("0"), attr.title(ui("HTML version of message with images inlined, without external resources loaded.")), attr.src("msg/" + m.ID + "/" + urlType), css("msgIframeHTML", { position: "absolute", width: "100%", height: "100%" })));
 			renderAttachments();
 		}, "loadHTML");
 		const loadHTMLexternal = /* @__PURE__ */ __name(() => {
 			urlType = "htmlexternal";
-			dom._kids(msgcontentElem, dom.iframe(attr.tabindex("0"), attr.title("HTML version of message with images inlined and with external resources loaded."), attr.src("msg/" + m.ID + "/" + urlType), css("msgIframeHTML", { position: "absolute", width: "100%", height: "100%" })));
+			dom._kids(msgcontentElem, dom.iframe(attr.tabindex("0"), attr.title(ui("HTML version of message with images inlined and with external resources loaded.")), attr.src("msg/" + m.ID + "/" + urlType), css("msgIframeHTML", { position: "absolute", width: "100%", height: "100%" })));
 			renderAttachments();
 		}, "loadHTMLexternal");
 		const mv = {
@@ -3893,6 +5355,7 @@
 				mi.Message.ModSeq = modseq;
 				mi.Message.Keywords = keywords;
 				loadMsgheaderView(msgheaderElem, miv.messageitem, accountSettings.ShowHeaders || [], refineKeyword, false);
+				loadMobileHeaderSummary();
 			}, "updateKeywords")
 		};
 		(async () => {
@@ -3901,14 +5364,14 @@
 				pm = parsedMessageOpt;
 				parsedMessageResolve(pm);
 			} else {
-				const promise = withStatus("Loading message", client.withOptions({ aborter: mv.aborter }).ParsedMessage(m.ID));
+				const promise = withStatus(ui("Loading message"), client.withOptions({ aborter: mv.aborter }).ParsedMessage(m.ID));
 				try {
 					pm = await promise;
 				} catch (err) {
 					if (err instanceof Error) {
 						parsedMessageReject(err);
 					} else {
-						parsedMessageReject(new Error("fetching message failed"));
+						parsedMessageReject(new Error(ui("fetching message failed")));
 					}
 					throw err;
 				}
@@ -3918,20 +5381,20 @@
 			loadHeaderDetails(pm);
 			const msgHeaderSeparatorStyle = css("msgHeaderSeparator", { borderTop: "1px solid", borderTopColor: styles.borderColor });
 			const msgModeWarningStyle = css("msgModeWarning", { backgroundColor: styles.warningBackgroundColor, padding: "0 .15em" });
-			const htmlNote = "In the HTML viewer, the following potentially dangerous functionality is disabled: submitting forms, starting a download from a link, navigating away from this page by clicking a link. If a link does not work, try explicitly opening it in a new tab.";
+			const htmlNote = ui("In the HTML viewer, the following potentially dangerous functionality is disabled: submitting forms, starting a download from a link, navigating away from this page by clicking a link. If a link does not work, try explicitly opening it in a new tab.");
 			const haveText = pm.Texts && pm.Texts.length > 0;
 			if (!haveText && !pm.HasHTML) {
 				dom._kids(msgcontentElem);
-				dom._kids(msgmodeElem, dom.div(dom._class("pad"), msgHeaderSeparatorStyle, dom.span("No textual content", msgModeWarningStyle)));
+				dom._kids(msgmodeElem, dom.div(dom._class("pad"), msgHeaderSeparatorStyle, dom.span(ui("No textual content"), msgModeWarningStyle)));
 			} else if (haveText && !pm.HasHTML) {
 				loadText(pm);
 				dom._kids(msgmodeElem);
 			} else {
 				const text = haveText && pm.ViewMode == ViewMode.ModeText;
-				dom._kids(msgmodeElem, dom.div(dom._class("pad"), msgHeaderSeparatorStyle, !haveText ? dom.span("HTML-only message", attr.title(htmlNote), msgModeWarningStyle, style({ marginRight: ".25em" })) : [], dom.span(dom._class("btngroup"), haveText ? textbtn = dom.clickbutton(text ? dom._class("active") : [], "Text", clickCmd(cmdShowText, shortcuts)) : [], htmlbtn = dom.clickbutton(text || !text && pm.ViewMode == ViewMode.ModeHTMLExt ? [] : dom._class("active"), "HTML", attr.title(htmlNote), /* @__PURE__ */ __name(async function click() {
+				dom._kids(msgmodeElem, dom.div(dom._class("pad"), dom._class("msgModeBar"), msgHeaderSeparatorStyle, !haveText ? dom.span(ui("HTML-only message"), attr.title(htmlNote), msgModeWarningStyle) : [], dom.span(dom._class("btngroup"), haveText ? textbtn = dom.clickbutton(text ? dom._class("active") : [], ui("Text"), clickCmd(cmdShowText, shortcuts)) : [], htmlbtn = dom.clickbutton(text || !text && pm.ViewMode == ViewMode.ModeHTMLExt ? [] : dom._class("active"), ui("HTML"), attr.title(htmlNote), /* @__PURE__ */ __name(async function click() {
 					showShortcut("T");
 					await cmdShowHTML();
-				}, "click")), htmlextbtn = dom.clickbutton(text || !text && pm.ViewMode != ViewMode.ModeHTMLExt ? [] : dom._class("active"), "HTML with external resources", attr.title(htmlNote), clickCmd(cmdShowHTMLExternal, shortcuts)))));
+				}, "click")), htmlextbtn = dom.clickbutton(text || !text && pm.ViewMode != ViewMode.ModeHTMLExt ? [] : dom._class("active"), isMobile() ? ui("HTML ext") : ui("HTML with external resources"), attr.title(htmlNote), clickCmd(cmdShowHTMLExternal, shortcuts)))));
 				if (text) {
 					loadText(pm);
 				} else if (pm.ViewMode == ViewMode.ModeHTMLExt) {
@@ -3959,7 +5422,7 @@
 			if (!miv.messageitem.Message.Seen) {
 				const tid = window.setTimeout(async () => {
 					if (!miv.messageitem.Message.Seen && miv.messageitem.Message.ID === msglistView.activeMessageID()) {
-						await withStatus("Marking current message as read", client.FlagsAdd([miv.messageitem.Message.ID], ["\\seen"]));
+						await withStatus(ui("Marking current message as read"), client.FlagsAdd([miv.messageitem.Message.ID], ["\\seen"]));
 					}
 					tidRemove(tid);
 				}, 500);
@@ -3969,7 +5432,7 @@
 				const tid = window.setTimeout(async () => {
 					const mailboxSpecial = /* @__PURE__ */ __name(() => !!listMailboxes().find((mb) => mb.ID === miv.messageitem.Message.MailboxID && (mb.Name === rejectsMailbox || mb.Name == introboxMailbox)), "mailboxSpecial");
 					if (!miv.messageitem.Message.Junk && !miv.messageitem.Message.Notjunk && miv.messageitem.Message.Seen && miv.messageitem.Message.ID === msglistView.activeMessageID() && !mailboxSpecial()) {
-						await withStatus("Marking current message as not junk", client.FlagsAdd([miv.messageitem.Message.ID], ["$notjunk"]));
+						await withStatus(ui("Marking current message as not junk"), client.FlagsAdd([miv.messageitem.Message.ID], ["$notjunk"]));
 					}
 					tidRemove(tid);
 				}, 5 * 1e3);
@@ -3978,67 +5441,74 @@
 		})();
 		return mv;
 	}, "newMsgView");
-	var newMsglistView = /* @__PURE__ */ __name((msgElem, activeMailbox, listMailboxes, setLocationHash, otherMailbox, possibleLabels, scrollElemHeight, refineKeyword, viewportEnsureMessages) => {
+	var newMsglistView = /* @__PURE__ */ __name((msgElem, activeMailbox, listMailboxes, setLocationHash, otherMailbox, possibleLabels, scrollElemHeight, refineKeyword, viewportEnsureMessages, onMessagePane) => {
 		let msgitemViews = [];
 		let collapsedMsgitemViews = [];
 		let oldThreadMessageItems = [];
 		let selected = [];
 		let focus = null;
 		let msgView = null;
-		const moveActionMsgIDs = /* @__PURE__ */ __name((skipMBID) => {
+		const moveActionSources = /* @__PURE__ */ __name((skipMBID) => {
 			const sentMailboxID = listMailboxes().find((mb) => mb.Sent)?.ID;
 			const effselected = mlv.selected();
-			return effselected.filter((miv) => miv.messageitem.Message.MailboxID !== skipMBID).map((miv) => miv.messageitem.Message).filter((m) => effselected.length === 1 || !sentMailboxID || m.MailboxID !== sentMailboxID || !otherMailbox(sentMailboxID)).map((m) => m.ID);
-		}, "moveActionMsgIDs");
+			return effselected.filter((miv) => miv.messageitem.Message.MailboxID !== skipMBID).map((miv) => miv.messageitem.Message).filter((m) => effselected.length === 1 || !sentMailboxID || m.MailboxID !== sentMailboxID || !otherMailbox(sentMailboxID)).map((m) => ({ id: m.ID, mailboxID: m.MailboxID }));
+		}, "moveActionSources");
 		const cmdArchive = /* @__PURE__ */ __name(async () => {
 			const mb = listMailboxes().find((mb2) => mb2.Archive);
 			if (mb) {
-				await withStatus("Moving to archive mailbox", client.MessageMove(moveActionMsgIDs(mb.ID), mb.ID, true));
+				const sources = moveActionSources(mb.ID);
+				await withStatus(ui("Moving to archive mailbox"), client.MessageMove(sources.map((s) => s.id), mb.ID, true));
+				offerMoveUndo(sources);
 			} else {
-				window.alert("No mailbox configured for archiving yet.");
+				window.alert(ui("No mailbox configured for archiving yet."));
 			}
 		}, "cmdArchive");
 		const cmdDelete = /* @__PURE__ */ __name(async () => {
-			if (!window.confirm("Are you sure you want to permanently delete?")) {
+			if (!window.confirm(ui("Are you sure you want to permanently delete?"))) {
 				return;
 			}
 			const ids = mlv.selected().map((miv) => miv.messageitem.Message.ID);
+			forgetMovedMessages(ids);
 			for (const id of ids) {
 				for (const tid of scheduledTimers.get(id) || []) {
 					window.clearTimeout(tid);
 				}
 				scheduledTimers.delete(id);
 			}
-			await withStatus("Permanently deleting messages", client.MessageDelete(ids));
+			await withStatus(ui("Permanently deleting messages"), client.MessageDelete(ids));
 		}, "cmdDelete");
 		const cmdTrash = /* @__PURE__ */ __name(async () => {
 			const mb = listMailboxes().find((mb2) => mb2.Trash);
 			if (mb) {
-				await withStatus("Moving to trash mailbox", client.MessageMove(moveActionMsgIDs(mb.ID), mb.ID, true));
+				const sources = moveActionSources(mb.ID);
+				await withStatus(ui("Moving to trash mailbox"), client.MessageMove(sources.map((s) => s.id), mb.ID, true));
+				offerMoveUndo(sources);
 			} else {
-				window.alert("No mailbox configured for trash yet.");
+				window.alert(ui("No mailbox configured for trash yet."));
 			}
 		}, "cmdTrash");
 		const cmdJunk = /* @__PURE__ */ __name(async () => {
 			const mb = listMailboxes().find((mb2) => mb2.Junk);
 			if (mb) {
-				await withStatus("Moving to junk mailbox", client.MessageMove(moveActionMsgIDs(mb.ID), mb.ID, true));
+				const sources = moveActionSources(mb.ID);
+				await withStatus(ui("Moving to junk mailbox"), client.MessageMove(sources.map((s) => s.id), mb.ID, true));
+				offerMoveUndo(sources);
 			} else {
-				window.alert("No mailbox configured for junk yet.");
+				window.alert(ui("No mailbox configured for junk yet."));
 			}
 		}, "cmdJunk");
 		const cmdMarkNotJunk = /* @__PURE__ */ __name(async () => {
-			await withStatus("Marking as not junk", client.FlagsAdd(mlv.selected().map((miv) => miv.messageitem.Message.ID), ["$notjunk"]));
+			await withStatus(ui("Marking as not junk"), client.FlagsAdd(mlv.selected().map((miv) => miv.messageitem.Message.ID), ["$notjunk"]));
 		}, "cmdMarkNotJunk");
 		const cmdMarkRead = /* @__PURE__ */ __name(async () => {
-			await withStatus("Marking as read", client.FlagsAdd(mlv.selected().map((miv) => miv.messageitem.Message.ID), ["\\seen"]));
+			await withStatus(ui("Marking as read"), client.FlagsAdd(mlv.selected().map((miv) => miv.messageitem.Message.ID), ["\\seen"]));
 		}, "cmdMarkRead");
 		const cmdMarkUnread = /* @__PURE__ */ __name(async () => {
-			await withStatus("Marking as not read", client.FlagsClear(mlv.selected().map((miv) => miv.messageitem.Message.ID), ["\\seen", "$junk", "$notjunk"]));
+			await withStatus(ui("Marking as not read"), client.FlagsClear(mlv.selected().map((miv) => miv.messageitem.Message.ID), ["\\seen", "$junk", "$notjunk"]));
 		}, "cmdMarkUnread");
 		const cmdMute = /* @__PURE__ */ __name(async () => {
 			const l = mlv.selected();
-			await withStatus("Muting thread", client.ThreadMute(l.map((miv) => miv.messageitem.Message.ID), true));
+			await withStatus(ui("Muting thread"), client.ThreadMute(l.map((miv) => miv.messageitem.Message.ID), true));
 			const oldstate = state();
 			for (const miv of l) {
 				if (!miv.parent && miv.kids.length > 0 && !miv.collapsed) {
@@ -4049,7 +5519,7 @@
 			viewportEnsureMessages();
 		}, "cmdMute");
 		const cmdUnmute = /* @__PURE__ */ __name(async () => {
-			await withStatus("Unmuting thread", client.ThreadMute(mlv.selected().map((miv) => miv.messageitem.Message.ID), false));
+			await withStatus(ui("Unmuting thread"), client.ThreadMute(mlv.selected().map((miv) => miv.messageitem.Message.ID), false));
 		}, "cmdUnmute");
 		const selectedRoots = /* @__PURE__ */ __name(() => {
 			const mivs = [];
@@ -4063,7 +5533,7 @@
 		}, "selectedRoots");
 		const cmdToggleMute = /* @__PURE__ */ __name(async () => {
 			if (settings.threading === ThreadMode.ThreadOff) {
-				alert("Toggle muting threads is only available when threading is enabled.");
+				alert(ui("Toggle muting threads is only available when threading is enabled."));
 				return;
 			}
 			const rootmivs = selectedRoots();
@@ -4082,7 +5552,7 @@
 		}, "cmdToggleMute");
 		const cmdToggleCollapse = /* @__PURE__ */ __name(async () => {
 			if (settings.threading === ThreadMode.ThreadOff) {
-				alert("Toggling thread collapse/expand is only available when threading is enabled.");
+				alert(ui("Toggling thread collapse/expand is only available when threading is enabled."));
 				return;
 			}
 			const rootmivs = selectedRoots();
@@ -4122,7 +5592,7 @@
 		}, "cmdSelectThread");
 		const cmdCollapseExpand = /* @__PURE__ */ __name(async (collapse) => {
 			if (settings.threading === ThreadMode.ThreadOff) {
-				alert("Toggling thread collapse/expand is only available when threading is enabled.");
+				alert(ui("Toggling thread collapse/expand is only available when threading is enabled."));
 				return;
 			}
 			const oldstate = state();
@@ -4262,6 +5732,38 @@
 			}
 			return { active, focus };
 		}, "state");
+		const listActionBar = dom.div(dom._class("msgListActionBar"), attr.role("region"), attr.arialabel("Actions for selected messages"));
+		const fillListActionBar = /* @__PURE__ */ __name((rows) => {
+			if (rows.length < 2) {
+				listActionBar.classList.remove("isOpen");
+				dom._kids(listActionBar);
+				return;
+			}
+			const trashMailboxID = listMailboxes().find((mb) => mb.Trash)?.ID;
+			const allTrash = trashMailboxID && !rows.find((miv) => miv.messageitem.Message.MailboxID !== trashMailboxID);
+			const sentMailboxID = listMailboxes().find((mb) => mb.Sent)?.ID;
+			const movable = rows.map((miv) => miv.messageitem.Message).filter((m) => rows.length === 1 || !sentMailboxID || m.MailboxID !== sentMailboxID || !otherMailbox(sentMailboxID));
+			listActionBar.classList.add("isOpen");
+			dom._kids(listActionBar, msgActionButton(ui("Archive"), strokePaths.archive, attr.title(ui("Move to the Archive mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdArchive, shortcuts)), allTrash ? msgActionButton(ui("Delete"), strokePaths.trash, attr.title(ui("Permanently delete messages.")), clickCmd(cmdDelete, shortcuts)) : msgActionButton(ui("Trash"), strokePaths.trash, attr.title(ui("Move to the Trash mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdTrash, shortcuts)), msgActionButton(ui("More"), strokePaths.more, attr.title(ui("More actions.")), /* @__PURE__ */ __name(function click(e) {
+				menuPopover(e.currentTarget, [
+					dom.clickbutton(ui("Junk"), attr.title(ui("Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox.")), clickCmd(cmdJunk, shortcuts)),
+					dom.clickbutton(ui("Move to..."), /* @__PURE__ */ __name(function click2(ev) {
+						movePopover(ev, listMailboxes(), movable);
+					}, "click")),
+					dom.clickbutton(ui("Labels..."), attr.title(ui("Add/remove labels ...")), /* @__PURE__ */ __name(function click2(ev) {
+						labelsPopover(ev, rows.map((miv) => miv.messageitem.Message), possibleLabels);
+					}, "click")),
+					dom.clickbutton(ui("Mark Read"), clickCmd(cmdMarkRead, shortcuts)),
+					dom.clickbutton(ui("Mark Unread"), clickCmd(cmdMarkUnread, shortcuts)),
+					dom.clickbutton(ui("Mark Not Junk"), attr.title(ui("Mark as not junk, causing this message to be used in spam classification of new incoming messages.")), clickCmd(cmdMarkNotJunk, shortcuts)),
+					dom.clickbutton(ui("Mute thread"), clickCmd(cmdMute, shortcuts)),
+					dom.clickbutton(ui("Unmute thread"), clickCmd(cmdUnmute, shortcuts)),
+					dom.clickbutton(ui("Export as..."), /* @__PURE__ */ __name(function click2(ev) {
+						popoverExport(ev.target, "", rows.map((miv) => miv.messageitem.Message.ID));
+					}, "click"))
+				]);
+			}, "click")));
+		}, "fillListActionBar");
 		const updateState = /* @__PURE__ */ __name(async (oldstate, initial, parsedMessageOpt) => {
 			const newstate = state();
 			if (oldstate.focus !== newstate.focus) {
@@ -4298,6 +5800,7 @@
 				msgView.aborter.abort();
 			}
 			msgView = null;
+			fillListActionBar(effselected);
 			if (effselected.length === 0) {
 				dom._kids(msgElem);
 			} else if (effselected.length === 1) {
@@ -4308,18 +5811,12 @@
 				msgView = newMsgView(effselected[0], mlv, listMailboxes, setLocationHash, possibleLabels, loaded, refineKeyword, parsedMessageOpt);
 				dom._kids(msgElem, msgView);
 			} else {
-				const trashMailboxID = listMailboxes().find((mb) => mb.Trash)?.ID;
-				const allTrash = trashMailboxID && !effselected.find((miv) => miv.messageitem.Message.MailboxID !== trashMailboxID);
-				dom._kids(msgElem, dom.div(attr.role("region"), attr.arialabel("Buttons for multiple messages"), css("multimsgBg", { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, display: "flex", alignItems: "center", justifyContent: "center" }), dom.div(css("multimsgBox", { backgroundColor: styles.backgroundColor, border: "1px solid", borderColor: styles.borderColor, padding: "4ex", borderRadius: ".25em" }), dom.div(style({ textAlign: "center", marginBottom: "4ex" }), "" + effselected.length + " messages selected"), dom.div(dom.clickbutton("Archive", attr.title("Move to the Archive mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox."), clickCmd(cmdArchive, shortcuts)), " ", allTrash ? dom.clickbutton("Delete", attr.title("Permanently delete messages."), clickCmd(cmdDelete, shortcuts)) : dom.clickbutton("Trash", attr.title("Move to the Trash mailbox. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox."), clickCmd(cmdTrash, shortcuts)), " ", dom.clickbutton("Junk", attr.title("Move to Junk mailbox, marking as junk and causing this message to be used in spam classification of new incoming messages. Messages in the designated Sent mailbox are only moved if a single message is selected, or the current mailbox is the Sent mailbox."), clickCmd(cmdJunk, shortcuts)), " ", dom.clickbutton("Move to...", /* @__PURE__ */ __name(function click(e) {
-					const sentMailboxID = listMailboxes().find((mb) => mb.Sent)?.ID;
-					movePopover(e, listMailboxes(), effselected.map((miv) => miv.messageitem.Message).filter((m) => effselected.length === 1 || !sentMailboxID || m.MailboxID !== sentMailboxID || !otherMailbox(sentMailboxID)));
-				}, "click")), " ", dom.clickbutton("Labels...", attr.title("Add/remove labels ..."), /* @__PURE__ */ __name(function click(e) {
-					labelsPopover(e, effselected.map((miv) => miv.messageitem.Message), possibleLabels);
-				}, "click")), " ", dom.clickbutton("Mark Not Junk", attr.title("Mark as not junk, causing this message to be used in spam classification of new incoming messages."), clickCmd(cmdMarkNotJunk, shortcuts)), " ", dom.clickbutton("Mark Read", clickCmd(cmdMarkRead, shortcuts)), " ", dom.clickbutton("Mark Unread", clickCmd(cmdMarkUnread, shortcuts)), " ", dom.clickbutton("Mute thread", clickCmd(cmdMute, shortcuts)), " ", dom.clickbutton("Unmute thread", clickCmd(cmdUnmute, shortcuts)), " ", dom.clickbutton("Export as...", /* @__PURE__ */ __name(function click(e) {
-					popoverExport(e.target, "", effselected.map((miv) => miv.messageitem.Message.ID));
-				}, "click"))))));
+				dom._kids(msgElem, dom.div(attr.role("region"), attr.arialabel(ui("Selected messages")), css("msgSelectionNote", { padding: "2em", textAlign: "center", color: styles.colorMild }), selectedTitle(effselected.length)));
 			}
 			setLocationHash();
+			if (activeChanged && onMessagePane && isMobile()) {
+				onMessagePane(effselected.length === 1);
+			}
 		}, "updateState");
 		const moveFocus = /* @__PURE__ */ __name((miv) => {
 			const oldstate = state();
@@ -4410,10 +5907,10 @@
 			}
 			if (focus === miv) {
 				const i = msgitemViews.indexOf(miv);
-				if (i > 0) {
-					focus = msgitemViews[i - 1];
-				} else if (i + 1 < msgitemViews.length) {
+				if (i + 1 < msgitemViews.length) {
 					focus = msgitemViews[i + 1];
+				} else if (i > 0) {
+					focus = msgitemViews[i - 1];
 				} else {
 					focus = null;
 				}
@@ -4969,6 +6466,7 @@
 				if (!miv) {
 					return false;
 				}
+				dismissMoveUndoUnless(parsedMessage.ID);
 				const oldstate = state();
 				focus = miv;
 				selected = [miv];
@@ -4978,6 +6476,9 @@
 			click: /* @__PURE__ */ __name((miv, ctrl, shift) => {
 				if (msgitemViews.length === 0) {
 					return;
+				}
+				if (!(selected.length === 1 && selected[0] === miv)) {
+					dismissMoveUndoUnless(miv.messageitem.Message.ID);
 				}
 				const oldstate = state();
 				if (shift) {
@@ -5147,6 +6648,7 @@
 			threadCollapse: /* @__PURE__ */ __name((miv) => threadCollapse(miv, true), "threadCollapse"),
 			threadToggle,
 			viewportEnsureMessages,
+			actionBar: listActionBar,
 			cmdArchive,
 			cmdTrash,
 			cmdDelete,
@@ -5161,35 +6663,251 @@
 	}, "newMsglistView");
 	var popoverExport = /* @__PURE__ */ __name((reference, mailboxName, messageIDs) => {
 		let format;
-		let archive2;
+		let archive;
 		let mboxbtn;
-		const removeExport = popover(reference, {}, dom.h1("Export"), dom.form(/* @__PURE__ */ __name(function submit() {
+		const removeExport = popover(reference, {}, dom.h1(ui("Export")), dom.form(/* @__PURE__ */ __name(function submit() {
 			window.setTimeout(() => removeExport(), 100);
-		}, "submit"), attr.target("_blank"), attr.method("POST"), attr.action("export"), dom.input(attr.type("hidden"), attr.name("csrf"), attr.value(localStorageGet("webmailcsrftoken") || "")), dom.input(attr.type("hidden"), attr.name("mailbox"), attr.value(mailboxName)), dom.input(attr.type("hidden"), attr.name("messageids"), attr.value((messageIDs || []).join(","))), format = dom.input(attr.type("hidden"), attr.name("format")), archive2 = dom.input(attr.type("hidden"), attr.name("archive")), dom.div(css("exportFields", { display: "flex", flexDirection: "column", gap: ".5ex" }), mailboxName ? dom.div(dom.label(dom.input(attr.type("checkbox"), attr.name("recursive"), attr.value("on"), /* @__PURE__ */ __name(function change(e) {
+		}, "submit"), attr.target("_blank"), attr.method("POST"), attr.action("export"), dom.input(attr.type("hidden"), attr.name("csrf"), attr.value(localStorageGet("webmailcsrftoken") || "")), dom.input(attr.type("hidden"), attr.name("mailbox"), attr.value(mailboxName)), dom.input(attr.type("hidden"), attr.name("messageids"), attr.value((messageIDs || []).join(","))), format = dom.input(attr.type("hidden"), attr.name("format")), archive = dom.input(attr.type("hidden"), attr.name("archive")), dom.div(css("exportFields", { display: "flex", flexDirection: "column", gap: ".5ex" }), mailboxName ? dom.div(dom.label(dom.input(attr.type("checkbox"), attr.name("recursive"), attr.value("on"), /* @__PURE__ */ __name(function change(e) {
 			mboxbtn.disabled = e.target.checked;
-		}, "change")), " Recursive")) : [], dom.div(!mailboxName && !messageIDs ? "Mbox " : mboxbtn = dom.submitbutton("Mbox", attr.title("Export as mbox file, not wrapped in an archive."), /* @__PURE__ */ __name(function click() {
+		}, "change")), ui(" Recursive"))) : [], dom.div(!mailboxName && !messageIDs ? "Mbox " : mboxbtn = dom.submitbutton("Mbox", attr.title(ui("Export as mbox file, not wrapped in an archive.")), /* @__PURE__ */ __name(function click() {
 			format.value = "mbox";
-			archive2.value = "none";
+			archive.value = "none";
 		}, "click")), " ", dom.submitbutton("zip", /* @__PURE__ */ __name(function click() {
 			format.value = "mbox";
-			archive2.value = "zip";
+			archive.value = "zip";
 		}, "click")), " ", dom.submitbutton("tgz", /* @__PURE__ */ __name(function click() {
 			format.value = "mbox";
-			archive2.value = "tgz";
+			archive.value = "tgz";
 		}, "click")), " ", dom.submitbutton("tar", /* @__PURE__ */ __name(function click() {
 			format.value = "mbox";
-			archive2.value = "tar";
-		}, "click"))), dom.div("Maildir ", dom.submitbutton("zip", /* @__PURE__ */ __name(function click() {
+			archive.value = "tar";
+		}, "click"))), dom.div(ui("Maildir "), dom.submitbutton("zip", /* @__PURE__ */ __name(function click() {
 			format.value = "maildir";
-			archive2.value = "zip";
+			archive.value = "zip";
 		}, "click")), " ", dom.submitbutton("tgz", /* @__PURE__ */ __name(function click() {
 			format.value = "maildir";
-			archive2.value = "tgz";
+			archive.value = "tgz";
 		}, "click")), " ", dom.submitbutton("tar", /* @__PURE__ */ __name(function click() {
 			format.value = "maildir";
-			archive2.value = "tar";
+			archive.value = "tar";
 		}, "click"))))));
 	}, "popoverExport");
+	var strokePaths = {
+		inbox: [
+			"M22 12 16 12 14 15 10 15 8 12 2 12",
+			"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+		],
+		draft: [
+			"M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34",
+			"M14 2v5a1 1 0 0 0 1 1h5",
+			"M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"
+		],
+		sent: [
+			"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z",
+			"m21.854 2.147-10.94 10.939"
+		],
+		trash: [
+			"M10 11v6",
+			"M14 11v6",
+			"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6",
+			"M3 6h18",
+			"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+		],
+		junk: [
+			"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+			"M12 8v4",
+			"M12 16h.01"
+		],
+		archive: [
+			"M3 3h18a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z",
+			"M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8",
+			"M10 12h4"
+		],
+		folder: [
+			"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+		],
+		// Hamburger path copied from SSClash sidebar.html.
+		menu: ["M4 6h16M4 12h16M4 18h10"],
+		compose: [
+			"M15.363 17.634a2 2 0 00-.506.854l-.837 2.87a.5.5 0 00.62.62l2.87-.837a2 2 0 00.854-.506l3.013-3.009a1 1 0 10-3.004-3.004z",
+			"M22 10.38V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h6.25",
+			"m22 7-8.991 5.727a2 2 0 01-2.009 0L2 7"
+		],
+		// Lucide ellipsis circles (r=1) as stroked paths.
+		more: [
+			"M11 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0",
+			"M18 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0",
+			"M4 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0"
+		],
+		reply: [
+			"M20 18v-2a4 4 0 0 0-4-4H4",
+			"m9 17-5-5 5-5"
+		],
+		replyAll: [
+			"m12 17-5-5 5-5",
+			"M22 18v-2a4 4 0 0 0-4-4H7",
+			"m7 17-5-5 5-5"
+		],
+		forward: [
+			"m15 17 5-5-5-5",
+			"M4 18v-2a4 4 0 0 1 4-4h12"
+		],
+		pencil: [
+			"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+			"m15 5 4 4"
+		],
+		back: ["m12 19-7-7 7-7", "M19 12H5"],
+		x: ["M18 6 6 18", "m6 6 12 12"],
+		flag: ["M6 22V2.8a.8.8 0 0 1 1.17-.71l11.38 5.69a.8.8 0 0 1 0 1.44L6 15.5"],
+		plus: ["M5 12h14", "M12 5v14"],
+		minus: ["M5 12h14"],
+		sun: [
+			"M12 2v2",
+			"M12 20v2",
+			"m4.93 4.93 1.41 1.41",
+			"m17.66 17.66 1.41 1.41",
+			"M2 12h2",
+			"M20 12h2",
+			"m6.34 17.66-1.41 1.41",
+			"m19.07 4.93-1.41 1.41"
+		],
+		moon: ["M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"],
+		sunMoon: [
+			"M12 2v2",
+			"M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715",
+			"M16 12a4 4 0 0 0-4-4",
+			"m19 5-1.256 1.256",
+			"M20 12h2"
+		],
+		languages: [
+			"m5 8 6 6",
+			"m4 14 6-6 2-3",
+			"M2 5h12",
+			"M7 2h1",
+			"m22 22-5-10-5 10",
+			"M14 18h6"
+		],
+		chevronDown: ["m6 9 6 6 6-6"],
+		circleUser: ["M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"],
+		user: ["M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"],
+		info: ["M12 16v-4", "M12 8h.01"],
+		bookOpen: ["M12 5v16", "M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"],
+		settings: ["M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"],
+		logOut: ["m16 17 5-5-5-5", "M21 12H9", "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"],
+		check: ["M20 6 9 17l-5-5"]
+	};
+	var strokeIcon = /* @__PURE__ */ __name((paths, circles, rects) => {
+		const ns = "http://www.w3.org/2000/svg";
+		const svg = document.createElementNS(ns, "svg");
+		svg.setAttribute("viewBox", "0 0 24 24");
+		svg.setAttribute("fill", "none");
+		svg.setAttribute("stroke", "currentColor");
+		svg.setAttribute("stroke-width", "2");
+		svg.setAttribute("stroke-linecap", "round");
+		svg.setAttribute("stroke-linejoin", "round");
+		svg.setAttribute("width", "18");
+		svg.setAttribute("height", "18");
+		svg.setAttribute("aria-hidden", "true");
+		svg.style.pointerEvents = "none";
+		for (const [cx, cy, r] of circles || []) {
+			const circle = document.createElementNS(ns, "circle");
+			circle.setAttribute("cx", cx);
+			circle.setAttribute("cy", cy);
+			circle.setAttribute("r", r);
+			svg.appendChild(circle);
+		}
+		for (const rect of rects || []) {
+			const el = document.createElementNS(ns, "rect");
+			el.setAttribute("x", "" + rect.x);
+			el.setAttribute("y", "" + rect.y);
+			el.setAttribute("width", "" + rect.width);
+			el.setAttribute("height", "" + rect.height);
+			el.setAttribute("rx", "" + rect.rx);
+			svg.appendChild(el);
+		}
+		for (const d of paths) {
+			const path = document.createElementNS(ns, "path");
+			path.setAttribute("d", d);
+			svg.appendChild(path);
+		}
+		return svg;
+	}, "strokeIcon");
+	var msgActionButton = /* @__PURE__ */ __name((label, paths, ...opts) => dom.clickbutton(dom._class("msgActionBtn"), strokeIcon(paths), label, ...opts), "msgActionButton");
+	var threadCollapseIcon = /* @__PURE__ */ __name(() => {
+		const icon = strokeIcon(strokePaths.minus);
+		icon.setAttribute("width", "14");
+		icon.setAttribute("height", "14");
+		return icon;
+	}, "threadCollapseIcon");
+	var flagMarkIcon = /* @__PURE__ */ __name((on) => {
+		const icon = strokeIcon(strokePaths.flag);
+		const cloth = icon.querySelector("path");
+		if (on && cloth) {
+			cloth.setAttribute("fill", "currentColor");
+			cloth.setAttribute("class", "msgItemFlagCloth");
+		}
+		return icon;
+	}, "flagMarkIcon");
+	var mailboxStrokeIcon = /* @__PURE__ */ __name((mb) => {
+		if (mb.Name.split("/")[0] === "Inbox") {
+			return strokeIcon(strokePaths.inbox);
+		}
+		if (mb.Draft) {
+			return strokeIcon(strokePaths.draft);
+		}
+		if (mb.Sent) {
+			return strokeIcon(strokePaths.sent);
+		}
+		if (mb.Trash) {
+			return strokeIcon(strokePaths.trash);
+		}
+		if (mb.Junk) {
+			return strokeIcon(strokePaths.junk);
+		}
+		if (mb.Archive) {
+			return strokeIcon(strokePaths.archive);
+		}
+		if (rejectsMailbox !== "" && mb.Name === rejectsMailbox) {
+			return rejects();
+		}
+		if (introboxMailbox !== "" && mb.Name === introboxMailbox) {
+			return introbox();
+		}
+		return strokeIcon(strokePaths.folder);
+	}, "mailboxStrokeIcon");
+	var themeGlyph = /* @__PURE__ */ __name((kind) => {
+		const svg = kind === "sun" ? strokeIcon(strokePaths.sun, [["12", "12", "4"]]) : kind === "moon" ? strokeIcon(strokePaths.moon) : strokeIcon(strokePaths.sunMoon);
+		svg.classList.add("icon");
+		return svg;
+	}, "themeGlyph");
+	var langGlyph = /* @__PURE__ */ __name(() => {
+		const svg = strokeIcon(strokePaths.languages);
+		svg.classList.add("icon");
+		return svg;
+	}, "langGlyph");
+	var layoutGlyph = /* @__PURE__ */ __name((id) => {
+		const frame = { x: 3, y: 3, width: 18, height: 18, rx: 2 };
+		let rects = [frame];
+		let paths;
+		if (id === "leftright") {
+			paths = ["M9 3v18"];
+		} else if (id === "topbottom") {
+			paths = ["M3 9h18"];
+		} else {
+			rects = [{ x: 2, y: 4, width: 20, height: 16, rx: 2 }];
+			paths = ["M12 9v11", "M2 9h13a2 2 0 0 1 2 2v9"];
+		}
+		const svg = strokeIcon(paths, void 0, rects);
+		svg.classList.add("icon");
+		return svg;
+	}, "layoutGlyph");
+	var navIcon = /* @__PURE__ */ __name((paths, circles, extra) => {
+		const svg = strokeIcon(paths, circles);
+		svg.classList.add("icon");
+		if (extra)
+			svg.classList.add(extra);
+		return svg;
+	}, "navIcon");
 	var newMailboxView = /* @__PURE__ */ __name((xmb, mailboxlistView, otherMailbox) => {
 		const plusbox = "\u229E";
 		const minusbox = "\u229F";
@@ -5213,121 +6931,117 @@
 			e.stopPropagation();
 			cmdExpand();
 		}, "click"));
-		let icon;
-		let name, unread;
+		let name, unread, mailboxIcon;
 		let actionBtn;
 		const cmdOpenActions = /* @__PURE__ */ __name(async () => {
 			const trashmb = mailboxlistView.mailboxes().find((mb) => mb.Trash);
-			const remove = popover(actionBtn, { transparent: true }, dom.div(style({ display: "flex", flexDirection: "column", gap: ".5ex" }), dom.div(dom.clickbutton("Mark as read", attr.title("Mark all messages in the mailbox and its sub mailboxes as read."), /* @__PURE__ */ __name(async function click() {
-				remove();
-				const mailboxIDs = [mbv.mailbox.ID, ...mailboxlistView.mailboxes().filter((mb) => mb.Name.startsWith(mbv.mailbox.Name + "/")).map((mb) => mb.ID)];
-				await withStatus("Marking mailboxes as read", client.MailboxesMarkRead(mailboxIDs));
-			}, "click"))), dom.div(dom.clickbutton("Create mailbox", attr.title("Create new mailbox within this mailbox."), /* @__PURE__ */ __name(function click(e) {
-				let fieldset;
-				let name2;
-				const ref = e.target;
-				const removeCreate = popover(ref, {}, dom.form(/* @__PURE__ */ __name(async function submit(e2) {
-					e2.preventDefault();
-					await withStatus("Creating mailbox", client.MailboxCreate(mbv.mailbox.Name + "/" + name2.value), fieldset);
-					removeCreate();
-				}, "submit"), fieldset = dom.fieldset(dom.label("Name ", name2 = dom.input(attr.required("yes"))), " ", dom.submitbutton("Create"))));
-				remove();
-				name2.focus();
-			}, "click"))), dom.div(dom.clickbutton("Move to trash", attr.title("Move mailbox, its messages and its mailboxes to the trash."), /* @__PURE__ */ __name(async function click() {
-				if (!trashmb) {
-					window.alert("No mailbox configured for trash yet.");
-					return;
-				}
-				if (!window.confirm("Are you sure you want to move this mailbox, its messages and its mailboxes to the trash?")) {
-					return;
-				}
-				remove();
-				await withStatus("Moving mailbox to trash", client.MailboxRename(mbv.mailbox.ID, trashmb.Name + "/" + mbv.mailbox.Name));
-			}, "click"))), dom.div(dom.clickbutton("Delete mailbox", attr.title("Permanently delete this mailbox and all its messages."), /* @__PURE__ */ __name(async function click() {
-				if (!window.confirm("Are you sure you want to permanently delete this mailbox and all its messages?")) {
-					return;
-				}
-				remove();
-				await withStatus("Deleting mailbox", client.MailboxDelete(mbv.mailbox.ID));
-			}, "click"))), dom.div(dom.clickbutton("Empty mailbox", attr.title("Remove all messages from the mailbox, but not mailboxes inside this mailbox or their messages."), /* @__PURE__ */ __name(async function click() {
-				if (!window.confirm("Are you sure you want to empty this mailbox, permanently removing its messages? Mailboxes inside this mailbox are not affected.")) {
-					return;
-				}
-				remove();
-				await withStatus("Emptying mailbox", client.MailboxEmpty(mbv.mailbox.ID));
-			}, "click"))), dom.div(dom.clickbutton("Rename mailbox", /* @__PURE__ */ __name(function click() {
-				remove();
-				let fieldset, name2;
-				const remove2 = popover(actionBtn, {}, dom.form(/* @__PURE__ */ __name(async function submit(e) {
-					e.preventDefault();
-					await withStatus("Renaming mailbox", client.MailboxRename(mbv.mailbox.ID, name2.value), fieldset);
-					remove2();
-				}, "submit"), fieldset = dom.fieldset(dom.label("Name ", name2 = dom.input(attr.required(""), attr.value(mbv.mailbox.Name), prop({ selectionStart: 0, selectionEnd: mbv.mailbox.Name.length }))), " ", dom.submitbutton("Rename"))));
-				name2.focus();
-			}, "click"))), dom.div(dom.clickbutton("Set role for mailbox...", attr.title("Set a special-use role on the mailbox, making it the designated mailbox for either Archived, Sent, Draft, Trashed or Junk messages."), /* @__PURE__ */ __name(async function click() {
-				remove();
-				const setUse = /* @__PURE__ */ __name(async (set) => {
-					const mb = { ...mbv.mailbox };
-					mb.Archive = mb.Draft = mb.Junk = mb.Sent = mb.Trash = false;
-					set(mb);
-					await withStatus("Marking mailbox as special use", client.MailboxSetSpecialUse(mb));
-				}, "setUse");
-				popover(actionBtn, { transparent: true }, dom.div(style({ display: "flex", flexDirection: "column", gap: ".5ex" }), dom.div(dom.clickbutton("Archive", /* @__PURE__ */ __name(async function click2() {
-					await setUse((mb) => {
-						mb.Archive = true;
-					});
-				}, "click"))), dom.div(dom.clickbutton("Draft", /* @__PURE__ */ __name(async function click2() {
-					await setUse((mb) => {
-						mb.Draft = true;
-					});
-				}, "click"))), dom.div(dom.clickbutton("Junk", /* @__PURE__ */ __name(async function click2() {
-					await setUse((mb) => {
-						mb.Junk = true;
-					});
-				}, "click"))), dom.div(dom.clickbutton("Sent", /* @__PURE__ */ __name(async function click2() {
-					await setUse((mb) => {
-						mb.Sent = true;
-					});
-				}, "click"))), dom.div(dom.clickbutton("Trash", /* @__PURE__ */ __name(async function click2() {
-					await setUse((mb) => {
-						mb.Trash = true;
-					});
-				}, "click")))));
-			}, "click"))), dom.div(dom.clickbutton("Export as...", /* @__PURE__ */ __name(function click() {
-				popoverExport(actionBtn, mbv.mailbox.Name, null);
-				remove();
-			}, "click")))));
+			const remove = menuPopover(actionBtn, [
+				dom.clickbutton(ui("Mark as read"), attr.title(ui("Mark all messages in the mailbox and its sub mailboxes as read.")), /* @__PURE__ */ __name(async function click() {
+					remove();
+					const mailboxIDs = [mbv.mailbox.ID, ...mailboxlistView.mailboxes().filter((mb) => mb.Name.startsWith(mbv.mailbox.Name + "/")).map((mb) => mb.ID)];
+					await withStatus(ui("Marking mailboxes as read"), client.MailboxesMarkRead(mailboxIDs));
+				}, "click")),
+				dom.clickbutton(ui("Create mailbox"), attr.title(ui("Create new mailbox within this mailbox.")), /* @__PURE__ */ __name(function click(e) {
+					let fieldset;
+					let name2;
+					const ref = e.target;
+					const removeCreate = popover(ref, {}, dom.form(/* @__PURE__ */ __name(async function submit(e2) {
+						e2.preventDefault();
+						await withStatus(ui("Creating mailbox"), client.MailboxCreate(mbv.mailbox.Name + "/" + name2.value), fieldset);
+						removeCreate();
+					}, "submit"), fieldset = dom.fieldset(dom.label(ui("Name "), name2 = dom.input(attr.required("yes"))), " ", dom.submitbutton(ui("Create")))));
+					remove();
+					name2.focus();
+				}, "click")),
+				dom.clickbutton(ui("Move to trash"), attr.title(ui("Move mailbox, its messages and its mailboxes to the trash.")), /* @__PURE__ */ __name(async function click() {
+					if (!trashmb) {
+						window.alert(ui("No mailbox configured for trash yet."));
+						return;
+					}
+					if (!window.confirm(ui("Are you sure you want to move this mailbox, its messages and its mailboxes to the trash?"))) {
+						return;
+					}
+					remove();
+					await withStatus(ui("Moving mailbox to trash"), client.MailboxRename(mbv.mailbox.ID, trashmb.Name + "/" + mbv.mailbox.Name));
+				}, "click")),
+				dom.clickbutton(ui("Delete mailbox"), attr.title(ui("Permanently delete this mailbox and all its messages.")), /* @__PURE__ */ __name(async function click() {
+					if (!window.confirm(ui("Are you sure you want to permanently delete this mailbox and all its messages?"))) {
+						return;
+					}
+					remove();
+					await withStatus(ui("Deleting mailbox"), client.MailboxDelete(mbv.mailbox.ID));
+				}, "click")),
+				dom.clickbutton(ui("Empty mailbox"), attr.title(ui("Remove all messages from the mailbox, but not mailboxes inside this mailbox or their messages.")), /* @__PURE__ */ __name(async function click() {
+					if (!window.confirm(ui("Are you sure you want to empty this mailbox, permanently removing its messages? Mailboxes inside this mailbox are not affected."))) {
+						return;
+					}
+					remove();
+					await withStatus(ui("Emptying mailbox"), client.MailboxEmpty(mbv.mailbox.ID));
+				}, "click")),
+				dom.clickbutton(ui("Rename mailbox"), /* @__PURE__ */ __name(function click() {
+					remove();
+					let fieldset, name2;
+					const remove2 = popover(actionBtn, {}, dom.form(/* @__PURE__ */ __name(async function submit(e) {
+						e.preventDefault();
+						await withStatus(ui("Renaming mailbox"), client.MailboxRename(mbv.mailbox.ID, name2.value), fieldset);
+						remove2();
+					}, "submit"), fieldset = dom.fieldset(dom.label(ui("Name "), name2 = dom.input(attr.required(""), attr.value(mbv.mailbox.Name), prop({ selectionStart: 0, selectionEnd: mbv.mailbox.Name.length }))), " ", dom.submitbutton(ui("Rename")))));
+					name2.focus();
+				}, "click")),
+				dom.clickbutton(ui("Set role for mailbox..."), attr.title(ui("Set a special-use role on the mailbox, making it the designated mailbox for either Archived, Sent, Draft, Trashed or Junk messages.")), /* @__PURE__ */ __name(async function click() {
+					remove();
+					const setUse = /* @__PURE__ */ __name(async (set) => {
+						const mb = { ...mbv.mailbox };
+						mb.Archive = mb.Draft = mb.Junk = mb.Sent = mb.Trash = false;
+						set(mb);
+						await withStatus(ui("Marking mailbox as special use"), client.MailboxSetSpecialUse(mb));
+					}, "setUse");
+					menuPopover(actionBtn, [
+						dom.clickbutton(ui("Archive"), /* @__PURE__ */ __name(async function click2() {
+							await setUse((mb) => {
+								mb.Archive = true;
+							});
+						}, "click")),
+						dom.clickbutton(ui("Draft"), /* @__PURE__ */ __name(async function click2() {
+							await setUse((mb) => {
+								mb.Draft = true;
+							});
+						}, "click")),
+						dom.clickbutton(ui("Junk"), /* @__PURE__ */ __name(async function click2() {
+							await setUse((mb) => {
+								mb.Junk = true;
+							});
+						}, "click")),
+						dom.clickbutton(ui("Sent"), /* @__PURE__ */ __name(async function click2() {
+							await setUse((mb) => {
+								mb.Sent = true;
+							});
+						}, "click")),
+						dom.clickbutton(ui("Trash"), /* @__PURE__ */ __name(async function click2() {
+							await setUse((mb) => {
+								mb.Trash = true;
+							});
+						}, "click"))
+					]);
+				}, "click")),
+				dom.clickbutton(ui("Export as..."), /* @__PURE__ */ __name(function click() {
+					popoverExport(actionBtn, mbv.mailbox.Name, null);
+					remove();
+				}, "click"))
+			]);
 		}, "cmdOpenActions");
 		let drags = 0;
-		const mailboxItemStyle = css("mailboxItem", { cursor: "pointer", borderRadius: ".15em", userSelect: "none" });
 		ensureCSS(".mailboxItem.dropping", { background: styles.highlightBackground }, true);
-		ensureCSS(".mailboxItem:hover", { backgroundColor: styles.mailboxHoverBackgroundColor });
-		ensureCSS(".mailboxItem.active", { background: styles.mailboxActiveBackground });
+		ensureCSS(".mailboxItem:hover", { backgroundColor: styles.accentSoft, color: styles.color });
+		ensureCSS(".mailboxItem.active", { background: styles.accentSoft, color: styles.accent, fontWeight: "600" });
 		ensureCSS(".mailboxHoverOnly", { visibility: "hidden" });
 		ensureCSS(".mailboxItem:hover .mailboxHoverOnly, .mailboxItem:focus .mailboxHoverOnly", { visibility: "visible" });
 		ensureCSS(".mailboxCollapse", { visibility: "hidden" });
 		ensureCSS(".mailboxItem:hover .mailboxCollapse, .mailboxItem:focus .mailboxCollapse", { visibility: "visible" });
-		const mailboxIcons = /* @__PURE__ */ __name((mb) => {
-			const l = [];
-			const add = /* @__PURE__ */ __name((v, fn) => {
-				if (v) {
-					l.push(fn());
-				}
-			}, "add");
-			add(mb.Archive, archive);
-			add(mb.Draft, draft);
-			add(mb.Junk, junk);
-			add(mb.Sent, sent);
-			add(mb.Trash, trash);
-			add(mb.Name === "Inbox", inbox);
-			add(mb.Name === rejectsMailbox, rejects);
-			add(mb.Name === introboxMailbox, introbox);
-			return l;
-		}, "mailboxIcons");
-		const root = dom.div(mailboxItemStyle, attr.tabindex("0"), /* @__PURE__ */ __name(async function keydown(e) {
+		const root = dom.div(dom._class("mailboxItem"), attr.tabindex("0"), /* @__PURE__ */ __name(async function keydown(e) {
 			if (e.key === "Enter") {
 				e.stopPropagation();
-				await withStatus("Opening mailbox", mbv.open(true));
+				await withStatus(ui("Opening mailbox"), mbv.open(true));
 			} else if (e.key === "ArrowLeft") {
 				e.stopPropagation();
 				if (!mailboxlistView.mailboxLeaf(mbv)) {
@@ -5352,7 +7066,7 @@
 			}
 		}, "dblclick"), /* @__PURE__ */ __name(async function click() {
 			mbv.root.focus();
-			await withStatus("Opening mailbox", mbv.open(true));
+			await withStatus(ui("Opening mailbox"), mbv.open(true));
 		}, "click"), /* @__PURE__ */ __name(function dragover(e) {
 			e.preventDefault();
 			e.dataTransfer.dropEffect = "move";
@@ -5371,25 +7085,28 @@
 			mbv.root.classList.toggle("dropping", false);
 			const sentMailboxID = mailboxlistView.mailboxes().find((mb) => mb.Sent)?.ID;
 			const mailboxMsgIDs = JSON.parse(e.dataTransfer.getData("application/vnd.mox.messages"));
-			const msgIDs = mailboxMsgIDs.filter((mbMsgID) => mbMsgID[0] !== xmb.ID).filter((mbMsgID) => mailboxMsgIDs.length === 1 || !sentMailboxID || mbMsgID[0] !== sentMailboxID || !otherMailbox(sentMailboxID)).map((mbMsgID) => mbMsgID[1]);
-			await withStatus("Moving to " + xmb.Name, client.MessageMove(msgIDs, xmb.ID, false));
+			const moved = mailboxMsgIDs.filter((mbMsgID) => mbMsgID[0] !== xmb.ID).filter((mbMsgID) => mailboxMsgIDs.length === 1 || !sentMailboxID || mbMsgID[0] !== sentMailboxID || !otherMailbox(sentMailboxID));
+			const msgIDs = moved.map((mbMsgID) => mbMsgID[1]);
+			await withStatus(ui("Moving to ") + mailboxLabel(xmb, xmb.Name), client.MessageMove(msgIDs, xmb.ID, false));
+			offerMoveUndo(moved.map((mbMsgID) => ({ id: mbMsgID[1], mailboxID: mbMsgID[0] })));
 			if (msgIDs.length === 1) {
 				const msgID = msgIDs[0];
 				const mbSrcID = mailboxMsgIDs.find((mbMsgID) => mbMsgID[1] === msgID)[0];
 				await moveAskRuleset(msgID, mbSrcID, xmb, mailboxlistView.mailboxes());
 			}
-		}, "drop"), dom.div(css("mailbox", { padding: ".15em .25em", display: "flex", gap: ".25em", justifyContent: "space-between", alignItems: "baseline" }), icon = dom.div(css("mailboxIcon", { width: "1.1em", fontSize: "1.1em" }), mailboxIcons(xmb)), name = dom.div(css("mailboxName", { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexGrow: "1" })), dom.div(style({ whiteSpace: "nowrap" }), actionBtn = dom.clickbutton(
+		}, "drop"), dom.div(dom._class("mailbox"), mailboxIcon = dom.span(dom._class("mailboxIcon")), name = dom.div(dom._class("mailboxName")), dom.div(dom._class("mailboxActions"), actionBtn = dom.clickbutton(
 			dom._class("mailboxHoverOnly"),
-			"...",
+			dom._class("mailboxActionBtn"),
+			"\u2026",
 			attr.tabindex("-1"),
 			// Without, tab breaks because this disappears when mailbox loses focus.
-			attr.arialabel("Mailbox actions"),
-			attr.title("Actions on mailbox, like deleting, emptying, renaming."),
+			attr.arialabel(ui("Mailbox actions")),
+			attr.title(ui("Actions on mailbox, like deleting, emptying, renaming.")),
 			/* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
 				cmdOpenActions();
 			}, "click")
-		), " ", unread = dom.b(dom._class("silenttitle")))));
+		), unread = dom.span(dom._class("mailboxUnreadBadge", "isEmpty")))));
 		const update = /* @__PURE__ */ __name(() => {
 			let moreElems = [];
 			if (settings.mailboxCollapsed[mbv.mailbox.ID]) {
@@ -5408,8 +7125,21 @@
 					}
 				}
 			}
-			dom._kids(name, dom.span(mbv.parents > 0 ? style({ paddingLeft: "" + mbv.parents * 2 / 3 + "em" }) : [], mbv.shortname, attr.title("Total messages: " + ntotal), moreElems));
-			dom._kids(unread, nunread === 0 ? ["", attr.title("")] : ["" + nunread, attr.title("" + nunread + " unread")]);
+			dom._kids(mailboxIcon, mailboxStrokeIcon(mbv.mailbox));
+			mailboxIcon.style.marginLeft = mbv.parents > 0 ? mbv.parents * 2 / 3 + "em" : "";
+			dom._kids(name, dom.span(mailboxLabel(mbv.mailbox, mbv.shortname), attr.title(ui("Total messages: ") + ntotal), moreElems));
+			if (nunread === 0) {
+				unread.classList.add("isEmpty");
+				unread.removeAttribute("title");
+				unread.removeAttribute("aria-label");
+				dom._kids(unread, []);
+			} else {
+				unread.classList.remove("isEmpty");
+				const label = nunread > 99 ? "99+" : "" + nunread;
+				unread.setAttribute("title", unreadTitle(nunread));
+				unread.setAttribute("aria-label", unreadTitle(nunread));
+				dom._kids(unread, label);
+			}
 		}, "update");
 		const mbv = {
 			root,
@@ -5433,7 +7163,7 @@
 				mbv.mailbox.Junk = specialUse.Junk;
 				mbv.mailbox.Sent = specialUse.Sent;
 				mbv.mailbox.Trash = specialUse.Trash;
-				dom._kids(icon, mailboxIcons(mbv.mailbox));
+				dom._kids(mailboxIcon, mailboxStrokeIcon(mbv.mailbox));
 			}, "setSpecialUse"),
 			setKeywords: /* @__PURE__ */ __name((keywords) => {
 				mbv.mailbox.Keywords = keywords;
@@ -5441,7 +7171,7 @@
 		};
 		return mbv;
 	}, "newMailboxView");
-	var newMailboxlistView = /* @__PURE__ */ __name((msglistView, requestNewView, updatePageTitle, setLocationHash, unloadSearch, otherMailbox) => {
+	var newMailboxlistView = /* @__PURE__ */ __name((msglistView, requestNewView, updatePageTitle, setLocationHash, unloadSearch, otherMailbox, onOpenMailbox) => {
 		let mailboxViews = [];
 		let mailboxViewActive;
 		const updateMailboxNames = /* @__PURE__ */ __name(() => {
@@ -5537,25 +7267,28 @@
 			dom._kids(mailboxesElem, mailboxViews.filter((mbv) => !mbv.hidden));
 		}, "updateHidden");
 		const root = dom.div();
-		const mailboxesElem = dom.div();
-		dom._kids(root, dom.div(attr.role("region"), attr.arialabel("Mailboxes"), dom.div(dom.h1("Mailboxes", css("mailboxesTitle", { display: "inline", fontSize: "inherit" })), " ", dom.clickbutton("...", attr.arialabel("Mailboxes actions"), attr.title("Actions on mailboxes like creating a new mailbox or exporting all email."), /* @__PURE__ */ __name(function click(e) {
+		const mailboxesElem = dom.div(dom._class("mailboxesList"));
+		dom._kids(root, dom.div(dom._class("mailboxesRegion"), attr.role("region"), attr.arialabel(ui("Mailboxes")), dom.div(dom._class("mailboxesHeader"), dom.h1(ui("Mailboxes"), css("mailboxesTitle", { fontSize: ".8rem", textTransform: "uppercase", letterSpacing: ".06em", color: styles.colorMilder, fontWeight: "600", padding: "0 .25em" })), dom.clickbutton(dom._class("btnCompact"), dom._class("mailboxActionBtn"), "\u2026", attr.arialabel(ui("Mailboxes actions")), attr.title(ui("Actions on mailboxes like creating a new mailbox or exporting all email.")), /* @__PURE__ */ __name(function click(e) {
 			e.stopPropagation();
-			const remove = popover(e.target, { transparent: true }, dom.div(css("mailboxesActions", { display: "flex", flexDirection: "column", gap: ".5ex" }), dom.div(dom.clickbutton("Create mailbox", attr.arialabel("Create new mailbox."), attr.title("Create new mailbox."), style({ padding: "0 .25em" }), /* @__PURE__ */ __name(function click2(e2) {
-				let fieldset;
-				let name;
-				const ref = e2.target;
-				const removeCreate = popover(ref, {}, dom.form(/* @__PURE__ */ __name(async function submit(e3) {
-					e3.preventDefault();
-					await withStatus("Creating mailbox", client.MailboxCreate(name.value), fieldset);
-					removeCreate();
-				}, "submit"), fieldset = dom.fieldset(dom.label("Name ", name = dom.input(attr.required("yes"), focusPlaceholder("Lists/Go/Nuts"))), " ", dom.submitbutton("Create"))));
-				remove();
-				name.focus();
-			}, "click"))), dom.div(dom.clickbutton("Export as...", /* @__PURE__ */ __name(function click2(e2) {
-				const ref = e2.target;
-				popoverExport(ref, "", null);
-				remove();
-			}, "click")))));
+			const remove = menuPopover(e.target, [
+				dom.clickbutton(ui("Create mailbox"), attr.arialabel(ui("Create new mailbox.")), attr.title(ui("Create new mailbox.")), /* @__PURE__ */ __name(function click2(e2) {
+					let fieldset;
+					let name;
+					const ref = e2.target;
+					const removeCreate = popover(ref, {}, dom.form(/* @__PURE__ */ __name(async function submit(e3) {
+						e3.preventDefault();
+						await withStatus(ui("Creating mailbox"), client.MailboxCreate(name.value), fieldset);
+						removeCreate();
+					}, "submit"), fieldset = dom.fieldset(dom.label(ui("Name "), name = dom.input(attr.required("yes"), focusPlaceholder("Lists/Go/Nuts"))), " ", dom.submitbutton(ui("Create")))));
+					remove();
+					name.focus();
+				}, "click")),
+				dom.clickbutton(ui("Export as..."), /* @__PURE__ */ __name(function click2(e2) {
+					const ref = e2.target;
+					popoverExport(ref, "", null);
+					remove();
+				}, "click"))
+			]);
 		}, "click"))), mailboxesElem));
 		const loadMailboxes = /* @__PURE__ */ __name((mailboxes, mbnameOpt) => {
 			mailboxViews = mailboxes.map((mb) => newMailboxView(mb, mblv, otherMailbox));
@@ -5584,10 +7317,11 @@
 			mbv.root.classList.toggle("active", true);
 			updatePageTitle();
 			if (load) {
+				onOpenMailbox?.();
 				setLocationHash();
 				const f = newFilter();
 				f.MailboxID = mbv.mailbox.ID;
-				await withStatus("Requesting messages", requestNewView(true, f, newNotFilter()));
+				await withStatus(ui("Requesting messages"), requestNewView(true, f, newNotFilter()));
 			} else {
 				msglistView.clear();
 				setLocationHash();
@@ -5613,7 +7347,7 @@
 				if (mbv) {
 					await openMailboxView(mbv, false, focus);
 				} else {
-					throw new Error("unknown mailbox");
+					throw new Error(ui("unknown mailbox"));
 				}
 			}, "openMailboxID"),
 			addMailbox: /* @__PURE__ */ __name((mb) => {
@@ -5864,9 +7598,9 @@
 		let headerViews;
 		const newHeaderView = /* @__PURE__ */ __name((first) => {
 			let key, value;
-			const root2 = dom.div(style({ display: "flex" }), key = dom.input(focusPlaceholder("Header name"), style({ width: "40%" }), changeHandlers), dom.div(style({ width: ".5em" })), value = dom.input(focusPlaceholder("Header value"), style({ flexGrow: 1 }), changeHandlers), dom.div(style({ width: "2.5em", paddingLeft: ".25em" }), dom.clickbutton("+", style({ padding: "0 .25em" }), attr.arialabel("Add row for another header filter."), attr.title("Add row for another header filter."), /* @__PURE__ */ __name(function click() {
+			const root2 = dom.div(dom._class("searchHeaderRow"), key = dom.input(focusPlaceholder(ui("Header name")), changeHandlers), value = dom.input(focusPlaceholder(ui("Header value")), changeHandlers), dom.div(dom._class("searchHeaderActions"), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.plus), attr.arialabel(ui("Add row for another header filter.")), attr.title(ui("Add row for another header filter.")), /* @__PURE__ */ __name(function click() {
 				addHeaderView();
-			}, "click")), " ", first ? [] : dom.clickbutton("-", style({ padding: "0 .25em" }), attr.arialabel("Remove row."), attr.title("Remove row."), /* @__PURE__ */ __name(function click() {
+			}, "click")), first ? [] : dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.minus), attr.arialabel(ui("Remove row.")), attr.title(ui("Remove row.")), /* @__PURE__ */ __name(function click() {
 				root2.remove();
 				const index = headerViews.findIndex((v) => v === hv);
 				headerViews.splice(index, 1);
@@ -5890,9 +7624,8 @@
 			oldestTime.value = tm;
 			updateSearchbar();
 		}, "setPeriod");
-		const searchTableStyle = css("searchTable", { width: "100%" });
-		ensureCSS(".searchTable td", { padding: ".25em" });
-		const root = dom.div(css("searchOverlay", { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: styles.overlayBackgroundColor, zIndex: zindexes.compose }), /* @__PURE__ */ __name(function click(e) {
+		const searchTableStyle = css("searchTable", { width: "100%", borderCollapse: "collapse" });
+		const root = dom.div(dom._class("searchOverlay"), /* @__PURE__ */ __name(function click(e) {
 			e.stopPropagation();
 			searchViewClose();
 		}, "click"), /* @__PURE__ */ __name(function keyup(e) {
@@ -5900,35 +7633,40 @@
 				e.stopPropagation();
 				searchViewClose();
 			}
-		}, "keyup"), dom.search(
-			css("searchContent", { position: "absolute", width: "50em", padding: ".5ex", backgroundColor: styles.popupBackgroundColor, boxShadow: styles.boxShadow, border: "1px solid", borderColor: styles.popupBorderColor, color: styles.popupColor, borderRadius: ".15em" }),
+		}, "keyup"), form = dom.form(
+			dom._class("dialogForm"),
+			dom._class("dialogPanel"),
+			dom._class("searchContent"),
 			/* @__PURE__ */ __name(function click(e) {
 				e.stopPropagation();
 			}, "click"),
+			dom.div(dom._class("dialogHeader"), dom.h1(ui("Search")), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close search.")), /* @__PURE__ */ __name(function click() {
+				searchViewClose();
+			}, "click"))),
 			// This is a separate form, inside the form with the overall search field because
 			// when updating the form based on the parsed searchbar, we first need to reset it.
-			form = dom.form(dom.table(searchTableStyle, dom.tr(dom.td(dom.label("Mailbox", attr.for("searchMailbox")), attr.title("Filter by mailbox, including children of the mailbox.")), dom.td(mailbox = dom.select(attr.id("searchMailbox"), style({ width: "100%" }), dom.option("All mailboxes except Trash/Junk/Rejects", attr.value("-1")), dom.option("All mailboxes", attr.value("0")), changeHandlers), dom.div(style({ paddingTop: ".5ex" }), dom.label(mailboxkids = dom.input(attr.type("checkbox"), changeHandlers), " Also search in mailboxes below the selected mailbox.")))), dom.tr(dom.td(dom.label("Text", attr.for("searchWords"))), dom.td(words = dom.input(attr.id("searchWords"), attr.title("Filter by text, case-insensitive, substring match, not necessarily whole words."), focusPlaceholder('word "exact match" -notword'), style({ width: "100%" }), changeHandlers))), dom.tr(dom.td(dom.label("From", attr.for("searchFrom"))), dom.td(from = dom.input(attr.id("searchFrom"), style({ width: "100%" }), focusPlaceholder("Address or name"), newAddressComplete(), changeHandlers))), dom.tr(dom.td(dom.label("To", attr.for("searchTo")), attr.title("Search on addressee, including Cc and Bcc headers.")), dom.td(to = dom.input(attr.id("searchTo"), focusPlaceholder("Address or name, also matches Cc and Bcc addresses"), style({ width: "100%" }), newAddressComplete(), changeHandlers))), dom.tr(dom.td(dom.label("Subject", attr.for("searchSubject"))), dom.td(subject = dom.input(attr.id("searchSubject"), style({ width: "100%" }), focusPlaceholder('"exact match"'), changeHandlers))), dom.tr(dom.td("Received between", style({ whiteSpace: "nowrap" })), dom.td(style({ lineHeight: 2 }), dom.div(oldestDate = dom.input(attr.type("date"), focusPlaceholder("2023-07-20"), changeHandlers), oldestTime = dom.input(attr.type("time"), focusPlaceholder("23:10"), changeHandlers), " ", dom.clickbutton("x", style({ padding: "0 .3em" }), attr.arialabel("Clear start date."), attr.title("Clear start date."), /* @__PURE__ */ __name(function click() {
+			dom.div(dom._class("dialogBody"), dom.table(searchTableStyle, dom.tr(dom.td(dom.label(ui("Mailbox"), attr.for("searchMailbox")), attr.title(ui("Filter by mailbox, including children of the mailbox."))), dom.td(mailbox = dom.select(attr.id("searchMailbox"), style({ width: "100%" }), dom.option(ui("All mailboxes except Trash/Junk/Rejects"), attr.value("-1")), dom.option(ui("All mailboxes"), attr.value("0")), changeHandlers), dom.div(dom._class("searchMailboxKids"), dom.label(mailboxkids = dom.input(attr.type("checkbox"), changeHandlers), ui("Also search in mailboxes below the selected mailbox."))))), dom.tr(dom.td(dom.label(ui("Text"), attr.for("searchWords"))), dom.td(words = dom.input(attr.id("searchWords"), attr.title(ui("Filter by text, case-insensitive, substring match, not necessarily whole words.")), focusPlaceholder('word "exact match" -notword'), style({ width: "100%" }), changeHandlers))), dom.tr(dom.td(dom.label(ui("From"), attr.for("searchFrom"))), dom.td(from = dom.input(attr.id("searchFrom"), style({ width: "100%" }), focusPlaceholder(ui("Address or name")), newAddressComplete(), changeHandlers))), dom.tr(dom.td(dom.label(ui("To"), attr.for("searchTo")), attr.title(ui("Search on addressee, including Cc and Bcc headers."))), dom.td(to = dom.input(attr.id("searchTo"), focusPlaceholder(ui("Address or name, also matches Cc and Bcc addresses")), style({ width: "100%" }), newAddressComplete(), changeHandlers))), dom.tr(dom.td(dom.label(ui("Subject"), attr.for("searchSubject"))), dom.td(subject = dom.input(attr.id("searchSubject"), style({ width: "100%" }), focusPlaceholder(ui('"exact match"')), changeHandlers))), dom.tr(dom.td(ui("Received between"), style({ whiteSpace: "nowrap" })), dom.td(dom.div(dom._class("searchDateRow"), oldestDate = dom.input(attr.type("date"), focusPlaceholder("2023-07-20"), changeHandlers), oldestTime = dom.input(attr.type("time"), focusPlaceholder("23:10"), changeHandlers), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Clear start date.")), attr.title(ui("Clear start date.")), /* @__PURE__ */ __name(function click() {
 				oldestDate.value = "";
 				oldestTime.value = "";
 				updateSearchbar();
-			}, "click")), " and ", newestDate = dom.input(attr.type("date"), focusPlaceholder("2023-07-20"), changeHandlers), newestTime = dom.input(attr.type("time"), focusPlaceholder("23:10"), changeHandlers), " ", dom.clickbutton("x", style({ padding: "0 .3em" }), attr.arialabel("Clear end date."), attr.title("Clear end date."), /* @__PURE__ */ __name(function click() {
+			}, "click")), dom.span(ui("and")), newestDate = dom.input(attr.type("date"), focusPlaceholder("2023-07-20"), changeHandlers), newestTime = dom.input(attr.type("time"), focusPlaceholder("23:10"), changeHandlers), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Clear end date.")), attr.title(ui("Clear end date.")), /* @__PURE__ */ __name(function click() {
 				newestDate.value = "";
 				newestTime.value = "";
 				updateSearchbar();
-			}, "click"))), dom.div(dom.clickbutton("1 day", /* @__PURE__ */ __name(function click() {
+			}, "click"))), dom.div(dom._class("searchDatePresets"), dom.clickbutton(ui("1 day"), /* @__PURE__ */ __name(function click() {
 				setPeriod(new Date((/* @__PURE__ */ new Date()).getTime() - 24 * 3600 * 1e3));
-			}, "click")), " ", dom.clickbutton("1 week", /* @__PURE__ */ __name(function click() {
+			}, "click")), dom.clickbutton(ui("1 week"), /* @__PURE__ */ __name(function click() {
 				setPeriod(new Date((/* @__PURE__ */ new Date()).getTime() - 7 * 24 * 3600 * 1e3));
-			}, "click")), " ", dom.clickbutton("1 month", /* @__PURE__ */ __name(function click() {
+			}, "click")), dom.clickbutton(ui("1 month"), /* @__PURE__ */ __name(function click() {
 				setPeriod(new Date((/* @__PURE__ */ new Date()).getTime() - 31 * 24 * 3600 * 1e3));
-			}, "click")), " ", dom.clickbutton("1 year", /* @__PURE__ */ __name(function click() {
+			}, "click")), dom.clickbutton(ui("1 year"), /* @__PURE__ */ __name(function click() {
 				setPeriod(new Date((/* @__PURE__ */ new Date()).getTime() - 365 * 24 * 3600 * 1e3));
-			}, "click"))))), dom.tr(dom.td("Attachments"), dom.td(dom.label(style({ whiteSpace: "nowrap" }), attachmentNone = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("none"), attachmentHandlers), " None"), " ", dom.label(style({ whiteSpace: "nowrap" }), attachmentAny = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("any"), attachmentHandlers), " Any"), " ", dom.label(style({ whiteSpace: "nowrap" }), attachmentImage = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("image"), attachmentHandlers), " Images"), " ", dom.label(style({ whiteSpace: "nowrap" }), attachmentPDF = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("pdf"), attachmentHandlers), " PDFs"), " ", dom.label(style({ whiteSpace: "nowrap" }), attachmentArchive = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("archive"), attachmentHandlers), " Archives"), " ", dom.label(style({ whiteSpace: "nowrap" }), attachmentSpreadsheet = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("spreadsheet"), attachmentHandlers), " Spreadsheets"), " ", dom.label(style({ whiteSpace: "nowrap" }), attachmentDocument = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("document"), attachmentHandlers), " Documents"), " ", dom.label(style({ whiteSpace: "nowrap" }), attachmentPresentation = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("presentation"), attachmentHandlers), " Presentations"), " ")), dom.tr(dom.td("Labels"), dom.td(style({ lineHeight: 2 }), join(flagViews = Object.entries({ Read: "\\Seen", Replied: "\\Answered", Flagged: "\\Flagged", Deleted: "\\Deleted", Draft: "\\Draft", Forwarded: "$Forwarded", Junk: "$Junk", NotJunk: "$NotJunk", Phishing: "$Phishing", MDNSent: "$MDNSent" }).map((t) => {
+			}, "click"))))), dom.tr(dom.td(ui("Attachments")), dom.td(dom.div(dom._class("searchRadios"), dom.label(attachmentNone = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("none"), attachmentHandlers), ui(" None")), dom.label(attachmentAny = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("any"), attachmentHandlers), ui(" Any")), dom.label(attachmentImage = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("image"), attachmentHandlers), ui(" Images")), dom.label(attachmentPDF = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("pdf"), attachmentHandlers), ui(" PDFs")), dom.label(attachmentArchive = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("archive"), attachmentHandlers), ui(" Archives")), dom.label(attachmentSpreadsheet = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("spreadsheet"), attachmentHandlers), ui(" Spreadsheets")), dom.label(attachmentDocument = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("document"), attachmentHandlers), ui(" Documents")), dom.label(attachmentPresentation = dom.input(attr.type("radio"), attr.name("attachments"), attr.value("presentation"), attachmentHandlers), ui(" Presentations"))))), dom.tr(dom.td(ui("Labels")), dom.td(dom.div(dom._class("searchKeywordButtons"), join(flagViews = Object.entries({ Read: "\\Seen", Replied: "\\Answered", Flagged: "\\Flagged", Deleted: "\\Deleted", Draft: "\\Draft", Forwarded: "$Forwarded", Junk: "$Junk", NotJunk: "$NotJunk", Phishing: "$Phishing", MDNSent: "$MDNSent" }).map((t) => {
 				const [name, flag2] = t;
 				const v = {
 					active: null,
 					flag: flag2,
-					root: dom.clickbutton(name, /* @__PURE__ */ __name(function click() {
+					root: dom.clickbutton(ui(name), /* @__PURE__ */ __name(function click() {
 						if (v.active === null) {
 							v.active = true;
 						} else if (v.active === true) {
@@ -5947,10 +7685,15 @@
 					}, "update")
 				};
 				return v;
-			}), () => " "), " ", labels = dom.input(focusPlaceholder('todo -done "-dashingname"'), attr.title("User-defined labels."), changeHandlers))), dom.tr(dom.td("Headers"), headersCell = dom.td(headerViews = [newHeaderView(true)])), dom.tr(dom.td("Size between"), dom.td(minsize = dom.input(style({ width: "6em" }), focusPlaceholder("10kb"), changeHandlers), " and ", maxsize = dom.input(style({ width: "6em" }), focusPlaceholder("1mb"), changeHandlers)))), dom.div(style({ padding: "1ex", textAlign: "right" }), dom.submitbutton("Search")), /* @__PURE__ */ __name(async function submit2(e) {
+			}), () => " ")), labels = dom.input(focusPlaceholder('todo -done "-dashingname"'), attr.title(ui("User-defined labels.")), changeHandlers))), dom.tr(dom.td(ui("Headers")), headersCell = dom.td(headerViews = [newHeaderView(true)])), dom.tr(dom.td(ui("Size between")), dom.td(dom.div(dom._class("searchSizeRow"), minsize = dom.input(focusPlaceholder("10kb"), changeHandlers), dom.span(ui("and")), maxsize = dom.input(focusPlaceholder("1mb"), changeHandlers)))))),
+			dom.div(dom._class("dialogFooter"), dom.clickbutton(ui("Cancel"), /* @__PURE__ */ __name(function click(e) {
+				e.preventDefault();
+				searchViewClose();
+			}, "click")), dom.submitbutton(dom._class("btnPrimary"), ui("Search"))),
+			/* @__PURE__ */ __name(async function submit2(e) {
 				e.preventDefault();
 				await searchView.submit();
-			}, "submit"))
+			}, "submit")
 		));
 		const submit = /* @__PURE__ */ __name(async () => {
 			const [f, notf, _] = parseSearch(searchbarElem.value, mailboxlistView);
@@ -5965,7 +7708,7 @@
 					return;
 				}
 				loaded = true;
-				dom._kids(mailbox, dom.option("All mailboxes except Trash/Junk/Rejects", attr.value("-1")), dom.option("All mailboxes", attr.value("0")), mailboxlistView.mailboxes().map((mb) => dom.option(mb.Name, attr.value("" + mb.ID))));
+				dom._kids(mailbox, dom.option(ui("All mailboxes except Trash/Junk/Rejects"), attr.value("-1")), dom.option(ui("All mailboxes"), attr.value("0")), mailboxlistView.mailboxes().map((mb) => dom.option(mailboxLabel(mb, mb.Name), attr.value("" + mb.ID))));
 				searchView.updateForm();
 			}, "ensureLoaded"),
 			updateForm
@@ -5995,9 +7738,14 @@
 	}, "parseComposeMailto");
 	var init = /* @__PURE__ */ __name(async () => {
 		let connectionElem;
-		let layoutElem;
 		let accountElem;
 		let loginAddressElem;
+		let accountRoot;
+		let accountMenu;
+		let accountToggle;
+		let splitElem;
+		let mailboxesElem;
+		let currentLayout = "";
 		let msglistscrollElem;
 		let queryactivityElem;
 		let composeBtn;
@@ -6005,7 +7753,7 @@
 		let settingsBtn;
 		let mailboxesListMsgBox;
 		const listendElem = dom.div(css("msgListEnd", { borderTop: "1px solid", borderColor: styles.borderColor, color: styles.colorMilder, margin: "1ex" }));
-		const listloadingElem = dom.div(css("msgListLoading", { textAlign: "center", padding: ".15em 0", color: styles.colorMild, border: "1px solid", borderColor: styles.borderColor, margin: "1ex", backgroundColor: styles.backgroundColorMild }), "loading...");
+		const listloadingElem = dom.div(css("msgListLoading", { textAlign: "center", padding: ".15em 0", color: styles.colorMild, border: "1px solid", borderColor: styles.borderColor, margin: "1ex", backgroundColor: styles.backgroundColorMild }), ui("loading..."));
 		const listerrElem = dom.div(css("msgListErr", { textAlign: "center", padding: ".15em 0", color: styles.colorMild, border: "1px solid", borderColor: styles.borderColor, margin: "1ex", backgroundColor: styles.backgroundColorMild }));
 		let sseID = 0;
 		let viewSequence = 0;
@@ -6030,11 +7778,11 @@
 			if (!mb) {
 				document.title = [addr, "Mox Webmail"].join(" - ");
 			} else {
-				document.title = ["(" + mb.Unread + ") " + mb.Name, addr, "Mox Webmail"].join(" - ");
+				document.title = ["(" + mb.Unread + ") " + mailboxLabel(mb, mb.Name), addr, "Mox Webmail"].join(" - ");
 			}
 		}, "updatePageTitle");
 		const faviconLink = document.head.querySelector('link[rel="icon"]');
-		const faviconImg = dom.img(attr.src("/favicon.ico"));
+		const faviconImg = dom.img(attr.src("favicon.png"));
 		const faviconProm = new Promise((resolve, reject) => {
 			faviconImg.addEventListener("load", () => resolve());
 			faviconImg.addEventListener("error", () => reject());
@@ -6050,8 +7798,8 @@
 			if (!eventSource) {
 				state = -1;
 			} else {
-				const inbox2 = mailboxlistView.findMailboxByName("Inbox");
-				state = Math.min(999, inbox2?.Unread || 0);
+				const inbox = mailboxlistView.findMailboxByName("Inbox");
+				state = Math.min(999, inbox?.Unread || 0);
 			}
 			if (faviconState === state) {
 				return;
@@ -6066,14 +7814,15 @@
 				const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 				const px = imageData.data;
 				for (let i = 0; i < px.length; i += 4) {
-					const r = px[i];
-					const g = px[i + 1];
-					const b = px[i + 2];
-					const grey = Math.floor(0.2126 * r + 0.715 * g + 0.0722 * b);
+					const a = px[i + 3];
+					if (a === 0) {
+						continue;
+					}
+					const grey = Math.floor(0.2126 * px[i] + 0.715 * px[i + 1] + 0.0722 * px[i + 2]);
 					px[i] = grey;
 					px[i + 1] = grey;
 					px[i + 2] = grey;
-					px[i + 3] = 127;
+					px[i + 3] = Math.round(a / 2);
 				}
 				ctx.putImageData(imageData, 0, 0);
 			} else if (state > 0) {
@@ -6180,11 +7929,125 @@
 				Query: query,
 				Page: page2
 			};
-			dom._kids(queryactivityElem, "loading...");
+			dom._kids(queryactivityElem, ui("loading..."));
 			msglistscrollElem.appendChild(listloadingElem);
 			await client.Request(request);
 		}, "requestMessages");
-		let msgElem = dom.div(css("msgElem", { position: "absolute", right: 0, left: 0, top: 0, bottom: 0, backgroundColor: styles.backgroundColorMild }));
+		let msgElem = dom.div(css("msgElem", { position: "absolute", right: 0, left: 0, top: 0, bottom: 0, backgroundColor: styles.backgroundColorMild, borderLeft: "1px solid", borderLeftColor: styles.borderColor }));
+		let mobileMsgTitle;
+		let topBarMessageTitle;
+		const applyMobileLayoutStyles = /* @__PURE__ */ __name(() => {
+			if (!splitElem) {
+				return;
+			}
+			const layoutTop = splitElem.querySelector(".layoutTop");
+			const layoutBottom = splitElem.querySelector(".layoutBottom");
+			const layoutLeft = splitElem.querySelector(".layoutLeft");
+			const layoutRight = splitElem.querySelector(".layoutRight");
+			const grabTB = splitElem.querySelector(".listMsgTopBottomGrab");
+			const grabLR = splitElem.querySelector(".listMsgLeftRightGrab");
+			if (isMobile()) {
+				splitElem.style.left = "0";
+				splitElem.style.right = "0";
+				if (mailboxesElem) {
+					mailboxesElem.style.width = "";
+				}
+				for (const pane of [layoutTop, layoutBottom, layoutLeft, layoutRight]) {
+					if (!pane) {
+						continue;
+					}
+					pane.style.top = "0";
+					pane.style.bottom = "0";
+					pane.style.left = "0";
+					pane.style.right = "0";
+					pane.style.width = "auto";
+					pane.style.height = "auto";
+				}
+				if (grabTB) {
+					grabTB.style.display = "none";
+				}
+				if (grabLR) {
+					grabLR.style.display = "none";
+				}
+			} else {
+				applyMailboxColumnWidth(fitMailboxWidth(settings.mailboxesWidth));
+				splitElem.style.right = "0";
+				if (currentLayout === "topbottom") {
+					if (layoutTop) {
+						layoutTop.style.top = "0";
+						layoutTop.style.left = "0";
+						layoutTop.style.right = "0";
+						layoutTop.style.bottom = "";
+						layoutTop.style.width = "auto";
+						layoutTop.style.height = "calc(" + settings.topHeightPct + "% - 1px)";
+					}
+					if (layoutBottom) {
+						layoutBottom.style.bottom = "0";
+						layoutBottom.style.left = "0";
+						layoutBottom.style.right = "0";
+						layoutBottom.style.width = "auto";
+						layoutBottom.style.height = "auto";
+						layoutBottom.style.top = "calc(" + settings.topHeightPct + "% + 1px)";
+					}
+					if (grabTB) {
+						grabTB.style.display = "";
+					}
+				} else if (currentLayout === "leftright") {
+					if (layoutLeft) {
+						layoutLeft.style.top = "0";
+						layoutLeft.style.bottom = "0";
+						layoutLeft.style.left = "0";
+						layoutLeft.style.height = "auto";
+						layoutLeft.style.width = "calc(" + settings.leftWidthPct + "% - 1px)";
+					}
+					if (layoutRight) {
+						layoutRight.style.top = "0";
+						layoutRight.style.bottom = "0";
+						layoutRight.style.right = "0";
+						layoutRight.style.height = "auto";
+						layoutRight.style.left = "calc(" + settings.leftWidthPct + "% + 1px)";
+					}
+					if (grabLR) {
+						grabLR.style.display = "";
+					}
+				}
+			}
+		}, "applyMobileLayoutStyles");
+		const setMobilePane = /* @__PURE__ */ __name((pane) => {
+			document.documentElement.classList.toggle("mobile-pane-list", isMobile() && pane === "list");
+			document.documentElement.classList.toggle("mobile-pane-message", isMobile() && pane === "message");
+			applyMobileLayoutStyles();
+		}, "setMobilePane");
+		const closeMailboxesDrawer = /* @__PURE__ */ __name(() => {
+			document.documentElement.classList.remove("mailboxes-drawer-open");
+		}, "closeMailboxesDrawer");
+		const openMailboxesDrawer = /* @__PURE__ */ __name(() => {
+			document.documentElement.classList.add("mailboxes-drawer-open");
+		}, "openMailboxesDrawer");
+		const onMobileMailboxOpen = /* @__PURE__ */ __name(() => {
+			if (!isMobile()) {
+				return;
+			}
+			closeMailboxesDrawer();
+			msglistView.unselect();
+			setMobilePane("list");
+		}, "onMobileMailboxOpen");
+		const onMobileMessagePane = /* @__PURE__ */ __name((open) => {
+			if (!isMobile()) {
+				return;
+			}
+			setMobilePane(open ? "message" : "list");
+			if (open) {
+				const mb = mailboxlistView.activeMailbox();
+				const subj = msglistView.activeMessageID() ? msglistView.selected()[0]?.messageitem.Envelope.Subject || ui("(no subject)") : "";
+				const title = subj || (mb ? mailboxLabel(mb, mb.Name) : ui("Message"));
+				mobileMsgTitle.textContent = title;
+			}
+		}, "onMobileMessagePane");
+		const mobileBackToList = /* @__PURE__ */ __name(() => {
+			msglistView.unselect();
+			setMobilePane("list");
+		}, "mobileBackToList");
 		const possibleLabels = /* @__PURE__ */ __name(() => {
 			if (requestFilter.MailboxID > 0) {
 				const mb = mailboxlistView.findMailboxByID(requestFilter.MailboxID);
@@ -6205,28 +8068,28 @@
 		const refineKeyword = /* @__PURE__ */ __name(async (kw) => {
 			settingsPut({ ...settings, refine: "label:" + kw });
 			refineToggleActive(refineLabelBtn);
-			dom._kids(refineLabelBtn, "Label: " + kw);
-			await withStatus("Requesting messages", requestNewView(false));
+			dom._kids(refineLabelBtn, ui("Label: ") + kw);
+			await withStatus(ui("Requesting messages"), requestNewView(false));
 		}, "refineKeyword");
 		const viewportEnsureMessages = /* @__PURE__ */ __name(async () => {
 			const bounds = msglistscrollElem.getBoundingClientRect();
 			if (msglistscrollElem.scrollTop < msglistscrollElem.scrollHeight - 3 * bounds.height) {
 				return;
 			}
-			await withStatus("Requesting more messages", requestMessages(bounds, 0));
+			await withStatus(ui("Requesting more messages"), requestMessages(bounds, 0));
 		}, "viewportEnsureMessages");
 		const otherMailbox = /* @__PURE__ */ __name((mailboxID) => requestFilter.MailboxID !== mailboxID ? mailboxlistView.findMailboxByID(mailboxID) || null : null, "otherMailbox");
 		const listMailboxes = /* @__PURE__ */ __name(() => mailboxlistView.mailboxes(), "listMailboxes");
 		const activeMailbox = /* @__PURE__ */ __name(() => mailboxlistView.activeMailbox(), "activeMailbox");
-		const msglistView = newMsglistView(msgElem, activeMailbox, listMailboxes, setLocationHash, otherMailbox, possibleLabels, () => msglistscrollElem ? msglistscrollElem.getBoundingClientRect().height : 0, refineKeyword, viewportEnsureMessages);
-		const mailboxlistView = newMailboxlistView(msglistView, requestNewView, updatePageTitle, setLocationHash, unloadSearch, otherMailbox);
+		const msglistView = newMsglistView(msgElem, activeMailbox, listMailboxes, setLocationHash, otherMailbox, possibleLabels, () => msglistscrollElem ? msglistscrollElem.getBoundingClientRect().height : 0, refineKeyword, viewportEnsureMessages, onMobileMessagePane);
+		const mailboxlistView = newMailboxlistView(msglistView, requestNewView, updatePageTitle, setLocationHash, unloadSearch, otherMailbox, onMobileMailboxOpen);
 		let refineUnreadBtn, refineReadBtn, refineAttachmentsBtn, refineFlaggedBtn, refineLabelBtn;
 		const refineToggleActive = /* @__PURE__ */ __name((btn) => {
 			for (const e of [refineUnreadBtn, refineReadBtn, refineAttachmentsBtn, refineFlaggedBtn, refineLabelBtn]) {
 				e.classList.toggle("active", e === btn);
 			}
 			if (btn !== null && btn !== refineLabelBtn) {
-				dom._kids(refineLabelBtn, "Label");
+				dom._kids(refineLabelBtn, ui("Label"));
 			}
 		}, "refineToggleActive");
 		const refineToggle = /* @__PURE__ */ __name(async (refine, btn) => {
@@ -6237,80 +8100,75 @@
 				settingsPut({ ...settings, refine });
 				refineToggleActive(btn);
 			}
-			dom._kids(refineLabelBtn, settings.refine.startsWith("label:") ? "Label: " + settings.refine.substring("label:".length) : "Label");
-			await withStatus("Requesting messages", requestNewView(false));
+			dom._kids(refineLabelBtn, settings.refine.startsWith("label:") ? ui("Label: ") + settings.refine.substring("label:".length) : ui("Label"));
+			await withStatus(ui("Requesting messages"), requestNewView(false));
 		}, "refineToggle");
 		let threadMode;
 		const msgColumnDraggerStyle = css("msgColumnDragger", { position: "absolute", top: 0, bottom: 0, width: "1px", backgroundColor: styles.popupBorderColor, left: "2.5px" });
-		let msglistElem = dom.div(css("msgList", { backgroundColor: styles.msglistBackgroundColor, position: "absolute", left: "0", right: 0, top: 0, bottom: 0, display: "flex", flexDirection: "column" }), dom.div(attr.role("region"), attr.arialabel("Filter and sorting buttons for message list"), css("msgListFilterSorting", { display: "flex", justifyContent: "space-between", backgroundColor: styles.backgroundColorMild, borderBottom: "1px solid", borderBottomColor: styles.borderColor, padding: ".25em .5em" }), dom.div(dom.h1("Refine:", css("refineTitle", { fontWeight: "normal", fontSize: "inherit", display: "inline", margin: 0 }), attr.title("Refine message listing with quick filters. These refinement filters are in addition to any search criteria, but the refine attachment filter overrides a search attachment criteria.")), " ", dom.span(dom._class("btngroup"), refineUnreadBtn = dom.clickbutton(settings.refine === "unread" ? dom._class("active") : [], "Unread", attr.title("Only show messages marked as unread."), /* @__PURE__ */ __name(async function click(e) {
+		let msglistElem = dom.div(css("msgList", { backgroundColor: styles.msglistBackgroundColor, position: "absolute", left: "0", right: 0, top: 0, bottom: 0, display: "flex", flexDirection: "column" }), dom.div(attr.role("region"), attr.arialabel(ui("Filter and sorting buttons for message list")), css("msgListFilterSorting", { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "nowrap", gap: "6px", minWidth: 0, backgroundColor: styles.backgroundColorMild, borderBottom: "1px solid", borderBottomColor: styles.borderColor, padding: ".35em .5em" }), dom.div(dom._class("refineBar"), dom.span(css("refineTitle", { fontWeight: "normal", fontSize: "inherit" }), ui("Refine:"), attr.title(ui("Refine message listing with quick filters. These refinement filters are in addition to any search criteria, but the refine attachment filter overrides a search attachment criteria."))), dom.span(dom._class("btngroup"), refineUnreadBtn = dom.clickbutton(settings.refine === "unread" ? dom._class("active") : [], ui("Unread"), attr.title(ui("Only show messages marked as unread.")), /* @__PURE__ */ __name(async function click(e) {
 			await refineToggle("unread", e.target);
-		}, "click")), refineReadBtn = dom.clickbutton(settings.refine === "read" ? dom._class("active") : [], "Read", attr.title("Only show messages marked as read."), /* @__PURE__ */ __name(async function click(e) {
+		}, "click")), refineReadBtn = dom.clickbutton(settings.refine === "read" ? dom._class("active") : [], ui("Read"), attr.title(ui("Only show messages marked as read.")), /* @__PURE__ */ __name(async function click(e) {
 			await refineToggle("read", e.target);
-		}, "click")), refineAttachmentsBtn = dom.clickbutton(settings.refine === "attachments" ? dom._class("active") : [], "Attachments", attr.title("Only show messages with attachments."), /* @__PURE__ */ __name(async function click(e) {
+		}, "click")), refineAttachmentsBtn = dom.clickbutton(settings.refine === "attachments" ? dom._class("active") : [], ui("Attachments"), attr.title(ui("Only show messages with attachments.")), /* @__PURE__ */ __name(async function click(e) {
 			await refineToggle("attachments", e.target);
-		}, "click")), refineFlaggedBtn = dom.clickbutton(settings.refine === "flagged" ? dom._class("active") : [], "Flagged", attr.title("Only show flagged/starred messages."), /* @__PURE__ */ __name(async function click(e) {
+		}, "click")), refineFlaggedBtn = dom.clickbutton(settings.refine === "flagged" ? dom._class("active") : [], ui("Flagged"), attr.title(ui("Only show flagged/starred messages.")), /* @__PURE__ */ __name(async function click(e) {
 			await refineToggle("flagged", e.target);
-		}, "click")), refineLabelBtn = dom.clickbutton(settings.refine.startsWith("label:") ? [dom._class("active"), "Label: " + settings.refine.substring("label:".length)] : "Label", attr.title("Only show messages with the selected label."), /* @__PURE__ */ __name(async function click(e) {
+		}, "click")), refineLabelBtn = dom.clickbutton(settings.refine.startsWith("label:") ? [dom._class("active"), ui("Label: ") + settings.refine.substring("label:".length)] : ui("Label"), attr.title(ui("Only show messages with the selected label.")), /* @__PURE__ */ __name(async function click(e) {
 			const labels = possibleLabels();
-			const remove = popover(e.target, {}, dom.div(style({ display: "flex", flexDirection: "column", gap: "1ex" }), labels.map((l) => {
-				const selectLabel = /* @__PURE__ */ __name(async () => {
-					await refineToggle("label:" + l, e.target);
-					remove();
-				}, "selectLabel");
-				return dom.div(dom.clickbutton(styleClasses.keyword, keywordButtonStyle, l, /* @__PURE__ */ __name(async function click2() {
-					await selectLabel();
-				}, "click")));
-			}), labels.length === 0 ? dom.div("No labels yet, set one on a message first.") : []));
-		}, "click"))), " ", dom.clickbutton("x", style({ padding: "0 .25em" }), attr.arialabel("Clear refinement filters."), attr.title("Clear refinement filters."), /* @__PURE__ */ __name(async function click(e) {
+			const remove = menuPopover(e.target, [
+				...labels.map((l) => {
+					const selectLabel = /* @__PURE__ */ __name(async () => {
+						await refineToggle("label:" + l, e.target);
+						remove();
+					}, "selectLabel");
+					return dom.clickbutton(styleClasses.keyword, keywordButtonStyle, l, /* @__PURE__ */ __name(async function click2() {
+						await selectLabel();
+					}, "click"));
+				}),
+				labels.length === 0 ? dom.clickbutton(ui("No labels yet"), attr.disabled("")) : []
+			]);
+		}, "click")), dom.clickbutton("\xD7", attr.arialabel(ui("Clear refinement filters.")), attr.title(ui("Clear refinement filters.")), /* @__PURE__ */ __name(async function click(e) {
 			settingsPut({ ...settings, refine: "" });
 			refineToggleActive(e.target);
-			await withStatus("Requesting messages", requestNewView(false));
-		}, "click"))), dom.div(queryactivityElem = dom.span(), " ", threadMode = dom.select(attr.arialabel("Thread modes."), attr.title("Off: Threading disabled, messages are shown individually.\nOn: Group messages in threads, expanded by default except when (previously) manually collapsed.\nUnread: Only expand thread with unread messages, ignoring and not saving whether they were manually collapsed."), dom.option("Threads: Off", attr.value(ThreadMode.ThreadOff), settings.threading === ThreadMode.ThreadOff ? attr.selected("") : []), dom.option("Threads: On", attr.value(ThreadMode.ThreadOn), settings.threading === ThreadMode.ThreadOn ? attr.selected("") : []), dom.option("Threads: Unread", attr.value(ThreadMode.ThreadUnread), settings.threading === ThreadMode.ThreadUnread ? attr.selected("") : []), /* @__PURE__ */ __name(async function change() {
+			await withStatus(ui("Requesting messages"), requestNewView(false));
+		}, "click"))), dom.div(dom._class("msgListFilterSortingControls"), queryactivityElem = dom.span(), dom.span(dom._class("threadModeLabel"), ui("Threads")), threadMode = dom.select(dom._class("threadModeSelect"), attr.arialabel(ui("Thread modes.")), attr.title(ui("Off: Threading disabled, messages are shown individually.\nOn: Group messages in threads, expanded by default except when (previously) manually collapsed.\nUnread: Only expand thread with unread messages, ignoring and not saving whether they were manually collapsed.")), dom.option(ui("Threads: Off"), attr.value(ThreadMode.ThreadOff), settings.threading === ThreadMode.ThreadOff ? attr.selected("") : []), dom.option(ui("Threads: On"), attr.value(ThreadMode.ThreadOn), settings.threading === ThreadMode.ThreadOn ? attr.selected("") : []), dom.option(ui("Threads: Unread"), attr.value(ThreadMode.ThreadUnread), settings.threading === ThreadMode.ThreadUnread ? attr.selected("") : []), /* @__PURE__ */ __name(async function change() {
 			let reset = settings.threading === ThreadMode.ThreadOff;
 			settingsPut({ ...settings, threading: threadMode.value });
 			reset = reset || settings.threading === ThreadMode.ThreadOff;
 			if (reset) {
-				await withStatus("Requesting messages", requestNewView(false));
+				await withStatus(ui("Requesting messages"), requestNewView(false));
 			} else {
 				msglistView.threadToggle();
 			}
-		}, "change")), " ", dom.clickbutton("\u2191\u2193", attr.title("Toggle sorting by date received."), settings.orderAsc ? dom._class("invert") : [], /* @__PURE__ */ __name(async function click(e) {
+		}, "change")), dom.clickbutton(dom._class("threadSortBtn"), "\u2191\u2193", attr.title(ui("Toggle sorting by date received.")), settings.orderAsc ? dom._class("invert") : [], /* @__PURE__ */ __name(async function click(e) {
 			settingsPut({ ...settings, orderAsc: !settings.orderAsc });
 			e.target.classList.toggle("invert", settings.orderAsc);
-			await withStatus("Requesting messages", requestNewView(true));
-		}, "click")))), dom.div(style({ height: "1ex", position: "relative" }), dom.div(dom._class("msgItemFlags")), dom.div(dom._class("msgItemFlagsOffset"), css("msgItemFlagsGrab", { position: "absolute", width: "6px", top: 0, bottom: 0, marginLeft: "-3px", cursor: "ew-resize" }), dom.div(msgColumnDraggerStyle), /* @__PURE__ */ __name(function mousedown(e) {
+			await withStatus(ui("Requesting messages"), requestNewView(true));
+		}, "click"))))), msglistView.actionBar, dom.div(style({ height: "1ex", position: "relative" }), dom.div(dom._class("msgItemFlags")), dom.div(dom._class("msgItemFlagsOffset"), css("msgItemFlagsGrab", { position: "absolute", width: "6px", top: 0, bottom: 0, marginLeft: "-3px", cursor: "ew-resize" }), dom.div(msgColumnDraggerStyle), /* @__PURE__ */ __name(function mousedown(e) {
 			startDrag(e, (e2) => {
 				const bounds = msglistscrollElem.getBoundingClientRect();
 				const width = Math.round(e2.clientX - bounds.x);
 				settingsPut({ ...settings, msglistflagsWidth: width });
 				updateMsglistWidths();
 			});
-		}, "mousedown")), dom.div(dom._class("msgItemFrom")), dom.div(dom._class("msgItemFromOffset"), css("msgItemFlagsGrab", { position: "absolute", width: "6px", top: 0, bottom: 0, marginLeft: "-3px", cursor: "ew-resize" }), dom.div(msgColumnDraggerStyle), /* @__PURE__ */ __name(function mousedown(e) {
-			startDrag(e, (e2) => {
-				const bounds = msglistscrollElem.getBoundingClientRect();
-				const x = Math.round(e2.clientX - bounds.x - lastflagswidth);
-				const width = bounds.width - lastflagswidth - lastagewidth;
-				const pct = 100 * x / width;
-				settingsPut({ ...settings, msglistfromPct: pct });
-				updateMsglistWidths();
-			});
-		}, "mousedown")), dom.div(dom._class("msgItemSubject")), dom.div(dom._class("msgItemSubjectOffset"), css("msgItemFlagsGrab", { position: "absolute", width: "6px", top: 0, bottom: 0, marginLeft: "-3px", cursor: "ew-resize" }), dom.div(msgColumnDraggerStyle), /* @__PURE__ */ __name(function mousedown(e) {
+		}, "mousedown")), dom.div(dom._class("msgItemMain")), dom.div(dom._class("msgItemMainOffset"), css("msgItemFlagsGrab", { position: "absolute", width: "6px", top: 0, bottom: 0, marginLeft: "-3px", cursor: "ew-resize" }), dom.div(msgColumnDraggerStyle), /* @__PURE__ */ __name(function mousedown(e) {
 			startDrag(e, (e2) => {
 				const bounds = msglistscrollElem.getBoundingClientRect();
 				const width = Math.round(bounds.x + bounds.width - e2.clientX);
 				settingsPut({ ...settings, msglistageWidth: width });
 				updateMsglistWidths();
 			});
-		}, "mousedown")), dom.div(dom._class("msgItemAge"))), dom.div(style({ flexGrow: "1", position: "relative" }), msglistscrollElem = dom.div(yscrollStyle, attr.role("region"), attr.arialabel("Message list"), /* @__PURE__ */ __name(async function scroll() {
+		}, "mousedown")), dom.div(dom._class("msgItemAge"))), dom.div(style({ flexGrow: "1", position: "relative" }), msglistscrollElem = dom.div(yscrollStyle, attr.role("region"), attr.arialabel(ui("Message list")), /* @__PURE__ */ __name(async function scroll() {
 			if (!sseID || requestViewEnd || requestID) {
 				return;
 			}
 			await viewportEnsureMessages();
 		}, "scroll"), dom.div(style({ width: "100%", borderSpacing: "0" }), msglistView))));
+		moveUndoHost = msglistElem;
 		let searchbarElem;
 		const startSearch = /* @__PURE__ */ __name(async (f, notf) => {
 			if (!sseID) {
-				window.alert("Error: not connect");
+				window.alert(ui("Error: ") + ui("Not connected"));
 				return;
 			}
 			if (f.Attachments !== "" && settings.refine === "attachments") {
@@ -6324,7 +8182,7 @@
 			searchView.root.remove();
 			searchbarElem.blur();
 			document.body.focus();
-			await withStatus("Requesting messages", requestNewView(true, f, notf));
+			await withStatus(ui("Requesting messages"), requestNewView(true, f, notf));
 		}, "startSearch");
 		const searchViewClose = /* @__PURE__ */ __name(() => {
 			if (!search.active) {
@@ -6334,8 +8192,7 @@
 				searchView.root.remove();
 			}
 		}, "searchViewClose");
-		let mailboxesElem, topcomposeboxElem, mailboxessplitElem;
-		let splitElem;
+		let topcomposeboxElem, mailboxessplitElem;
 		const searchbarInitial = /* @__PURE__ */ __name(() => {
 			const mailboxActive = mailboxlistView.activeMailbox();
 			if (mailboxActive && mailboxActive.Name !== "Inbox") {
@@ -6343,16 +8200,26 @@
 			}
 			return "";
 		}, "searchbarInitial");
-		const ensureSearchView = /* @__PURE__ */ __name(() => {
-			if (searchView.root.parentElement) {
+		const positionSearchView = /* @__PURE__ */ __name(() => {
+			const content = searchView.root.querySelector(".searchContent");
+			if (!content) {
 				return;
 			}
+			content.style.top = "";
+			content.style.left = "";
+			content.style.right = "";
+			content.style.width = "";
+			content.style.transform = "";
+		}, "positionSearchView");
+		const ensureSearchView = /* @__PURE__ */ __name(() => {
+			if (searchView.root.parentElement) {
+				positionSearchView();
+				return;
+			}
+			clearMoveUndo();
 			searchView.ensureLoaded();
-			const pos = searchbarElem.getBoundingClientRect();
-			const child = searchView.root.firstChild;
-			child.style.left = "" + pos.x + "px";
-			child.style.top = "" + (pos.y + pos.height + 2) + "px";
-			searchbarElem.parentElement.appendChild(searchView.root);
+			page.appendChild(searchView.root);
+			positionSearchView();
 			searchbarElemBox.style.flexGrow = "4";
 			searchbarElem.style.zIndex = zindexes.searchbar;
 		}, "ensureSearchView");
@@ -6378,7 +8245,7 @@
 				await mailboxlistView.openMailboxID(mb.ID, true);
 				const f = newFilter();
 				f.MailboxID = mb.ID;
-				await withStatus("Requesting messages", requestNewView(true, f, newNotFilter()));
+				await withStatus(ui("Requesting messages"), requestNewView(true, f, newNotFilter()));
 			}
 		}, "cmdOpenInbox");
 		const cmdFocusMsg = /* @__PURE__ */ __name(async () => {
@@ -6396,11 +8263,93 @@
 			"ctrl m": cmdFocusMsg,
 			"ctrl !": cmdSettings
 		};
-		const topMailboxesStyle = css("topMailboxes", { backgroundColor: styles.mailboxesTopBackgroundColor });
-		css("searchbarActive", { background: styles.mailboxActiveBackground });
-		const webmailroot = dom.div(css("webmailRoot", { display: "flex", flexDirection: "column", alignContent: "stretch", height: "100dvh" }), dom.div(topMailboxesStyle, style({ display: "flex" }), attr.role("region"), attr.arialabel("Top bar"), topcomposeboxElem = dom.div(dom._class("pad"), style({ width: settings.mailboxesWidth + "px", textAlign: "center" }), composeBtn = dom.clickbutton("Compose", attr.title("Compose new email message."), /* @__PURE__ */ __name(function click() {
+		let closeAccountMenu = /* @__PURE__ */ __name(() => {
+		}, "closeAccountMenu");
+		const openAccountMenu = /* @__PURE__ */ __name(() => {
+			if (accountRoot.classList.contains("open")) {
+				return;
+			}
+			accountRoot.classList.add("open");
+			accountToggle.setAttribute("aria-expanded", "true");
+			const onDocClick = /* @__PURE__ */ __name((ev) => {
+				const t = ev.target;
+				if (t instanceof Node && accountRoot.contains(t)) {
+					return;
+				}
+				closeAccountMenu();
+			}, "onDocClick");
+			const onDocKey = /* @__PURE__ */ __name((ev) => {
+				if (ev.key === "Escape") {
+					closeAccountMenu();
+				}
+			}, "onDocKey");
+			document.addEventListener("click", onDocClick);
+			document.addEventListener("keydown", onDocKey);
+			closeAccountMenu = /* @__PURE__ */ __name(() => {
+				accountRoot.classList.remove("open");
+				accountToggle.setAttribute("aria-expanded", "false");
+				document.removeEventListener("click", onDocClick);
+				document.removeEventListener("keydown", onDocKey);
+				closeAccountMenu = /* @__PURE__ */ __name(() => {
+				}, "closeAccountMenu");
+			}, "closeAccountMenu");
+		}, "openAccountMenu");
+		const accountCmdItem = /* @__PURE__ */ __name((icon, label, title, cmd) => {
+			return dom.clickbutton(dom._class("nav-account-item"), attr.role("menuitem"), icon, label, attr.title(title), /* @__PURE__ */ __name(async function click() {
+				closeAccountMenu();
+				await shortcutCmd(cmd, shortcuts);
+			}, "click"));
+		}, "accountCmdItem");
+		const topBarStyle = css("topBar", { backgroundColor: styles.mailboxesTopBackgroundColor });
+		const mailboxesSidebarStyle = css("mailboxesSidebar", { backgroundColor: styles.mailboxesSidebarBackground, borderRight: "1px solid", borderRightColor: styles.borderColor });
+		let msgPaneWrap;
+		const showMobileOverflow = /* @__PURE__ */ __name((ref) => {
+			menuPopover(ref, [
+				dom.clickbutton(ui("Tooltip"), clickCmd(cmdTooltip, shortcuts)),
+				dom.clickbutton(ui("Help"), clickCmd(cmdHelp, shortcuts)),
+				dom.clickbutton(ui("Settings"), clickCmd(cmdSettings, shortcuts)),
+				dom.clickbutton(ui("Logout"), /* @__PURE__ */ __name(async function click(ev) {
+					await withStatus(ui("Logging out"), client.Logout(), ev.target);
+					localStorageRemove("webmailcsrftoken");
+					if (eventSource) {
+						eventSource.close();
+						eventSource = null;
+					}
+					window.location.reload();
+				}, "click"))
+			]);
+		}, "showMobileOverflow");
+		let fitMailboxWidth = /* @__PURE__ */ __name((want) => want, "fitMailboxWidth");
+		let applyMailboxColumnWidth = /* @__PURE__ */ __name(() => {
+		}, "applyMailboxColumnWidth");
+		const layoutModes = [
+			{ id: "leftright", label: /* @__PURE__ */ __name(() => ui("Left/right"), "label"), icon: /* @__PURE__ */ __name(() => layoutGlyph("leftright"), "icon") },
+			{ id: "topbottom", label: /* @__PURE__ */ __name(() => ui("Top/bottom"), "label"), icon: /* @__PURE__ */ __name(() => layoutGlyph("topbottom"), "icon") },
+			{ id: "auto", label: /* @__PURE__ */ __name(() => ui("Auto layout"), "label"), icon: /* @__PURE__ */ __name(() => layoutGlyph("auto"), "icon") }
+		];
+		const layoutButtons = [];
+		const syncLayoutButtons = /* @__PURE__ */ __name(() => {
+			for (let i = 0; i < layoutModes.length; i++) {
+				const on = settings.layout === layoutModes[i].id;
+				layoutButtons[i].classList.toggle("isOn", on);
+				layoutButtons[i].setAttribute("aria-pressed", on ? "true" : "false");
+			}
+		}, "syncLayoutButtons");
+		let applyLayoutMode = /* @__PURE__ */ __name(() => {
+		}, "applyLayoutMode");
+		const layoutRow = dom.div(dom._class("nav-account-layouts"), attr.arialabel(ui("Layout")), ...layoutModes.map((mode) => {
+			const on = settings.layout === mode.id;
+			const btn = dom.clickbutton(on ? dom._class("nav-layout", "isOn") : dom._class("nav-layout"), mode.icon(), attr.title(mode.label()), attr.arialabel(mode.label()), dom._attrs({ "aria-pressed": on ? "true" : "false" }), /* @__PURE__ */ __name(function click() {
+				applyLayoutMode(mode.id);
+			}, "click"));
+			layoutButtons.push(btn);
+			return btn;
+		}));
+		const webmailroot = dom.div(css("webmailRoot", { display: "flex", flexDirection: "column", alignContent: "stretch", height: "100dvh", position: "relative", zIndex: 0 }), dom.div(topBarStyle, attr.role("region"), attr.arialabel(ui("Top bar")), topcomposeboxElem = dom.div(dom._class("pad"), dom._class("topBarComposeDesktop"), style({ width: settings.mailboxesWidth + "px", textAlign: "center" }), composeBtn = dom.clickbutton(dom._class("btnPrimary"), strokeIcon(strokePaths.compose), ui("Compose"), attr.title(ui("Compose new email message.")), /* @__PURE__ */ __name(function click() {
 			shortcutCmd(cmdCompose, shortcuts);
-		}, "click"))), dom.div(dom._class("pad"), css("searchbarBox", { paddingLeft: 0, display: "flex", flexGrow: 1 }), searchbarElemBox = dom.search(style({ display: "flex", marginRight: ".5em" }), dom.form(style({ display: "flex", flexGrow: 1 }), searchbarElem = dom.input(attr.placeholder("Search..."), style({ position: "relative", width: "100%" }), attr.title("Search messages based on criteria like matching free-form text, in a mailbox, labels, addressees."), focusPlaceholder('word "with space" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"subject" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb'), /* @__PURE__ */ __name(function click() {
+		}, "click"))), dom.div(dom._class("pad"), dom._class("topBarSearchRow"), dom.div(dom._class("topBarMobileOnly"), dom.clickbutton(dom._class("topBarMenuBtn"), attr.title(ui("Open mailboxes.")), attr.arialabel(ui("Open mailboxes.")), /* @__PURE__ */ __name(function click() {
+			openMailboxesDrawer();
+		}, "click"), dom.span(dom._class("topBarMenuIcon"), strokeIcon(strokePaths.menu)))), dom.div(css("searchbarBox", { paddingLeft: 0, display: "flex", flexGrow: 1, minWidth: 0 }), searchbarElemBox = dom.search(style({ display: "flex", flex: 1, minWidth: 0, width: "100%" }), dom.form(dom._class("topBarSearchForm"), searchbarElem = dom.input(dom._class("topBarSearchInput"), attr.placeholder(ui("Search...")), style({ position: "relative" }), attr.title(ui("Search messages based on criteria like matching free-form text, in a mailbox, labels, addressees.")), focusPlaceholder('word "with space" -notword mb:Inbox f:from@x.example t:rcpt@x.example start:2023-7-1 end:2023-7-8 s:"subject" a:images l:$Forwarded h:Reply-To:other@x.example minsize:500kb'), /* @__PURE__ */ __name(function click() {
 			cmdSearch();
 			showShortcut("/");
 		}, "click"), /* @__PURE__ */ __name(function focus() {
@@ -6427,47 +8376,89 @@
 				ensureSearchView();
 			}
 			searchView.updateForm();
-		}, "keyup")), dom.clickbutton("x", attr.arialabel("Cancel and clear search and open Inbox."), attr.title("Cancel and clear search and open Inbox."), style({ marginLeft: ".25em", padding: "0 .3em" }), /* @__PURE__ */ __name(async function click() {
+		}, "keyup")), dom.clickbutton(dom._class("topBarSearchClear"), strokeIcon(strokePaths.x), attr.arialabel(ui("Cancel and clear search and open Inbox.")), attr.title(ui("Cancel and clear search and open Inbox.")), /* @__PURE__ */ __name(async function click() {
 			searchbarElem.value = "";
 			if (!search.active) {
 				return;
 			}
 			const mb = mailboxlistView.findMailboxByName("Inbox");
 			if (!mb) {
-				window.alert("Cannot find inbox.");
+				window.alert(ui("Cannot find inbox."));
 				return;
 			}
 			await mailboxlistView.openMailboxID(mb.ID, true);
 			const f = newFilter();
 			f.MailboxID = mb.ID;
-			await withStatus("Requesting messages", requestNewView(true, f, newNotFilter()));
+			await withStatus(ui("Requesting messages"), requestNewView(true, f, newNotFilter()));
 		}, "click")), /* @__PURE__ */ __name(async function submit(e) {
 			e.preventDefault();
 			await searchView.submit();
-		}, "submit"))), connectionElem = dom.div(), statusElem = dom.div(css("status", { marginLeft: ".5em", flexGrow: "1" }), attr.role("status")), dom.div(style({ paddingLeft: "1em" }), layoutElem = dom.select(attr.title("Layout of message list and message panes. Top/bottom has message list above message view. Left/Right has message list left, message view right. Auto selects based on window width and automatically switches on resize. Wide screens get left/right, smaller screens get top/bottom."), dom.option("Auto layout", attr.value("auto"), settings.layout === "auto" ? attr.selected("") : []), dom.option("Top/bottom", attr.value("topbottom"), settings.layout === "topbottom" ? attr.selected("") : []), dom.option("Left/right", attr.value("leftright"), settings.layout === "leftright" ? attr.selected("") : []), /* @__PURE__ */ __name(function change() {
-			settingsPut({ ...settings, layout: layoutElem.value });
-			if (layoutElem.value === "auto") {
-				autoselectLayout();
+		}, "submit")))), dom.div(dom._class("topBarMobileOnly"), dom.clickbutton(dom._class("btnPrimary"), dom._class("topBarMobileCompose"), strokeIcon(strokePaths.compose), attr.title(ui("Compose new email message.")), attr.arialabel(ui("Compose")), /* @__PURE__ */ __name(function click() {
+			shortcutCmd(cmdCompose, shortcuts);
+		}, "click"))), dom.div(dom._class("topBarMobileOnly"), dom.clickbutton(dom._class("topBarMobileOverflow"), strokeIcon(strokePaths.more), attr.title(ui("More actions.")), attr.arialabel(ui("More actions")), /* @__PURE__ */ __name(function click(e) {
+			showMobileOverflow(e.target);
+		}, "click")))), dom.div(dom._class("pad"), dom._class("topBarMessageRow"), dom.clickbutton(dom._class("topBarMessageBack"), strokeIcon(strokePaths.back), attr.title(ui("Back to message list.")), attr.arialabel(ui("Back to message list.")), /* @__PURE__ */ __name(function click() {
+			mobileBackToList();
+		}, "click")), topBarMessageTitle = dom.span(dom._class("topBarMessageTitle")), dom.clickbutton(dom._class("topBarMobileOverflow"), strokeIcon(strokePaths.more), attr.title(ui("More actions.")), attr.arialabel(ui("More actions")), /* @__PURE__ */ __name(function click(e) {
+			showMobileOverflow(e.target);
+		}, "click"))), dom.div(dom._class("pad"), dom._class("topBarStatusRow"), connectionElem = dom.div(), statusElem = dom.div(css("status", { marginLeft: ".5em", flexGrow: "1" }), attr.role("status")), dom.div(dom._class("topBarNav"), dom._class("topBarNavDesktop"), accountRoot = dom.div(dom._class("nav-account"), accountToggle = dom.clickbutton(dom._class("nav-account-toggle"), navIcon(strokePaths.circleUser, [["12", "12", "10"], ["12", "10", "3"]]), loginAddressElem = dom.span(dom._class("nav-account-label")), navIcon(strokePaths.chevronDown, void 0, "nav-account-caret"), attr.arialabel(ui("Account")), dom._attrs({ "aria-haspopup": "menu", "aria-expanded": "false" }), /* @__PURE__ */ __name(function click(e) {
+			e.stopPropagation();
+			if (accountRoot.classList.contains("open")) {
+				closeAccountMenu();
 			} else {
-				selectLayout(layoutElem.value);
+				openAccountMenu();
 			}
-		}, "change")), " ", dom.clickbutton("Help", attr.title("Show popup with basic usage information and a keyboard shortcuts."), clickCmd(cmdHelp, shortcuts)), " ", settingsBtn = dom.clickbutton("Settings", attr.title("Change settings for composing messages."), clickCmd(cmdSettings, shortcuts)), " ", accountElem = dom.span(), " ", loginAddressElem = dom.span(), " ", dom.clickbutton("Logout", attr.title("Logout, invalidating this session."), /* @__PURE__ */ __name(async function click(e) {
-			await withStatus("Logging out", client.Logout(), e.target);
+		}, "click")), accountMenu = dom.div(dom._class("nav-account-menu"), accountElem = dom.a(dom._class("nav-account-item"), attr.role("menuitem"), navIcon(strokePaths.user, [["12", "7", "4"]]), ui("Account")), accountCmdItem(navIcon(strokePaths.info, [["12", "12", "10"]]), ui("Tooltip"), ui('Show tooltips, based on the title attributes (underdotted text) for the focused element and all user interface elements below it. Use the keyboard shortcut "ctrl ?" instead of clicking on the tooltip button, which changes focus to the tooltip button.'), cmdTooltip), accountCmdItem(navIcon(strokePaths.bookOpen), ui("Help"), ui("Show popup with basic usage information and a keyboard shortcuts."), cmdHelp), settingsBtn = accountCmdItem(navIcon(strokePaths.settings, [["12", "12", "3"]]), ui("Settings"), ui("Change settings for composing messages."), cmdSettings), dom.div(dom._class("nav-account-divider")), dom.clickbutton(dom._class("nav-account-item"), attr.role("menuitem"), navIcon(strokePaths.logOut), ui("Logout"), attr.title(ui("Logout, invalidating this session.")), /* @__PURE__ */ __name(async function click(e) {
+			closeAccountMenu();
+			await withStatus(ui("Logging out"), client.Logout(), e.currentTarget);
 			localStorageRemove("webmailcsrftoken");
 			if (eventSource) {
 				eventSource.close();
 				eventSource = null;
 			}
 			window.location.reload();
-		}, "click"))))), mailboxesListMsgBox = dom.div(css("mailboxesListMsgBox", { flexGrow: "1", position: "relative" }), mailboxesElem = dom.div(topMailboxesStyle, style({ width: settings.mailboxesWidth + "px" }), css("mailboxesBox", { display: "flex", flexDirection: "column", alignContent: "stretch", position: "absolute", left: 0, top: 0, bottom: 0 }), dom.div(dom._class("pad"), yscrollAutoStyle, style({ flexGrow: "1", position: "relative" }), mailboxlistView.root)), mailboxessplitElem = dom.div(css("mailboxesListGrab", { position: "absolute", width: "5px", top: 0, bottom: 0, cursor: "ew-resize", zIndex: zindexes.splitter }), style({ left: "calc(" + settings.mailboxesWidth + "px - 2px)" }), dom.div(css("mailboxesListLine", { position: "absolute", width: "1px", top: 0, bottom: 0, left: "2px", right: "2px", backgroundColor: styles.popupBorderColor })), /* @__PURE__ */ __name(function mousedown(e) {
+		}, "click")), dom.div(dom._class("nav-account-divider")), layoutRow)))), dom.div(dom._class("theme-toggle-container"), dom.clickbutton(dom._class("lang-choice"), attr.title(ui("Language")), attr.arialabel(ui("Language")), langGlyph(), /* @__PURE__ */ __name(function click(e) {
+			const current = langPreference();
+			const item = /* @__PURE__ */ __name((id, label, title) => {
+				const on = current === id;
+				return dom.clickbutton(label, title ? attr.title(title) : [], on ? dom._attrs({ "aria-current": "true" }) : [], /* @__PURE__ */ __name(function click2() {
+					chooseLang(id);
+				}, "click"));
+			}, "item");
+			menuPopover(e.currentTarget, [
+				item("auto", ui("Auto"), ui("Follow the browser language")),
+				dom.div(dom._class("langRule"), attr.role("separator")),
+				item("en", "English"),
+				item("ru", "\u0420\u0443\u0441\u0441\u043A\u0438\u0439")
+			], true, "langMenu");
+		}, "click")), dom.div(dom._class("theme-switch-group"), dom.label(dom._class("theme-toggle"), attr.title(ui("Light or dark theme")), dom.input(attr.type("checkbox"), attr.id("theme-toggle-switch"), attr.arialabel(ui("Dark theme")), /* @__PURE__ */ __name(function change(e) {
+			applyTheme(e.target.checked ? "dark" : "light");
+		}, "change")), dom.span(dom._class("slider"), dom.span(dom._class("theme-slot", "theme-sun"), themeGlyph("sun")), dom.span(dom._class("theme-slot", "theme-moon"), themeGlyph("moon")))), dom.clickbutton(dom._class("theme-auto"), attr.id("theme-auto"), attr.title(ui("Auto")), attr.arialabel(ui("Auto")), themeGlyph("auto"), /* @__PURE__ */ __name(function click() {
+			applyTheme("auto");
+		}, "click"))))), mailboxesListMsgBox = dom.div(css("mailboxesListMsgBox", { flexGrow: "1", position: "relative" }), dom.div(dom._class("mailboxesBackdrop"), /* @__PURE__ */ __name(function click() {
+			closeMailboxesDrawer();
+		}, "click")), mailboxesElem = dom.div(mailboxesSidebarStyle, dom._class("mailboxesSidebar"), style({ width: settings.mailboxesWidth + "px" }), css("mailboxesBox", { display: "flex", flexDirection: "column", alignContent: "stretch", position: "absolute", left: 0, top: 0, bottom: 0, width: "100%", boxSizing: "border-box" }), dom.div(dom._class("pad"), yscrollAutoStyle, style({ flexGrow: "1", position: "relative" }), mailboxlistView.root)), mailboxessplitElem = dom.div(css("mailboxesListGrab", { position: "absolute", width: "5px", top: 0, bottom: 0, cursor: "ew-resize", zIndex: zindexes.splitter }), style({ left: "calc(" + settings.mailboxesWidth + "px - 2px)" }), dom.div(css("mailboxesListLine", { position: "absolute", width: "1px", top: 0, bottom: 0, left: "2px", right: "2px", backgroundColor: styles.popupBorderColor })), /* @__PURE__ */ __name(function mousedown(e) {
 			startDrag(e, (e2) => {
-				mailboxesElem.style.width = Math.round(e2.clientX) + "px";
-				topcomposeboxElem.style.width = Math.round(e2.clientX) + "px";
-				mailboxessplitElem.style.left = "calc(" + e2.clientX + "px - 2px)";
-				splitElem.style.left = "calc(" + e2.clientX + "px + 1px)";
-				settingsPut({ ...settings, mailboxesWidth: Math.round(e2.clientX) });
+				const px = fitMailboxWidth(e2.clientX);
+				applyMailboxColumnWidth(px);
+				settingsPut({ ...settings, mailboxesWidth: px });
 			});
-		}, "mousedown")), splitElem = dom.div(css("listMsgBox", { position: "absolute", left: "calc(" + settings.mailboxesWidth + "px + 1px)", right: 0, top: 0, bottom: 0, borderTop: "1px solid", borderTopColor: styles.borderColor }))));
+		}, "mousedown")), splitElem = dom.div(css("listMsgBox", { position: "absolute", left: "calc(" + settings.mailboxesWidth + "px + 1px)", right: 0, top: 0, bottom: 0, backgroundColor: styles.backgroundColorMild }))));
+		fitMailboxWidth = /* @__PURE__ */ __name((want) => {
+			const theme = document.querySelector(".theme-toggle-container")?.getBoundingClientRect().width ?? 0;
+			const nav = document.querySelector(".topBarNav")?.getBoundingClientRect().width ?? 0;
+			const connection = connectionElem.getBoundingClientRect().width;
+			const max = Math.max(160, Math.floor(window.innerWidth - theme - nav - connection - 160 - 48));
+			return Math.min(max, Math.max(160, want));
+		}, "fitMailboxWidth");
+		applyMailboxColumnWidth = /* @__PURE__ */ __name((px) => {
+			topcomposeboxElem.style.width = px + "px";
+			mailboxesElem.style.width = px + "px";
+			mailboxessplitElem.style.left = "calc(" + px + "px - 2px)";
+			splitElem.style.left = "calc(" + px + "px + 1px)";
+		}, "applyMailboxColumnWidth");
+		msgPaneWrap = dom.div(dom._class("mobileMsgPane"), msgElem);
+		mobileMsgTitle = topBarMessageTitle;
 		const searchView = newSearchView(searchbarElem, mailboxlistView, startSearch, searchViewClose);
 		document.body.addEventListener("keydown", async (e) => {
 			switch (e.key) {
@@ -6515,7 +8506,6 @@
 			}
 			msglistView.key(k, e);
 		});
-		let currentLayout = "";
 		const selectLayout = /* @__PURE__ */ __name((want) => {
 			if (want === currentLayout) {
 				return;
@@ -6534,7 +8524,7 @@
 						updateMsglistWidths();
 					});
 					right.style.pointerEvents = "";
-				}, "mousedown")), right = dom.div(css("layoutRight", { position: "absolute", right: 0, top: 0, bottom: 0 }), style({ left: "calc(" + settings.leftWidthPct + "% + 1px)" }), msgElem));
+				}, "mousedown")), right = dom.div(css("layoutRight", { position: "absolute", right: 0, top: 0, bottom: 0 }), style({ left: "calc(" + settings.leftWidthPct + "% + 1px)" }), msgPaneWrap));
 			} else {
 				let top, split, bottom;
 				dom._kids(splitElem, top = dom.div(css("layoutTop", { position: "absolute", top: 0, left: 0, right: 0 }), style({ height: "calc(" + settings.topHeightPct + "% - 1px)" }), msglistElem), split = dom.div(css("listMsgTopBottomGrab", { position: "absolute", height: "5px", left: "0", right: "0", cursor: "ns-resize", zIndex: zindexes.splitter }), style({ top: "calc(" + settings.topHeightPct + "% - 2px)" }), dom.div(css("listmsgTopBottomLine", { position: "absolute", backgroundColor: styles.popupBorderColor, left: 0, right: 0, height: "1px", top: "2px", bottom: "2px" })), /* @__PURE__ */ __name(function mousedown(e) {
@@ -6546,15 +8536,25 @@
 						bottom.style.top = "calc(" + y + "px + 1px)";
 						settingsPut({ ...settings, topHeightPct: Math.round(100 * bounds.height / splitElem.getBoundingClientRect().height) });
 					});
-				}, "mousedown")), bottom = dom.div(css("layoutBottom", { position: "absolute", bottom: 0, left: 0, right: 0 }), style({ top: "calc(" + settings.topHeightPct + "% + 1px)" }), msgElem));
+				}, "mousedown")), bottom = dom.div(css("layoutBottom", { position: "absolute", bottom: 0, left: 0, right: 0 }), style({ top: "calc(" + settings.topHeightPct + "% + 1px)" }), msgPaneWrap));
 			}
 			currentLayout = want;
 			checkMsglistWidth();
+			applyMobileLayoutStyles();
 		}, "selectLayout");
 		const autoselectLayout = /* @__PURE__ */ __name(() => {
 			const want = window.innerWidth <= 2 * 2560 / 3 ? "topbottom" : "leftright";
 			selectLayout(want);
 		}, "autoselectLayout");
+		applyLayoutMode = /* @__PURE__ */ __name((id) => {
+			settingsPut({ ...settings, layout: id });
+			if (id === "auto") {
+				autoselectLayout();
+			} else {
+				selectLayout(id);
+			}
+			syncLayoutButtons();
+		}, "applyLayoutMode");
 		const styleElem = dom.style(attr.type("text/css"));
 		document.head.appendChild(styleElem);
 		const stylesheet = styleElem.sheet;
@@ -6566,29 +8566,44 @@
 			}
 			updateMsglistWidths();
 		}, "checkMsglistWidth");
-		let lastflagswidth, lastagewidth;
 		let rulesInserted = false;
+		const measureColumn = /* @__PURE__ */ __name((selector) => {
+			let max = 0;
+			msglistscrollElem.querySelectorAll(selector).forEach((node) => {
+				if (!(node instanceof HTMLElement)) {
+					return;
+				}
+				node.style.width = "max-content";
+				node.style.flexBasis = "auto";
+				node.style.overflow = "visible";
+				const w = Math.ceil(node.getBoundingClientRect().width);
+				node.style.width = "";
+				node.style.flexBasis = "";
+				node.style.overflow = "";
+				if (w > max) {
+					max = w;
+				}
+			});
+			return max;
+		}, "measureColumn");
 		const updateMsglistWidths = /* @__PURE__ */ __name(() => {
 			const width = msglistscrollElem.clientWidth - 2;
 			lastmsglistwidth = width;
-			let flagswidth = settings.msglistflagsWidth;
-			let agewidth = settings.msglistageWidth;
-			let frompct = settings.msglistfromPct;
+			const flagsContent = measureColumn(".msgItemFlags");
+			const ageContent = measureColumn(".msgItemAge");
+			let flagswidth = isMobile() ? 28 : Math.max(settings.msglistflagsWidth, flagsContent);
+			let agewidth = isMobile() ? 58 : Math.max(settings.msglistageWidth, ageContent);
 			if (flagswidth + agewidth > width) {
 				flagswidth = Math.floor(width / 2);
 				agewidth = width - flagswidth;
 			}
-			const remain = width - (flagswidth + agewidth);
-			const fromwidth = Math.floor(frompct * remain / 100);
-			const subjectwidth = Math.floor(remain - fromwidth);
+			const mainwidth = width - (flagswidth + agewidth);
 			const cssRules2 = [
-				[".msgItemFlags", { width: flagswidth }],
-				[".msgItemFrom", { width: fromwidth, position: "relative" }],
-				[".msgItemSubject", { width: subjectwidth }],
-				[".msgItemAge", { width: agewidth, "text-align": "right" }],
+				[".msgItemFlags", { width: flagswidth, "flex-grow": 0, "flex-shrink": 0, "flex-basis": flagswidth }],
+				[".msgItemMain", { width: mainwidth, "flex-grow": 1, "flex-shrink": 1, "flex-basis": mainwidth, position: "relative", "min-width": 0, "max-width": mainwidth }],
+				[".msgItemAge", { width: agewidth, "flex-grow": 0, "flex-shrink": 0, "flex-basis": agewidth, "text-align": "right" }],
 				[".msgItemFlagsOffset", { left: flagswidth }],
-				[".msgItemFromOffset", { left: flagswidth + fromwidth }],
-				[".msgItemSubjectOffset", { left: flagswidth + fromwidth + subjectwidth }]
+				[".msgItemMainOffset", { left: flagswidth + mainwidth }]
 			];
 			if (!rulesInserted) {
 				cssRules2.forEach((rule, i) => {
@@ -6606,25 +8621,84 @@
 					r.style.setProperty(k, v);
 				}
 			});
-			lastflagswidth = flagswidth;
-			lastagewidth = agewidth;
 		}, "updateMsglistWidths");
-		if (layoutElem.value === "auto") {
+		if (isMobile()) {
+			selectLayout("topbottom");
+		} else if (settings.layout === "auto") {
 			autoselectLayout();
 		} else {
-			selectLayout(layoutElem.value);
+			selectLayout(settings.layout);
 		}
+		accountElem.hidden = true;
+		accountToggle.setAttribute("aria-haspopup", "menu");
+		accountToggle.setAttribute("aria-expanded", "false");
+		accountToggle.setAttribute("aria-label", ui("Account"));
+		accountMenu.setAttribute("role", "menu");
+		document.body.appendChild(webmailroot);
+		applyMailboxColumnWidth(fitMailboxWidth(settings.mailboxesWidth));
+		webmailroot.remove();
 		if (window.moxBeforeDisplay) {
 			moxBeforeDisplay(webmailroot);
 		}
 		dom._kids(page, webmailroot);
+		applyTheme(themePreference());
+		updateMobileMode();
+		if (isMobile()) {
+			applyMobileLayoutStyles();
+			setMobilePane("list");
+		}
 		checkMsglistWidth();
-		window.addEventListener("resize", function() {
-			if (layoutElem.value === "auto") {
-				autoselectLayout();
+		let columnSync = 0;
+		const scheduleColumnSync = /* @__PURE__ */ __name(() => {
+			if (columnSync) {
+				return;
+			}
+			columnSync = requestAnimationFrame(() => {
+				columnSync = 0;
+				lastmsglistwidth = -1;
+				checkMsglistWidth();
+			});
+		}, "scheduleColumnSync");
+		new MutationObserver(scheduleColumnSync).observe(msglistscrollElem, { childList: true, subtree: true });
+		let lastViewportWidth = -1;
+		const syncViewportMode = /* @__PURE__ */ __name(() => {
+			const width = viewportWidth();
+			if (width === lastViewportWidth) {
+				return;
+			}
+			lastViewportWidth = width;
+			const wasMobile = document.documentElement.classList.contains("mobile");
+			updateMobileMode();
+			const nowMobile = isMobile();
+			if (nowMobile) {
+				if (currentLayout !== "topbottom") {
+					selectLayout("topbottom");
+				}
+				applyMobileLayoutStyles();
+				if (!wasMobile) {
+					setMobilePane(msglistView.activeMessageID() ? "message" : "list");
+				}
+			} else if (wasMobile) {
+				document.documentElement.classList.remove("mobile-pane-list", "mobile-pane-message", "mailboxes-drawer-open");
+				if (settings.layout === "auto") {
+					autoselectLayout();
+				} else {
+					selectLayout(settings.layout);
+				}
+				applyMobileLayoutStyles();
+			} else {
+				applyMobileLayoutStyles();
+				if (settings.layout === "auto") {
+					autoselectLayout();
+				}
 			}
 			checkMsglistWidth();
-		});
+			if (searchView.root.parentElement) {
+				positionSearchView();
+			}
+		}, "syncViewportMode");
+		window.addEventListener("resize", syncViewportMode);
+		new ResizeObserver(syncViewportMode).observe(document.documentElement);
 		window.addEventListener("hashchange", async (e) => {
 			const hash = decodeURIComponent(window.location.hash);
 			if (hash.startsWith("#compose ")) {
@@ -6638,12 +8712,12 @@
 					}
 					(async () => {
 						if (opts.subject && opts.subject.includes("=?")) {
-							opts.subject = await withStatus("Decoding MIME words for subject", client.DecodeMIMEWords(opts.subject));
+							opts.subject = await withStatus(ui("Decoding MIME words for subject"), client.DecodeMIMEWords(opts.subject));
 						}
 						compose(opts, listMailboxes, setLocationHash);
 					})();
 				} catch (err) {
-					window.alert("Error parsing compose mailto URL: " + errmsg(err));
+					window.alert(ui("Error parsing compose mailto URL: ") + errmsg(err));
 					window.location.hash = "";
 				}
 				return;
@@ -6660,14 +8734,14 @@
 			if (editMsgid) {
 				(async () => {
 					try {
-						const [mi, pm] = await withStatus("Loading compose message", Promise.all([client.MessageItem(editMsgid), client.ParsedMessage(editMsgid)]));
+						const [mi, pm] = await withStatus(ui("Loading compose message"), Promise.all([client.MessageItem(editMsgid), client.ParsedMessage(editMsgid)]));
 						await composeDraft(mi, pm, listMailboxes, setLocationHash);
 					} catch (err) {
-						window.alert("Error opening draft message: " + errmsg(err));
+						window.alert(ui("Error opening draft message: ") + errmsg(err));
 					}
 				})();
 			}
-			await withStatus("Requesting messages", requestNewView(false, f, notf));
+			await withStatus(ui("Requesting messages"), requestNewView(false, f, notf));
 		});
 		let eventSource = null;
 		let connecting = false;
@@ -6700,7 +8774,7 @@
 			}
 		});
 		const showNotConnected = /* @__PURE__ */ __name(() => {
-			dom._kids(connectionElem, attr.role("status"), dom.span(css("connectionStatus", { backgroundColor: styles.warningBackgroundColor, padding: "0 .15em", borderRadius: ".15em" }), "Not connected", attr.title("Not receiving real-time updates, including of new deliveries.")), " ", dom.clickbutton("Reconnect", /* @__PURE__ */ __name(function click() {
+			dom._kids(connectionElem, attr.role("status"), dom.span(css("connectionStatus", { backgroundColor: styles.warningBackgroundColor, padding: "2px 8px", borderRadius: styles.radius, fontSize: "12px" }), ui("Not connected"), attr.title(ui("Not receiving real-time updates, including of new deliveries."))), " ", dom.clickbutton(ui("Reconnect"), /* @__PURE__ */ __name(function click() {
 				if (!eventSource && !connecting) {
 					autoReconnect = 1;
 					connect(true);
@@ -6735,11 +8809,11 @@
 			connecting = true;
 			let token;
 			try {
-				token = await withStatus("Fetching token for connection with real-time updates", client.Token(), void 0, true);
+				token = await withStatus(ui("Fetching token for connection with real-time updates"), client.Token(), void 0, true);
 			} catch (err) {
 				connecting = false;
 				autoReconnect = 0;
-				dom._kids(statusElem, capitalizeFirst(err.message || "Error fetching connection token") + ", not automatically retrying. ");
+				dom._kids(statusElem, capitalizeFirst(err.message || ui("Error fetching connection token")) + ui(", not automatically retrying. "));
 				showNotConnected();
 				return;
 			}
@@ -6748,7 +8822,7 @@
 				try {
 					openComposeOptions = parseComposeMailto(h.substring("#compose ".length));
 				} catch (err) {
-					window.alert("Error parsing mailto URL: " + errmsg(err));
+					window.alert(ui("Error parsing mailto URL: ") + errmsg(err));
 				}
 				window.location.hash = "";
 			}
@@ -6798,7 +8872,7 @@
 			} catch (err) {
 			}
 			eventSource = new window.EventSource("events?singleUseToken=" + encodeURIComponent(token) + "&request=" + encodeURIComponent(JSON.stringify(request)) + slow);
-			let eventID = window.setTimeout(() => dom._kids(statusElem, "Connecting... "), 1e3);
+			let eventID = window.setTimeout(() => dom._kids(statusElem, ui("Connecting... ")), 1e3);
 			eventSource.addEventListener("open", (e) => {
 				log("eventsource open", { e });
 				if (eventID) {
@@ -6825,12 +8899,12 @@
 					window.clearTimeout(eventID);
 					eventID = 0;
 				}
-				document.title = ["(not connected)", loginAddress ? loginAddress.User + "@" + formatDomain(loginAddress.Domain) : "", "Mox Webmail"].filter((s) => s).join(" - ");
+				document.title = [ui("(not connected)"), loginAddress ? loginAddress.User + "@" + formatDomain(loginAddress.Domain) : "", "Mox Webmail"].filter((s) => s).join(" - ");
 				dom._kids(connectionElem);
 				if (autoReconnect < 1) {
 					let msg = capitalizeFirst(errmsg2);
 					if (addNotRetrying) {
-						msg += ", not automatically retrying. ";
+						msg += ui(", not automatically retrying. ");
 					}
 					dom._kids(statusElem, msg);
 					showNotConnected();
@@ -6842,15 +8916,15 @@
 			}, "sseError");
 			eventSource.addEventListener("error", (e) => {
 				log("eventsource error", { e }, JSON.stringify(e));
-				sseError("Connection failed", true);
+				sseError(ui("Connection failed"), true);
 			});
 			eventSource.addEventListener("fatalErr", (e) => {
-				const errmsg2 = JSON.parse(e.data) || "(no error message)";
-				sseError('Server error: "' + errmsg2 + '"', true);
+				const errmsg2 = JSON.parse(e.data) || ui("(no error message)");
+				sseError(ui('Server error: "') + errmsg2 + '"', true);
 			});
 			eventSource.addEventListener("serverShutdown", (_) => {
 				autoReconnect = 0;
-				sseError("Server shutting down, will try to reconnect in a few seconds", false);
+				sseError(ui("Server shutting down, will try to reconnect in a few seconds"), false);
 				shutdownReconnectTimer = window.setTimeout(() => {
 					connect(true);
 				}, 3e3 + Math.floor(Math.random() * 5e3));
@@ -6859,7 +8933,7 @@
 				try {
 					return fn();
 				} catch (err) {
-					const errmsg2 = "invalid event from server: " + (err.message || "(no message)");
+					const errmsg2 = ui("invalid event from server: ") + (err.message || ui("(no message)"));
 					window.alert(errmsg2);
 					autoReconnect = -1;
 					sseError(errmsg2, true);
@@ -6872,9 +8946,9 @@
 					let reload = true;
 					if (composeView && composeView.unsavedChanges()) {
 						try {
-							withStatus("Saving before reloading due to server update", composeView.save());
+							withStatus(ui("Saving before reloading due to server update"), composeView.save());
 						} catch (err) {
-							window.alert("Server was updated, and webmail wants to reload to get the latest changes, but encountered an error while saving changes your open draft message. Please reload at your earliest convenience.");
+							window.alert(ui("Server was updated, and webmail wants to reload to get the latest changes, but encountered an error while saving changes your open draft message. Please reload at your earliest convenience."));
 							reload = false;
 						}
 					}
@@ -6893,9 +8967,18 @@
 				connecting = false;
 				sseID = start.SSEID;
 				loginAddress = start.LoginAddress;
-				dom._kids(accountElem, start.AccountPath ? dom.a(attr.href(start.AccountPath), "Account") : []);
+				if (start.AccountPath) {
+					accountElem.setAttribute("href", start.AccountPath);
+					accountElem.hidden = false;
+				} else {
+					accountElem.hidden = true;
+				}
 				const loginAddr = formatEmail(loginAddress);
 				dom._kids(loginAddressElem, loginAddr);
+				accountToggle.title = loginAddr;
+				if (!isMobile()) {
+					applyMailboxColumnWidth(fitMailboxWidth(settings.mailboxesWidth));
+				}
 				accountAddresses = start.Addresses || [];
 				accountAddresses.sort((a, b) => {
 					if (formatEmail(a) === loginAddr) {
@@ -6915,7 +8998,7 @@
 				if (openComposeOptions) {
 					(async () => {
 						if (openComposeOptions.subject && openComposeOptions.subject.includes("=?")) {
-							openComposeOptions.subject = await withStatus("Decoding MIME words for subject", client.DecodeMIMEWords(openComposeOptions.subject));
+							openComposeOptions.subject = await withStatus(ui("Decoding MIME words for subject"), client.DecodeMIMEWords(openComposeOptions.subject));
 						}
 						compose(openComposeOptions, listMailboxes, setLocationHash);
 						openComposeOptions = void 0;
@@ -6926,10 +9009,10 @@
 						const editMsgid2 = connectOpenComposeMessageID;
 						connectOpenComposeMessageID = 0;
 						try {
-							const [mi, pm] = await withStatus("Loading compose message", Promise.all([client.MessageItem(editMsgid2), client.ParsedMessage(editMsgid2)]));
+							const [mi, pm] = await withStatus(ui("Loading compose message"), Promise.all([client.MessageItem(editMsgid2), client.ParsedMessage(editMsgid2)]));
 							await composeDraft(mi, pm, listMailboxes, setLocationHash);
 						} catch (err) {
-							window.alert("Error opening draft message: " + errmsg(err));
+							window.alert(ui("Error opening draft message: ") + errmsg(err));
 						}
 					})();
 				}
@@ -6948,7 +9031,7 @@
 				if (!mb) {
 					updatePageTitle();
 				}
-				dom._kids(queryactivityElem, "loading...");
+				dom._kids(queryactivityElem, ui("loading..."));
 				msglistscrollElem.appendChild(listloadingElem);
 				autoReconnectResetTimer = window.setTimeout(() => {
 					autoReconnect = 1;
@@ -6968,9 +9051,9 @@
 				dom._kids(queryactivityElem);
 				listloadingElem.remove();
 				listerrElem.remove();
-				dom._kids(listerrElem, "Error from server during request for messages: " + viewErr.Err);
+				dom._kids(listerrElem, ui("Error from server during request for messages: ") + viewErr.Err);
 				msglistscrollElem.appendChild(listerrElem);
-				window.alert("Error from server during request for messages: " + viewErr.Err);
+				window.alert(ui("Error from server during request for messages: ") + viewErr.Err);
 			});
 			eventSource.addEventListener("viewReset", async (e) => {
 				const viewReset = checkParse(() => parser.EventViewReset(JSON.parse(e.data)));
@@ -6980,9 +9063,9 @@
 					return;
 				}
 				clearList();
-				dom._kids(queryactivityElem, "loading...");
+				dom._kids(queryactivityElem, ui("loading..."));
 				msglistscrollElem.appendChild(listloadingElem);
-				window.alert("Could not find message to continue scrolling, resetting the view.");
+				window.alert(ui("Could not find message to continue scrolling, resetting the view."));
 			});
 			eventSource.addEventListener("viewMsgs", async (e) => {
 				const viewMsgs = checkParse(() => parser.EventViewMsgs(JSON.parse(e.data)));
@@ -6995,7 +9078,7 @@
 				if (viewMsgs.MessageItems) {
 					msglistView.addMessageItems(viewMsgs.MessageItems || [], false, requestMsgID);
 				}
-				if (viewMsgs.ParsedMessage) {
+				if (viewMsgs.ParsedMessage && !(isMobile() && requestMsgID === 0)) {
 					const ok = msglistView.openMessage(viewMsgs.ParsedMessage);
 					if (!ok) {
 						requestMsgID = 0;
@@ -7070,7 +9153,7 @@
 					});
 					faviconDraw();
 				} catch (err) {
-					window.alert("Error processing changes (reloading advised): " + errmsg(err));
+					window.alert(ui("Error processing changes (reloading advised): ") + errmsg(err));
 				}
 			});
 		}, "connect");
@@ -7080,7 +9163,7 @@
 		try {
 			await init();
 		} catch (err) {
-			window.alert("Error: " + errmsg(err));
+			window.alert(ui("Error: ") + errmsg(err));
 		}
 	});
 	var origLocation = {
@@ -7104,7 +9187,7 @@
 			stack = " (not available)";
 		}
 		const xerrmsg = err.toString();
-		const box = dom.div(css("unhandledErrorBox", { position: "absolute", bottom: "1ex", left: "1ex", backgroundColor: "rgba(255, 110, 110, .9)", maxWidth: "14em", padding: ".25em .5em", borderRadius: ".25em", fontSize: ".8em", wordBreak: "break-all", zIndex: zindexes.shortcut }), dom.div(style({ marginBottom: ".5ex" }), "" + xerrmsg), dom.clickbutton("Details", /* @__PURE__ */ __name(function click() {
+		const box = dom.div(css("unhandledErrorBox", { position: "absolute", bottom: "1ex", left: "1ex", backgroundColor: "rgba(255, 110, 110, .9)", maxWidth: "14em", padding: ".25em .5em", borderRadius: ".25em", fontSize: ".8em", wordBreak: "break-all", zIndex: zindexes.shortcut }), dom.div(style({ marginBottom: ".5ex" }), "" + xerrmsg), dom.clickbutton(ui("Details"), /* @__PURE__ */ __name(function click() {
 			box.remove();
 			let msg = `Mox version: ${moxversion} (${moxgoos}/${moxgoarch})
 Browser: ${window.navigator.userAgent}
@@ -7121,13 +9204,15 @@ Details of the error and browser:
 
 \`\`\`
 ` + msg + "```\n";
-			const remove = popup(style({ maxWidth: "60em" }), dom.h1("A JavaScript error occurred"), dom.pre(dom._class("mono"), css("unhandledErrorMsg", { backgroundColor: styles.backgroundColorMild, padding: "1ex", borderRadius: ".15em", border: "1px solid", borderColor: styles.borderColor, whiteSpace: "pre-wrap" }), msg), dom.br(), dom.div("There is a good chance this is a bug in Mox Webmail."), dom.div('Consider filing a bug report ("issue") at ', link("https://github.com/mjl-/mox/issues/new?title=" + encodeURIComponent('mox webmail js error: "' + xerrmsg + '"') + "&body=" + encodeURIComponent(body), "https://github.com/mjl-/mox/issues/new"), ". The link includes the error details."), dom.div("Before reporting you could check previous ", link('https://github.com/mjl-/mox/issues?q=is%3Aissue+"mox+webmail+js+error%3A"', "webmail bug reports"), "."), dom.br(), dom.div("Your feedback will help improve mox, thanks!"), dom.br(), dom.div(style({ textAlign: "right" }), dom.clickbutton("Close and silence errors for 1 week", /* @__PURE__ */ __name(function click2() {
+			const remove = popup(dom.div(dom._class("dialogPanel"), dom._class("errorPanel"), dom.div(dom._class("dialogHeader"), dom.h1(ui("A JavaScript error occurred")), dom.clickbutton(dom._class("btnIcon"), strokeIcon(strokePaths.x), attr.arialabel(ui("Close")), attr.title(ui("Close error details.")), /* @__PURE__ */ __name(function click2() {
+				remove();
+			}, "click"))), dom.div(dom._class("dialogBody"), dom.pre(dom._class("errorPre"), msg), dom.p(ui("There is a good chance this is a bug in Mox Webmail.")), dom.p(ui('Consider filing a bug report ("issue") at '), link("https://github.com/mjl-/mox/issues/new?title=" + encodeURIComponent(ui('mox webmail js error: "') + xerrmsg + '"') + "&body=" + encodeURIComponent(body), "https://github.com/mjl-/mox/issues/new"), ui(". The link includes the error details.")), dom.p(ui("Before reporting you could check previous "), link('https://github.com/mjl-/mox/issues?q=is%3Aissue+"mox+webmail+js+error%3A"', ui("webmail bug reports")), "."), dom.p(ui("Your feedback will help improve mox, thanks!"))), dom.div(dom._class("dialogFooter"), dom.clickbutton(ui("Close"), /* @__PURE__ */ __name(function click2() {
+				remove();
+			}, "click")), dom.clickbutton(dom._class("btnPrimary"), ui("Silence for 1 week"), /* @__PURE__ */ __name(function click2() {
 				remove();
 				settingsPut({ ...settings, ignoreErrorsUntil: Math.round((/* @__PURE__ */ new Date()).getTime() / 1e3 + 7 * 24 * 3600) });
-			}, "click")), " ", dom.clickbutton("Close", /* @__PURE__ */ __name(function click2() {
-				remove();
-			}, "click"))));
-		}, "click")), " ", dom.clickbutton("Ignore", /* @__PURE__ */ __name(function click() {
+			}, "click")))));
+		}, "click")), " ", dom.clickbutton(ui("Ignore"), /* @__PURE__ */ __name(function click() {
 			box.remove();
 		}, "click")));
 		document.body.appendChild(box);

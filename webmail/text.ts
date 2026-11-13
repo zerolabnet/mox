@@ -1,6 +1,7 @@
 // Javascript is generated from typescript, do not modify generated javascript because changes will be overwritten.
 
 import {dom, attr} from '../lib'
+import {ui} from './i18n'
 import {css, styles, renderText, isImage} from './lib'
 import * as api from './api'
 
@@ -40,5 +41,5 @@ const init = async () => {
 
 init()
 .catch((err) => {
-	window.alert('Error: ' + ((err as any).message || '(no message)'))
+	window.alert(ui('Error: ') + ((err as any).message || ui('(no message)')))
 })

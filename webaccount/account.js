@@ -17,6 +17,19 @@
 		}
 		return s;
 	}, "findBlock");
+	var letterScript = /* @__PURE__ */ __name((code) => {
+		if (code <= 591 || code >= 7680 && code <= 7935 || code >= 11360 && code <= 11391 || code >= 42784 && code <= 43007 || code >= 43824 && code <= 43887) {
+			return 0;
+		}
+		if (code >= 880 && code <= 1023 || code >= 7936 && code <= 8191) {
+			return 1;
+		}
+		if (code >= 1024 && code <= 1327 || code >= 7296 && code <= 7311 || code >= 11744 && code <= 11775 || code >= 42560 && code <= 42655) {
+			return 2;
+		}
+		return 1e3 + findBlock(code);
+	}, "letterScript");
+	var isLetter = /* @__PURE__ */ __name((code) => /\p{L}/u.test(String.fromCodePoint(code)), "isLetter");
 	var formatText = /* @__PURE__ */ __name((e, s) => {
 		if (!s) {
 			return;
@@ -33,41 +46,58 @@
 			e.appendChild(document.createTextNode(s));
 			return;
 		}
-		let n = 0;
-		let str = "";
-		let block = -1;
-		let mod = 1;
-		const put = /* @__PURE__ */ __name((nextblock) => {
-			if (n === 0 && nextblock === 0) {
-				mod = 0;
-			}
-			if (n % 2 === mod) {
-				const x = document.createElement("span");
-				x.classList.add("scriptswitch");
-				x.appendChild(document.createTextNode(str));
-				e.appendChild(x);
-			} else {
-				e.appendChild(document.createTextNode(str));
-			}
-			n++;
-			str = "";
-		}, "put");
-		for (const c of s) {
-			if (c === " " || c === "	" || c === "\r" || c === "\n") {
-				str += c;
+		for (const part of s.split(/([ \t\r\n]+)/)) {
+			if (!part) {
 				continue;
 			}
-			const code = c.codePointAt(0);
-			if (block < 0 || !(code >= scriptblocks[block] && (code < scriptblocks[block + 1] || block === scriptblocks.length - 1))) {
-				const nextblock = code < 128 ? 0 : findBlock(code);
-				if (block >= 0) {
-					put(nextblock);
-				}
-				block = nextblock;
+			if (/^[ \t\r\n]+$/.test(part)) {
+				e.appendChild(document.createTextNode(part));
+				continue;
 			}
-			str += c;
+			const runs = [];
+			const scripts = /* @__PURE__ */ new Set();
+			let buf = "";
+			let bufScript = -2;
+			const flush = /* @__PURE__ */ __name(() => {
+				if (!buf) {
+					return;
+				}
+				runs.push({ script: bufScript, text: buf });
+				if (bufScript >= 0) {
+					scripts.add(bufScript);
+				}
+				buf = "";
+			}, "flush");
+			for (const c of part) {
+				const code = c.codePointAt(0);
+				const script = isLetter(code) ? letterScript(code) : -1;
+				if (script !== bufScript) {
+					flush();
+					bufScript = script;
+				}
+				buf += c;
+			}
+			flush();
+			const mixed = scripts.size >= 2;
+			let first = -1;
+			for (const run of runs) {
+				if (run.script >= 0) {
+					first = run.script;
+					break;
+				}
+			}
+			for (const run of runs) {
+				if (mixed && run.script >= 0 && run.script !== first) {
+					const x = document.createElement("span");
+					x.classList.add("scriptswitch");
+					x.title = "This word mixes scripts. That can imitate another word.";
+					x.appendChild(document.createTextNode(run.text));
+					e.appendChild(x);
+				} else {
+					e.appendChild(document.createTextNode(run.text));
+				}
+			}
 		}
-		put(-1);
 	}, "formatText");
 	var _domKids = /* @__PURE__ */ __name((e, l) => {
 		l.forEach((c) => {
